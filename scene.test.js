@@ -36,3 +36,9 @@ test('scout graphics search for a full five minutes between outbound and return 
   assert.equal(scoutView(s.scout,now+320000).travel,0);
   assert.equal(scoutView(null,now).phase,'idle');
 });
+
+test('finishing a wounded giant is shown as victory even below its original full strength',()=>{
+  const E=require('./engine'),s=E.initial();s.giant.hp=40;E.launchGiant(s,s.last);
+  assert.ok(s.mission.power<s.mission.enemy);assert.equal(missionView(s.mission,s.last+12000).win,true);
+  E.resolve(s,s.last+15000);assert.equal(s.giant.rewardClaimed,true);
+});

@@ -1,10 +1,10 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const E=require('./engine');
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-7,`${a} != ${b}`);
-test('iron production starts at 220 per minute and scales with the building level',()=>{
-  const s=E.initial(),start=s.last,metal=s.metal;assert.equal(E.productionRate(s,'metal',start),220);
-  E.advance(s,start+60000);near(s.metal,metal+220);
-  s.levels.mine=2;assert.equal(E.productionRate(s,'metal',s.last),440);
-  E.advance(s,start+120000);near(s.metal,metal+660);
+test('iron production starts at 176 per minute and scales with the building level',()=>{
+  const s=E.initial(),start=s.last,metal=s.metal;assert.equal(E.productionRate(s,'metal',start),176);
+  E.advance(s,start+60000);near(s.metal,metal+176);
+  s.levels.mine=2;assert.equal(E.productionRate(s,'metal',s.last),352);
+  E.advance(s,start+120000);near(s.metal,metal+528);
 });
 test('scouting needs three free soldiers, reserves them, and prevents duplicate launches',()=>{
   const s=E.initial(),now=s.last;s.soldiers=2;let before=structuredClone(s);
@@ -45,28 +45,28 @@ test('scouts cannot take soldiers already deployed on a combat mission',()=>{
 });
 test('a bonus doubles only its selected resource and never retroactively boosts production',()=>{
   const s=E.initial(),now=s.last,metal=s.metal,wood=s.wood;s.bonusInventory.metal=1;
-  assert.equal(E.activateBonus(s,'metal',now+60000),null);near(s.metal,metal+220);
-  assert.equal(s.bonusInventory.metal,0);assert.equal(E.productionRate(s,'metal',now+60000),440);
-  E.advance(s,now+120000);near(s.metal,metal+660);near(s.wood,wood+96);
-  assert.equal(E.productionRate(s,'wood',now+120000),48);
+  assert.equal(E.activateBonus(s,'metal',now+60000),null);near(s.metal,metal+176);
+  assert.equal(s.bonusInventory.metal,0);assert.equal(E.productionRate(s,'metal',now+60000),352);
+  E.advance(s,now+120000);near(s.metal,metal+528);near(s.wood,wood+105.6);
+  assert.equal(E.productionRate(s,'wood',now+120000),52.8);
 });
 test('production integrates expiry in the middle of an offline interval',()=>{
   const s=E.initial(),now=s.last,metal=s.metal;s.boostUntil.metal=now+30000;
-  E.advance(s,now+60000);near(s.metal,metal+330);
-  assert.equal(E.productionRate(s,'metal',now+60000),220);
+  E.advance(s,now+60000);near(s.metal,metal+264);
+  assert.equal(E.productionRate(s,'metal',now+60000),176);
 });
 test('reactivating a bonus extends time, does not quadruple output, and persists across reloads',()=>{
   let s=E.initial();const now=s.last;s.bonusInventory.metal=2;
   E.activateBonus(s,'metal',now);E.activateBonus(s,'metal',now+60000);
   assert.equal(s.boostUntil.metal,now+600000);assert.equal(s.bonusInventory.metal,0);
-  assert.equal(E.productionRate(s,'metal',now+60000),440);
+  assert.equal(E.productionRate(s,'metal',now+60000),352);
   s=E.migrate(JSON.parse(JSON.stringify(s)));E.advance(s,now+660000);
-  near(s.metal,150+440*10+220);
-  assert.equal(E.productionRate(s,'metal',now+660000),220);
+  near(s.metal,150+352*10+176);
+  assert.equal(E.productionRate(s,'metal',now+660000),176);
 });
 test('offline cap includes only the real boosted interval and clocks cannot duplicate production',()=>{
   const s=E.initial(),now=s.last;s.boostUntil.metal=now+300000;
-  E.advance(s,now+86400000);near(s.metal,150+220*245);
+  E.advance(s,now+86400000);near(s.metal,150+176*245);
   const before=structuredClone(s);E.advance(s,now);assert.deepEqual(s,before);
 });
 test('empty and unknown bonus activations never spend resources or inventory',()=>{

@@ -25,19 +25,26 @@ const random=seeded(7319),v=new T.Vector3();let inView=true;let selected=null,fo
 const $=id=>document.getElementById(id);
 function texture(kind,size=1024){
  const c=document.createElement('canvas');c.width=c.height=size;const g=c.getContext('2d'),r=seeded(kind.length*941+kind.charCodeAt(0));
- const colors={brick:'#a28d77',plaster:'#c4beaa',roof:'#665b4d',wood:'#806344',grass:'#667151',dirt:'#968366',cloth:'#69745c',concrete:'#9b9c8a',asphalt:'#666b60',skin:'#d8b49b'};
+ const colors={brick:'#a28d77',plaster:'#c4beaa',roof:'#665b4d',wood:'#806344',grass:'#667151',dirt:'#968366',cloth:'#69745c',concrete:'#9b9c8a',asphalt:'#666b60',skin:'#d8b49b',camo:'#69745e'};
  g.fillStyle=colors[kind]||'#93978a';g.fillRect(0,0,size,size);
  for(let i=0;i<size*14;i++){let n=r();g.fillStyle=n>.5?`rgba(255,248,219,${r()*.12})`:`rgba(20,30,18,${r()*.16})`;g.fillRect(r()*size,r()*size,1+r()*5,1+r()*4);}
  if(kind==='brick')for(let y=0;y<size;y+=64){for(let x=-64;x<size;x+=128){const xx=x+(y/64%2)*64;g.strokeStyle='#615e4f';g.lineWidth=4;g.strokeRect(xx,y,128,64);g.fillStyle=`rgba(50,40,25,${r()*.12})`;g.fillRect(xx+3,y+3,122,58);}}
  if(kind==='roof')for(let y=0;y<size;y+=32){g.fillStyle=y%64?'#b4a68a22':'#1c241e44';g.fillRect(0,y,size,3);for(let x=0;x<size;x+=64){g.strokeStyle='#242d2544';g.strokeRect(x+(y%64?32:0),y,64,32);}}
- if(kind==='wood'||kind==='cloth'){g.lineWidth=1;for(let i=0;i<size;i+=kind==='cloth'?5:3){g.strokeStyle=i%2?'#ffffff18':'#0d1e1740';g.beginPath();g.moveTo(i,0);g.bezierCurveTo(i+8,size*.3,i-8,size*.7,i,size);g.stroke();}if(kind==='cloth')for(let y=0;y<size;y+=5){g.fillStyle='#ffffff0c';g.fillRect(0,y,size,1);}}
+ if(kind==='wood'||kind==='cloth'){g.lineWidth=1;for(let i=0;i<size;i+=kind==='cloth'?5:3){g.strokeStyle=i%2?'#ffffff0a':'#0d1e1715';g.beginPath();g.moveTo(i,0);g.bezierCurveTo(i+8,size*.3,i-8,size*.7,i,size);g.stroke();}if(kind==='cloth')for(let y=0;y<size;y+=5){g.fillStyle='#ffffff08';g.fillRect(0,y,size,1);}}
  if(kind==='grass'){for(let i=0;i<18000;i++){const x=r()*size,y=r()*size;g.strokeStyle=i%2?'#a3a76d55':'#334c2d55';g.beginPath();g.moveTo(x,y);g.lineTo(x+2-r()*4,y-2-r()*7);g.stroke();}}
  if(kind==='plaster'||kind==='concrete'){for(let i=0;i<80;i++){g.strokeStyle='#25372816';g.lineWidth=r()*1.5;const x=r()*size,y=r()*size;g.beginPath();g.moveTo(x,y);g.lineTo(x+r()*20-10,y+10+r()*30);g.lineTo(x+r()*40-20,y+30+r()*50);g.stroke();}}
+ if(kind==='camo'){
+  for(let i=0;i<90;i++){const x=r()*size,y=r()*size;g.fillStyle=['#4f5b49','#879077','#706f56','#5a6753'][i%4];g.beginPath();g.moveTo(x,y);for(let j=0;j<12;j++){const angle=j*Math.PI/6;g.lineTo(x+Math.cos(angle)*(15+r()*60),y+Math.sin(angle)*(12+r()*40));}g.closePath();g.fill();}
+ }
+ if(kind==='plaster'||kind==='concrete'){
+  for(let i=0;i<120;i++){const x=r()*size,y=size*(.65+r()*.35),radius=10+r()*60;const stain=g.createRadialGradient(x,y,0,x,y,radius);stain.addColorStop(0,'#37432a10');stain.addColorStop(1,'#37432a00');g.fillStyle=stain;g.fillRect(x-radius,y-radius,radius*2,radius*2);}
+  for(let i=0;i<35;i++){const x=r()*size,y=r()*size;g.strokeStyle='#35402e14';g.lineWidth=.6;g.beginPath();g.moveTo(x,y);for(let j=1;j<6;j++)g.lineTo(x+(r()-.5)*12,y+j*5);g.stroke();}
+ }
  const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;tex.wrapS=tex.wrapT=T.RepeatWrapping;tex.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());textures.push(tex);return tex;
 }
-const maps={};for(const name of ['brick','plaster','roof','wood','grass','dirt','cloth','concrete','asphalt','skin'])maps[name]=texture(name,name==='grass'?2048:name==='cloth'?512:1024);
+const maps={};for(const name of ['brick','plaster','roof','wood','grass','dirt','cloth','concrete','asphalt','skin','camo'])maps[name]=texture(name,name==='grass'?2048:name==='cloth'?512:1024);
 function mat(color,map,roughness=.88,metalness=0){const m=new T.MeshStandardMaterial({color,map:maps[map]||null,bumpMap:maps[map]||null,bumpScale:map==='brick'?.035:.012,roughness,metalness});materials.push(m);return m;}
-const M={plaster:mat('#ece2c8','plaster'),brick:mat('#d1ac89','brick'),concrete:mat('#b4b7a8','concrete'),darkConcrete:mat('#8b9188','concrete'),roof:mat('#b9aa96','roof'),metal:mat('#8a9691',null,.5,.7),iron:mat('#414c4c',null,.48,.7),wood:mat('#bd9b71','wood'),darkWood:mat('#8a7153','wood'),window:mat('#4b6a71',null,.22,.35),frame:mat('#d5d4bc'),black:mat('#232a28'),grass:mat('#9ca978','grass'),dirt:mat('#c1b390','dirt'),road:mat('#b2b6a0','asphalt'),leaf:mat('#456747'),leafLight:mat('#637b4d'),bark:mat('#81715b','wood'),gold:mat('#d0ab5c',null,.4,.35),blue:mat('#5b8794','cloth'),uniform:mat('#90977a','cloth'),vest:mat('#5c6855','cloth'),skin:mat('#efddd0','skin'),boots:mat('#363e38'),eyes:mat('#e1e0cd'),hair:mat('#3d3930'),zskin:mat('#98a08a'),blood:mat('#785a4e'),zcloth:mat('#7e7967','cloth'),ztrousers:mat('#686e6a','cloth'),red:mat('#ad5746'),cloth:mat('#a6aa8b','cloth')};
+const M={plaster:mat('#ece2c8','plaster'),brick:mat('#d1ac89','brick'),concrete:mat('#b4b7a8','concrete'),darkConcrete:mat('#8b9188','concrete'),roof:mat('#b9aa96','roof'),metal:mat('#8a9691',null,.5,.7),iron:mat('#414c4c',null,.48,.7),wood:mat('#bd9b71','wood'),darkWood:mat('#8a7153','wood'),window:mat('#4b6a71',null,.22,.35),frame:mat('#d5d4bc'),black:mat('#232a28'),grass:mat('#9ca978','grass'),dirt:mat('#c1b390','dirt'),road:mat('#b2b6a0','asphalt'),leaf:mat('#456747'),leafLight:mat('#637b4d'),bark:mat('#81715b','wood'),gold:mat('#d0ab5c',null,.4,.35),blue:mat('#5b8794','cloth'),uniform:mat('#c2cbb6','camo'),vest:mat('#5c6855','cloth'),skin:mat('#efddd0','skin'),boots:mat('#363e38'),eyes:mat('#e1e0cd'),hair:mat('#3d3930'),zskin:mat('#98a08a'),blood:mat('#785a4e'),zcloth:mat('#7e7967','cloth'),ztrousers:mat('#686e6a','cloth'),red:mat('#ad5746'),cloth:mat('#a6aa8b','cloth')};
 function geometry(key,create){if(!geometries.has(key))geometries.set(key,create());return geometries.get(key);}
 function mesh(parent,geo,material,x=0,y=0,z=0,sx=1,sy=1,sz=1){const o=new T.Mesh(geo,material);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o;}
 function box(parent,w,h,d,x,y,z,material){return mesh(parent,geometry('box',()=>new T.BoxGeometry(1,1,1)),material,x,y,z,w,h,d);}
@@ -58,7 +65,8 @@ const ground=flat(scene,185,160,0,0,M.grass,-.08);maps.grass.repeat.set(13,11);
 flat(scene,31,31,-16,0,M.dirt);maps.dirt.repeat.set(5,5);
 function route(points,width,material){const curve=new T.CatmullRomCurve3(points.map(p=>new T.Vector3(p[0],.035,p[1])));const vertices=[],uv=[],indices=[],count=90;for(let i=0;i<=count;i++){const t=i/count,p=curve.getPoint(t),d=curve.getTangent(t),nx=-d.z,nz=d.x;for(const side of [-1,1]){vertices.push(p.x+nx*width/2*side,p.y,p.z+nz*width/2*side);uv.push((side+1)/2,t*9);}if(i<count){const k=i*2;indices.push(k,k+2,k+1,k+1,k+2,k+3);}}const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(vertices,3));geo.setAttribute('uv',new T.Float32BufferAttribute(uv,2));geo.setIndex(indices);geo.computeVertexNormals();const o=mesh(scene,geo,material);o.castShadow=false;o.material.side=T.DoubleSide;geometries.set('route:'+geometries.size,geo);return curve;}
 const battleRoute=route([[-1,3],[5,5],[13,6],[17,4],[21,2]],3.5,M.road);
-const scoutRoute=route([[-1,3],[2,-2],[5,-7],[9,-12]],1.3,M.dirt);
+const giantRoute=route([[-1,3],[9,3],[22,-3],[31,-6],[34,-10]],2.4,M.road);
+const scoutRoute=route([[-1,3],[2,-2],[5,-7],[9,-8.9]],1.3,M.dirt);
 route([[-29,3],[-15,3],[-1,3]],2.3,M.road);route([[-18,-12],[-18,12]],2.1,M.road);
 function pitchedRoof(parent,w,d,height,x,y,z,material){
  const g=new T.BufferGeometry(),a=w/2,b=d/2;
@@ -130,7 +138,28 @@ for(const [x,z] of [[-28,1],[-18,1],[-7,1],[-28,13],[-2,-13]]){
 }
 for(let i=0;i<5;i++){const x=15+i*4.5,z=i%2?-10:12;const ruin=group(architecture,x,0,z);house(ruin,{w:4.3,d:4,h:3+(i%3),roof:i%2===0,wall:M.darkConcrete});if(i%2){for(let j=0;j<5;j++){const debris=box(ruin,.5+random(),.3+random()*.4,.7+random(),random()*5-2.5,.3,2.5+random()*2,M.brick);debris.rotation.y=random()*6;}}}
 // Elhagyott kutatótábor.
-const camp=group(architecture,9,0,-12);pitchedRoof(camp,4.5,4.7,2.7,0,.1,0,M.blue);box(camp,1.2,1,.8,3,.5,1,M.wood);box(camp,1,.7,.75,3.8,.35,0,M.wood);cylinder(camp,.4,.4,.9,-3,.45,1,M.metal);
+const camp=group(scene,9,0,-12);
+const tentFabric=M.blue.clone();tentFabric.side=T.DoubleSide;materials.push(tentFabric);
+function clothPanel(points){const geo=new T.BufferGeometry(),pos=[],uv=[];for(let i=1;i<points.length-1;i++)for(const p of [points[0],points[i],points[i+1]]){pos.push(...p);uv.push((p[0]+2.25)/4.5,(p[1]-.1)/2.7);}geo.setAttribute('position',new T.Float32BufferAttribute(pos,3));geo.setAttribute('uv',new T.Float32BufferAttribute(uv,2));geo.computeVertexNormals();geometries.set('tent:'+geometries.size,geo);mesh(camp,geo,tentFabric);}
+clothPanel([[-2.25,.1,2.35],[-2.25,.1,-2.35],[0,2.8,-2.35],[0,2.8,2.35]]);
+clothPanel([[0,2.8,2.35],[0,2.8,-2.35],[2.25,.1,-2.35],[2.25,.1,2.35]]);
+clothPanel([[-2.25,.1,-2.35],[2.25,.1,-2.35],[0,2.8,-2.35]]);
+// Nyitott, 1,3 m széles bejárat: a homloklapok ténylegesen kihagyják a nyílást.
+clothPanel([[-2.25,.1,2.35],[-.65,.1,2.35],[-.65,2.02,2.35]]);
+clothPanel([[.65,.1,2.35],[2.25,.1,2.35],[.65,2.02,2.35]]);
+clothPanel([[-.65,2.02,2.35],[0,2.8,2.35],[.65,2.02,2.35]]);
+clothPanel([[-.65,1.75,2.35],[.65,1.75,2.35],[.65,2.02,2.35],[-.65,2.02,2.35]]);
+box(camp,4.2,.08,4.5,0,.06,0,M.darkWood);box(camp,1.5,.04,.7,0,.07,2.6,M.darkWood);
+const rolled=cylinder(camp,.085,.085,1.45,0,1.8,2.42,M.blue);rolled.rotation.z=Math.PI/2;
+for(const x of [-.69,.69])cylinder(camp,.025,.025,1.8,x,.94,2.38,M.wood,8);
+box(camp,1.2,.12,2.2,-.7,.18,-.6,M.vest);box(camp,.7,.2,.4,-.7,.3,-1.4,M.cloth);
+box(camp,1.2,1,.8,3,.5,1,M.wood);box(camp,1,.7,.75,3.8,.35,0,M.wood);cylinder(camp,.4,.4,.9,-3,.45,1,M.metal);
+for(const side of [-1,1]){
+ const points=[new T.Vector3(side*2.1,.8,1.9),new T.Vector3(side*3.1,.04,2.8)],geo=new T.BufferGeometry().setFromPoints(points),material=new T.LineBasicMaterial({color:'#bcb599'});materials.push(material);geometries.set('rope:'+side,geo);camp.add(new T.Line(geo,material));
+ cylinder(camp,.035,.035,.35,side*3.1,.15,2.8,M.iron,8);
+}
+bake(camp);
+const campEntry={kind:'landmark',id:'scout-camp',name:'Felderítők sátra',group:camp,description:'Nyitott bejáratú ellátósátor, belül fekhellyel. A felderítők a bejárat előtt gyülekeznek és kutatnak.'};entity(camp,campEntry);
 bake(architecture);
 // Magasabb részletességű lombkoronák, törzsek, kövek és növényzet.
 const vegetation=group(scene);
@@ -146,7 +175,7 @@ const foliageTexture=new T.CanvasTexture(foliageCanvas);foliageTexture.colorSpac
 const foliageMaterial=new T.MeshStandardMaterial({map:foliageTexture,color:'#c8d6b1',alphaTest:.45,side:T.DoubleSide,roughness:.92});materials.push(foliageMaterial);
 for(let i=0;i<96;i++){
  const x=random()*126-60,z=random()*94-47;
- if((x>-35&&x<34&&z>-19&&z<20)||(x>0&&x<15&&z>-17&&z<-5))continue;
+ if((x-35)**2+(z+15)**2<64||(x>-35&&x<34&&z>-19&&z<20)||(x>0&&x<15&&z>-17&&z<-5))continue;
  const h=4+random()*5;const trunk=cylinder(vegetation,.14,.27,h*.7,x,h*.35,z,M.bark,10);trunk.rotation.z=(random()-.5)*.1;
  for(let j=0;j<3;j++){const branch=cylinder(vegetation,.035,.11,h*.36,x+(j-1)*.4,h*.55,z,M.bark,8);branch.rotation.z=(j-1)*.7;branch.rotation.y=j*2;}
  for(let j=0;j<5;j++){
@@ -155,22 +184,45 @@ for(let i=0;i<96;i++){
  const top=mesh(vegetation,geometry('foliagePlane',()=>new T.PlaneGeometry(1,1)),foliageMaterial,x,h*.87,z,4.5+h*.25,4.5+h*.25,1);top.rotation.x=-Math.PI/2;
 }
 for(let i=0;i<115;i++){
- const x=random()*104-47,z=random()*76-38;if(x>-34&&x<33&&z>-19&&z<20)continue;
+ const x=random()*104-47,z=random()*76-38;if((x-35)**2+(z+15)**2<64||(x>-34&&x<33&&z>-19&&z<20))continue;
  const rock=mesh(vegetation,geometry('rock',()=>new T.DodecahedronGeometry(1,1)),M.darkConcrete,x,0,z,.2+random()*.7,.16+random()*.4,.25+random()*.5);rock.rotation.set(random(),random(),random());
 }
 bake(vegetation);
+const faceMaterials=new Map();
+function facialMaterial(zombie,index){
+ const key=(zombie?'z':'h')+(index%4);if(faceMaterials.has(key))return faceMaterials.get(key);
+ const c=document.createElement('canvas');c.width=1024;c.height=512;const g=c.getContext('2d'),r=seeded(540+index%4);
+ const skin=zombie?'#919b84':['#caa184','#c5a18b','#d0ac90','#bf977c'][index%4];g.fillStyle=skin;g.fillRect(0,0,1024,512);
+ for(let i=0;i<28000;i++){g.fillStyle=i%2?'#fff0da0c':'#5435230c';g.fillRect(r()*1024,r()*512,1+r()*1.5,1+r()*1.5);}
+ const shade=g.createRadialGradient(256,260,20,256,265,170);shade.addColorStop(0,'#fff0da19');shade.addColorStop(.65,'#513b2e00');shade.addColorStop(1,'#513b2e18');g.fillStyle=shade;g.fillRect(75,100,365,350);
+ for(const x of [187,325]){
+  const cheek=g.createRadialGradient(x,284,0,x,284,48);cheek.addColorStop(0,zombie?'#4a574044':'#a35d4a22');cheek.addColorStop(1,'#7b4a3100');g.fillStyle=cheek;g.fillRect(x-50,234,100,100);
+  g.fillStyle=zombie?'#46524166':'#71503b33';g.beginPath();g.ellipse(x,233,34,14,0,0,Math.PI*2);g.fill();
+  g.fillStyle=zombie?'#c2c9ad':'#d1cbbb';g.beginPath();g.ellipse(x,229,24,8,0,0,Math.PI*2);g.fill();
+  g.fillStyle=zombie?'#7f8a6c':'#4a4635';g.beginPath();g.arc(x,230,7,0,Math.PI*2);g.fill();g.fillStyle='#1f2520';g.beginPath();g.arc(x,230,3.5,0,Math.PI*2);g.fill();
+  g.strokeStyle=zombie?'#4d5141':'#65503e';g.lineWidth=4;g.beginPath();g.moveTo(x-23,211);g.quadraticCurveTo(x,203,x+23,210);g.stroke();
+  g.strokeStyle='#65433222';g.lineWidth=1;g.beginPath();g.moveTo(x-20,246);g.quadraticCurveTo(x,251,x+20,245);g.stroke();
+ }
+ g.strokeStyle='#744f3b44';g.lineWidth=3;g.beginPath();g.moveTo(244,253);g.quadraticCurveTo(239,274,248,281);g.moveTo(265,253);g.quadraticCurveTo(274,274,266,281);g.stroke();
+ g.fillStyle=zombie?'#665e4e':'#926657';g.beginPath();g.ellipse(256,326,23,5,0,0,Math.PI*2);g.fill();g.strokeStyle='#493d303f';g.lineWidth=1.5;g.beginPath();g.moveTo(232,326);g.quadraticCurveTo(256,330,280,326);g.stroke();
+ if(zombie){for(let i=0;i<12;i++){g.fillStyle='#5e53423d';g.beginPath();g.ellipse(155+r()*200,260+r()*100,2+r()*10,1+r()*5,r()*3,0,Math.PI*2);g.fill();}}
+ else{for(let i=0;i<750;i++){const x=175+r()*160,y=292+r()*90;if(Math.abs(x-256)<30&&y<340)continue;g.fillStyle='#40362d12';g.fillRect(x,y,1,1);}}
+ const map=new T.CanvasTexture(c);map.colorSpace=T.SRGBColorSpace;map.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());textures.push(map);
+ const material=new T.MeshStandardMaterial({map,roughness:.82,metalness:0});materials.push(material);faceMaterials.set(key,material);return material;
+}
 function character(kind,index){
- const g=group(scene),detail=group(g),body=group(detail),zombie=kind==='zombie',civilian=kind==='civilian',scout=kind==='scout';
+ const g=group(scene),detail=group(g),body=group(detail),zombie=kind==='zombie'||kind==='giant',civilian=kind==='civilian',scout=kind==='scout';
  const uniform=zombie?M.zcloth:scout?M.blue:civilian?M.cloth:M.uniform,skin=zombie?M.zskin:M.skin;
+ const faceSurface=facialMaterial(zombie,index);
  const trousers=zombie?M.ztrousers:civilian?M.darkWood:M.uniform;
  capsule(body,.16,.26,0,1.21,0,uniform);sphere(body,.225,.135,.13,0,1.36,0,uniform);
  sphere(body,.17,.13,.13,0,.97,0,trousers);box(body,.34,.055,.26,0,1.025,0,M.boots);
  cylinder(body,.065,.07,.11,0,1.51,0,skin);
- const face=mesh(body,geometry('humanHead',()=>{const g=new T.SphereGeometry(1,32,24),p=g.attributes.position;for(let i=0;i<p.count;i++){const y=p.getY(i);if(y<-.15)p.setX(i,p.getX(i)*(.86+.14*(y+1)/.85));}g.computeVertexNormals();return g;}),skin,0,1.675,.01,.108,.147,.098);
+ const face=mesh(body,geometry('humanHead',()=>{const g=new T.SphereGeometry(1,32,24),p=g.attributes.position;for(let i=0;i<p.count;i++){const y=p.getY(i);if(y<-.15)p.setX(i,p.getX(i)*(.86+.14*(y+1)/.85));}g.computeVertexNormals();return g;}),faceSurface,0,1.675,.01,.108,.147,.098);
  sphere(body,.016,.033,.018,-.108,1.665,0,skin);sphere(body,.016,.033,.018,.108,1.665,0,skin);
  sphere(body,.014,.028,.022,0,1.662,.105,skin);
  for(const x of [-.043,.043]){
-  sphere(body,.018,.008,.008,x,1.699,.101,M.eyes);sphere(body,.0055,.006,.006,x,1.698,.109,zombie?M.eyes:M.hair);
+  sphere(body,.02,.011,.009,x,1.699,.098,skin);sphere(body,.016,.0065,.007,x,1.699,.104,M.eyes);sphere(body,.0065,.0065,.004,x,1.698,.111,zombie?M.eyes:M.darkWood);sphere(body,.0033,.004,.003,x,1.698,.114,M.black);sphere(body,.0015,.0015,.001,x-.002,1.701,.117,M.eyes);
   const brow=box(body,.034,.005,.008,x,1.718,.099,zombie?M.zcloth:M.hair);brow.rotation.z=x>0?-.12:.12;
  }
  box(body,.033,.004,.005,0,1.615,.103,zombie?M.blood:M.darkWood);
@@ -198,7 +250,7 @@ function character(kind,index){
   const shoulder=group(detail,side*.235,1.39,0),upper=group(shoulder);
   capsule(upper,.067,.19,0,-.13,0,uniform);bake(upper);
   const elbow=group(shoulder,0,-.29,0),lower=group(elbow);
-  capsule(lower,.055,.17,0,-.11,0,uniform);sphere(lower,.045,.07,.035,0,-.25,.008,skin);bake(lower);
+  capsule(lower,.055,.17,0,-.11,0,uniform);sphere(lower,.038,.057,.025,0,-.24,.008,skin);for(let f=0;f<4;f++)capsule(lower,.007,.026,-.025+f*.016,-.293,.014,skin);sphere(lower,.01,.027,.011,side*.041,-.25,.025,skin);bake(lower);
   shoulder.rotation.z=side*.08;elbow.rotation.x=-.25;arms.push({shoulder,elbow});
   const hip=group(detail,side*.09,.94,0),thigh=group(hip);
   capsule(thigh,.084,.25,0,-.18,0,trousers);bake(thigh);
@@ -210,7 +262,7 @@ function character(kind,index){
  const low=group(g),lowBody=group(low),lowLegs=[];
  const lowCapsule=geometry('lowCapsule',()=>new T.CapsuleGeometry(1,1,2,6));
  mesh(lowBody,lowCapsule,uniform,0,1.2,0,.16,.23,.13);
- mesh(lowBody,geometry('lowHead',()=>new T.SphereGeometry(1,8,6)),skin,0,1.67,.01,.11,.15,.1);
+ mesh(lowBody,geometry('lowHead',()=>new T.SphereGeometry(1,16,12)),faceSurface,0,1.67,.01,.11,.15,.1);
  for(const side of [-1,1]){
   mesh(lowBody,lowCapsule,uniform,side*.23,1.13,0,.055,.25,.055);
   const leg=group(low,side*.09,.94,0);mesh(leg,lowCapsule,trousers,0,-.4,0,.075,.29,.07);lowLegs.push(leg);
@@ -225,10 +277,18 @@ for(let i=0;i<24;i++)soldiers.push(character('soldier',i));
 for(let i=0;i<3;i++)scouts.push(character('scout',i));
 const zombies=[];for(let i=0;i<11;i++)zombies.push(character('zombie',i));
 for(let i=0;i<4;i++)civilians.push(character('civilian',i));
+const giant=character('giant',0);giant.group.scale.set(5.2,4.1,5.2);giant.body.scale.set(1.2,1.02,1.1);giant.arms.forEach(a=>{a.shoulder.position.x*=1.3;a.shoulder.scale.set(1.2,1,1.2);});giant.group.position.set(35,0,-15);
+giant.data.id='giant';giant.data.name='A Pusztító · Óriászombi';giant.data.description='Tíz alapzombi harci ereje. A megmaradt életerő minden támadás után mentésre kerül. Legyőzése egyszeri, hatalmas zsákmányt ad.';
+let lastGiantHp=getState().giant.hp,giantHitUntil=0;
+
 const flashMaterial=new T.MeshBasicMaterial({color:'#ffdf8f'});materials.push(flashMaterial);
 const flashes=Array.from({length:8},()=>{const o=sphere(scene,.065,.065,.065,0,1.2,0,flashMaterial);o.castShadow=false;return o;});
 const selectionRing=mesh(scene,geometry('selectRing',()=>new T.RingGeometry(.55,.59,64)),new T.MeshBasicMaterial({color:'#d6ef94',side:T.DoubleSide,transparent:true,opacity:.9}));materials.push(selectionRing.material);selectionRing.rotation.x=-Math.PI/2;selectionRing.visible=false;selectionRing.castShadow=false;
 const labelLayer=$('world-labels');
+const giantLabel=document.createElement('button');giantLabel.className='giant-world-health';giantLabel.id='giant-world-health';
+giantLabel.innerHTML=`<span>ÓRIÁSZOMBI</span><strong id="giant-map-percent">${root.Engine.giantPercent(getState())}%</strong><i class="giant-map-track"><i></i></i>`;
+giantLabel.addEventListener('click',()=>select(giant.data));labelLayer.append(giantLabel);
+
 for(const entry of buildingEntries){const button=document.createElement('button');button.className='world-label';button.dataset.worldBuilding=entry.id;button.textContent=entry.name;button.addEventListener('click',()=>select(entry));labelLayer.append(button);entry.label=button;}
 function updateCamera(){
  const c=cameraState;c.distance=clamp(c.distance,4.2,125);c.pitch=clamp(c.pitch,.25,1.33);c.target.x=clamp(c.target.x,-42,42);c.target.z=clamp(c.target.z,-28,28);
@@ -239,17 +299,17 @@ function updateCamera(){
  canvas.dataset.zoom=String(81/c.distance);
 }
 function focus(entry){
- if(!entry)return;select(entry);following=entry.kind==='character'?entry:null;
- entry.group.getWorldPosition(cameraState.target);cameraState.target.y=entry.kind==='character'?1.05:1.7;
- cameraState.distance=entry.kind==='character'?4.8:entry.id==='hq'?21:17;
+ if(!entry)return;canvas.scrollIntoView({behavior:'instant',block:'center'});select(entry);following=entry.kind==='character'?entry:null;
+ entry.group.getWorldPosition(cameraState.target);cameraState.target.y=entry.id==='giant'?(getState().giant.hp>0?4:1):entry.kind==='character'?1.05:1.7;
+ cameraState.distance=entry.id==='giant'?18:entry.id==='scout-camp'?12:entry.kind==='character'?4.8:entry.id==='hq'?21:17;
  cameraState.pitch=entry.kind==='character'?.28:.64;if(entry.kind==='character')cameraState.yaw=entry.group.rotation.y;updateCamera();
 }
 function select(entry){
  selected=entry;const info=$('map-inspector');info.hidden=false;
  $('inspector-title').textContent=entry.name;
- $('inspector-type').textContent=entry.kind==='building'?'BÁZISÉPÜLET':entry.actor.kind==='zombie'?'KÓSZÁLÓ FERTŐZÖTT':entry.actor.kind==='civilian'?'A MENEDÉK LAKÓJA':'A SAJÁT CSAPATOD';
+ $('inspector-type').textContent=entry.kind==='building'?'BÁZISÉPÜLET':entry.kind==='landmark'?'FELDERÍTŐTÁBOR':entry.id==='giant'?'ÓRIÁSZOMBI · 10× HARCI ERŐ':entry.actor.kind==='zombie'?'KÓSZÁLÓ FERTŐZÖTT':entry.actor.kind==='civilian'?'A MENEDÉK LAKÓJA':'A SAJÁT CSAPATOD';
  $('inspector-description').textContent=entry.description;
- $('inspect-upgrade').hidden=entry.kind!=='building';
+ $('inspect-upgrade').hidden=entry.kind!=='building';$('inspect-giant-attack').hidden=entry.id!=='giant';
  canvas.dataset.selected=entry.id;
 }
 function clearSelection(){selected=null;following=null;selectionRing.visible=false;$('map-inspector').hidden=true;delete canvas.dataset.selected;}
@@ -304,13 +364,15 @@ for(const [name,handler] of Object.entries(events))canvas.addEventListener(name,
 $('zoom-in').onclick=()=>zoom(.76);$('zoom-out').onclick=()=>zoom(1/.76);$('camera-home').onclick=home;
 $('rotate-map').onclick=()=>{following=null;cameraState.yaw+=Math.PI/4;updateCamera();};
 $('inspector-close').onclick=clearSelection;$('inspect-closeup').onclick=()=>focus(selected);
+$('inspect-giant-attack').onclick=()=>$('attack-giant').click();
 $('inspect-upgrade').onclick=()=>{if(selected?.kind==='building')onUpgrade(selected.id);};
 for(const button of document.querySelectorAll('[data-camera]'))button.onclick=()=>{
  const id=button.dataset.camera;
  if(id==='base')focus(buildingEntries[0]);
  else if(id==='army'){const available=soldiers.filter(s=>s.group.visible);focus(available[Math.min(3,available.length-1)]?.data||civilians[0].data);}
  else if(id==='zombies')focus(zombies[0].data);
- else if(id==='scouts'){if(getState().scout)focus(scouts[0].data);else{following=null;clearSelection();cameraState.target.set(9,1,-12);cameraState.distance=20;cameraState.pitch=.6;updateCamera();}}
+ else if(id==='giant')focus(giant.data);
+ else if(id==='scouts'){if(getState().scout)focus(scouts[0].data);else focus(campEntry);}
 };
 function setQuality(value){
  quality=value;renderer.setPixelRatio(Math.min(root.devicePixelRatio||1,value==='high'?2:1));
@@ -324,7 +386,7 @@ const software=debug&&/swiftshader|llvmpipe|software/i.test(gl.getParameter(debu
 setQuality(root.innerWidth<700||software?'low':'high');
 function walk(actor,time,moving=true,zombie=false,battle=false){
  const phase=time*(zombie?4.1:7)+actor.index*.7,amplitude=moving?(zombie?.37:.58):.025;
- const detailed=camera.position.distanceTo(actor.group.position)<22;
+ const detailed=camera.position.distanceTo(actor.group.position)<(actor.kind==='giant'?65:30);
  actor.detail.visible=detailed;actor.low.visible=!detailed;
  actor.lowBody.position.y=moving?Math.abs(Math.sin(phase))*.02:0;
  actor.lowLegs.forEach((leg,i)=>leg.rotation.x=Math.sin(phase+i*Math.PI)*amplitude);
@@ -340,34 +402,47 @@ const visibilityObserver=new IntersectionObserver(entries=>{inView=entries[0].is
 function animate(timestamp){
  if(destroyed)return;frameId=root.requestAnimationFrame(animate);if(!inView||document.hidden)return;if(timestamp-lastRendered<(software?120:32))return;lastRendered=timestamp;
  const now=Date.now(),time=now/1000,state=getState(),mission=timing.missionView(state.mission,now),scout=timing.scoutView(state.scout,now);
- if(previousMission&&!state.mission)aftermath={until:now+3500,win:previousMission.power>=previousMission.enemy};previousMission=state.mission;
+ if(previousMission&&!state.mission)aftermath={until:now+3500,win:timing.missionView(previousMission,previousMission.ends).win};previousMission=state.mission;
  if(aftermath&&now>aftermath.until)aftermath=null;
  const actual=state.mission?(state.mission.soldiers??root.Engine.availableSoldiers(state)):root.Engine.availableSoldiers(state);
- const count=mission.phase==='return'?Math.max(0,actual-Math.max(1,Math.ceil(actual*(mission.win?.12:.35)))):actual;
- const center=state.mission?battleRoute.getPointAt(mission.travel):new T.Vector3(-8,0,3);
- const tangent=state.mission?battleRoute.getTangentAt(mission.travel):new T.Vector3(1,0,0),direction=Math.atan2(tangent.x,tangent.z)+(mission.phase==='return'?Math.PI:0);
+ const bossMission=state.mission?.kind==='giant',activeRoute=bossMission?giantRoute:battleRoute;
+ const count=mission.phase==='return'?Math.max(0,actual-Math.max(1,Math.ceil(actual*(mission.win?.12:bossMission?.25:.35)))):actual;
+ const center=state.mission?activeRoute.getPointAt(mission.travel):new T.Vector3(-8,0,3);
+ const tangent=state.mission?activeRoute.getTangentAt(mission.travel):new T.Vector3(1,0,0),direction=Math.atan2(tangent.x,tangent.z)+(mission.phase==='return'?Math.PI:0);
  soldiers.forEach((actor,i)=>{actor.group.visible=i<Math.min(24,count);if(!actor.group.visible)return;const col=i%4-1.5,row=Math.floor(i/4);actor.group.position.set(center.x+col*.62,0,center.z+row*.72);actor.group.rotation.y=direction;walk(actor,time,mission.phase==='outbound'||mission.phase==='return',false,mission.phase==='battle');});
  scouts.forEach((actor,i)=>{actor.group.visible=Boolean(state.scout);if(!state.scout)return;const p=scoutRoute.getPointAt(scout.travel),d=scoutRoute.getTangentAt(scout.travel);actor.group.position.set(p.x+(i-1)*.65,0,p.z+(i%2)*.7);actor.group.rotation.y=Math.atan2(d.x,d.z)+(scout.phase==='return'?Math.PI:0);walk(actor,time,scout.phase!=='search');if(scout.phase==='search')actor.group.rotation.y+=Math.sin(time*.4+i)*.8;});
  zombies.forEach((actor,i)=>{
- const p=patrolPosition(i,time),q=patrolPosition(i,time+.1);actor.group.visible=!(mission.win&&((mission.phase==='battle'&&mission.battle>(i+1)/11)||mission.phase==='return'));
- if(mission.phase==='battle'){actor.group.position.set(24+(i%3)*.6,0,(Math.floor(i/3)-1)*.9+2);actor.group.rotation.y=-Math.PI/2;}else{actor.group.position.set(p.x,0,p.z);actor.group.rotation.y=Math.atan2(q.x-p.x,q.z-p.z);}
- walk(actor,time,true,true,mission.phase==='battle');
+ const p=patrolPosition(i,time),q=patrolPosition(i,time+.1);actor.group.visible=!(!bossMission&&mission.win&&((mission.phase==='battle'&&mission.battle>(i+1)/11)||mission.phase==='return'));
+ if(!bossMission&&mission.phase==='battle'){actor.group.position.set(24+(i%3)*.6,0,(Math.floor(i/3)-1)*.9+2);actor.group.rotation.y=-Math.PI/2;}else{actor.group.position.set(p.x,0,p.z);actor.group.rotation.y=Math.atan2(q.x-p.x,q.z-p.z);}
+ walk(actor,time,true,true,!bossMission&&mission.phase==='battle');
  });
+ const deadGiant=state.giant.hp===0;
+ if(state.giant.hp<lastGiantHp)giantHitUntil=now+350;lastGiantHp=state.giant.hp;
+ giant.group.position.set(35,deadGiant?1.0:0,-15);giant.group.rotation.set(0,deadGiant?0:-.24,deadGiant?Math.PI/2:0);
+ if(!deadGiant){walk(giant,time,false,true,bossMission&&mission.phase==='battle');if(now<giantHitUntil)giant.body.rotation.z+=Math.sin(time*35)*.09;}
+ else{giant.detail.visible=true;giant.low.visible=false;}
+ $('inspect-giant-attack').disabled=Boolean(state.mission)||deadGiant||root.Engine.availableSoldiers(state)<1;
+ if(selected?.id==='giant')$('inspector-description').textContent=`Életerő: ${root.Engine.giantPercent(state)}%. Harci erő: ${root.Engine.giantRules.power}. A sérülés megmarad. Jutalom: 1500 arany és nagy nyersanyagzsákmány.`;
  civilians.forEach((actor,i)=>{const t=time*.075+i*1.6;actor.group.position.set(-16+Math.sin(t)*11,0,3.5+Math.cos(t*.7+i)*.85);actor.group.rotation.y=Math.cos(t)>0?Math.PI/2:-Math.PI/2;walk(actor,time,true);});
- flashes.forEach((o,i)=>{o.visible=mission.phase==='battle'&&(time*7+i)%1<.5;if(o.visible){const t=(time*4+i/8)%1;o.position.set(center.x+(24-center.x)*t,1.22,center.z+(i%3-1)*.6);}});
- if(following){if(following.group.visible){following.group.getWorldPosition(cameraState.target);cameraState.target.y=1.05;}else following=null;}
+ flashes.forEach((o,i)=>{o.visible=mission.phase==='battle'&&(time*7+i)%1<.5;if(o.visible){const t=(time*4+i/8)%1;o.position.set(center.x+((bossMission?35:24)-center.x)*t,1.22+(bossMission?2.3*t:0),center.z+((bossMission?-15:center.z)-center.z)*t+(i%3-1)*.3);}});
+ if(following){if(following.group.visible){following.group.getWorldPosition(cameraState.target);cameraState.target.y=following.id==='giant'?(state.giant.hp>0?4:1):1.05;}else following=null;}
  vegetation.visible=quality==='high'||cameraState.distance>25;
  const far=cameraState.distance<25?42:190;if(camera.far!==far){camera.far=far;camera.updateProjectionMatrix();}
  scene.fog.density=cameraState.distance<25?.023:.007;
  updateCamera();
- if(selected&&selected.group.visible){selectionRing.visible=true;selectionRing.position.copy(selected.group.position);selectionRing.position.y=.065;const scale=selected.kind==='building'?4:1;selectionRing.scale.set(scale,scale,1);}else selectionRing.visible=false;
+ if(selected&&selected.group.visible){selectionRing.visible=true;selectionRing.position.copy(selected.group.position);selectionRing.position.y=.065;const scale=selected.kind==='building'||selected.id==='giant'?4:1;selectionRing.scale.set(scale,scale,1);}else selectionRing.visible=false;
  const r=canvas.getBoundingClientRect(),size=`${Math.round(r.width)}:${Math.round(r.height)}:${quality}`;
  if(size!==lastSize&&r.width&&r.height){renderer.setSize(r.width,r.height,false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();lastSize=size;}
  const levelSignature=JSON.stringify(state.levels);
  for(const entry of buildingEntries){const p=project(entry.group.position.clone().add(new T.Vector3(0,entry.id==='hq'?7:5.2,0)));entry.label.hidden=!p.visible||cameraState.distance<25;entry.label.style.transform=`translate(${p.x}px,${p.y}px) translate(-50%,-100%)`;if(levelSignature!==oldLevelSignature)entry.label.textContent=`${entry.name} · ${state.levels[entry.id]}`;}
+ const gp=project(new T.Vector3(35,deadGiant?2.2:8.6,-15));giantLabel.hidden=!gp.visible;
+ const compactHealth=r.width<600&&gp.y<160;
+ giantLabel.style.transform=`translate(${compactHealth?76:clamp(gp.x,80,r.width-80)}px,${Math.max(64,gp.y)}px) translate(-50%,-100%)`;
+ const percent=root.Engine.giantPercent(state);$('giant-map-percent').textContent=percent+'%';giantLabel.querySelector('.giant-map-track>i').style.width=(state.giant.hp/root.Engine.giantRules.maxHp*100)+'%';
+ giantLabel.setAttribute('aria-label',`Óriászombi életerő: ${percent}%. Kijelölés.`);
  oldLevelSignature=levelSignature;
  const phases={idle:'A helyőrség készen áll',outbound:'A sereg kivonul a bázisról',battle:'Összecsapás a fertőzöttekkel',return:'A túlélők hazafelé tartanak',done:'Az expedíció véget ért'};
- const label=state.mission?phases[mission.phase]:aftermath?(aftermath.win?'Győzelem! A sereg hazatért.':'A sereg visszavonult.'):state.scout?`Felderítők: ${scout.phase==='search'?'ellátmányt keresnek':scout.phase==='return'?'hazafelé tartanak':'elhagyják a várost'}`:phases.idle;
+ const label=state.mission?(bossMission?(mission.phase==='battle'?'Harc az óriászombival':mission.phase==='outbound'?'A sereg az óriászombihoz vonul':'A csapat hazatér az óriástól'):phases[mission.phase]):aftermath?(aftermath.win?'Győzelem! A sereg hazatért.':'A sereg visszavonult.'):state.scout?`Felderítők: ${scout.phase==='search'?'ellátmányt keresnek':scout.phase==='return'?'hazafelé tartanak':'elhagyják a várost'}`:phases.idle;
  if(label!==lastStatus){$('scene-status').textContent=label;lastStatus=label;}
  $('march-progress').style.width=`${mission.progress*100}%`;
  // A mozgó árnyékokat ritkábban frissítjük, mint a geometriát.
@@ -381,7 +456,8 @@ updateCamera();frameId=root.requestAnimationFrame(animate);
 const onLost=e=>{e.preventDefault();$('graphics-notice').hidden=false;$('graphics-notice').textContent='A grafikus kapcsolat megszakadt. A játék mentése megmaradt; töltsd újra az oldalt a térkép folytatásához.';};canvas.addEventListener('webglcontextlost',onLost);
 return {
  focusBuilding(id){focus(buildingEntries.find(b=>b.id===id));},
- getSnapshot(){return {renderer:'webgl',zoom:81/cameraState.distance,target:cameraState.target.toArray(),camera:camera.position.toArray(),selected:selected?.id||null,pixelRatio:renderer.getPixelRatio(),width:canvas.width,height:canvas.height,detailedCharacters:npcEntries.filter(e=>e.group.visible&&e.actor.detail.visible).length,triangles:renderer.info.render.triangles,drawCalls:renderer.info.render.calls,buildings:buildingEntries.map(e=>({id:e.id,...project(e.group.position.clone().add(new T.Vector3(0,1,0)))})),npcs:zombies.map(a=>({id:a.data.id,x:a.group.position.x,z:a.group.position.z,visible:a.group.visible,screen:project(a.group.position.clone().add(new T.Vector3(0,1,0)))})),soldiers:soldiers.filter(a=>a.group.visible).length,scouts:scouts.filter(a=>a.group.visible).length};},
+ focusGiant(){focus(giant.data);},
+ getSnapshot(){return {renderer:'webgl',zoom:81/cameraState.distance,target:cameraState.target.toArray(),camera:camera.position.toArray(),selected:selected?.id||null,pixelRatio:renderer.getPixelRatio(),width:canvas.width,height:canvas.height,detailedCharacters:npcEntries.filter(e=>e.group.visible&&e.actor.detail.visible).length,triangles:renderer.info.render.triangles,drawCalls:renderer.info.render.calls,buildings:buildingEntries.map(e=>({id:e.id,...project(e.group.position.clone().add(new T.Vector3(0,1,0)))})),npcs:zombies.map(a=>({id:a.data.id,x:a.group.position.x,z:a.group.position.z,visible:a.group.visible,screen:project(a.group.position.clone().add(new T.Vector3(0,1,0)))})),giant:{hp:getState().giant.hp,percent:root.Engine.giantPercent(getState()),screen:project(new T.Vector3(35,3.5,-15))},camp:{entranceDepth:new T.Raycaster(new T.Vector3(9,1.2,-7.3),new T.Vector3(0,0,-1)).intersectObject(camp,true)[0]?.distance||0},soldiers:soldiers.filter(a=>a.group.visible).length,scouts:scouts.filter(a=>a.group.visible).length};},
  destroy(){destroyed=true;root.cancelAnimationFrame(frameId);for(const [name,handler] of Object.entries(events))canvas.removeEventListener(name,handler);canvas.removeEventListener('webglcontextlost',onLost);geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());renderer.dispose();visibilityObserver.disconnect();labelLayer.replaceChildren();}
 };
 }

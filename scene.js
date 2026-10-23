@@ -6,7 +6,7 @@
     const progress = Math.max(0, Math.min(1, (now - (mission.ends - duration)) / duration));
     const phase = progress < .4 ? 'outbound' : progress < .7 ? 'battle' : progress < 1 ? 'return' : 'done';
     const travel = progress < .4 ? progress / .4 : progress < .7 ? 1 : Math.max(0, 1 - (progress - .7) / .3);
-    return { phase, progress, travel, battle: Math.max(0, Math.min(1, (progress - .4) / .3)), win: mission.power >= mission.enemy };
+    return { phase, progress, travel, battle: Math.max(0, Math.min(1, (progress - .4) / .3)), win: mission.kind==='giant'?mission.damageTotal>=mission.giantHpAtStart:mission.power >= mission.enemy };
   }
   function scoutView(scout, now) {
     if(!scout)return {phase:'idle',progress:0,travel:0};
@@ -53,10 +53,10 @@
       ctx.strokeStyle='#35433c';ctx.lineWidth=67;ctx.stroke();ctx.strokeStyle='#8f8e70';ctx.lineWidth=51;ctx.stroke();
       ctx.setLineDash([9,13]);ctx.strokeStyle='#c3ba8b77';ctx.lineWidth=2;ctx.stroke();ctx.setLineDash([]);
     }
-    function point(t) {
+    function point(t,isGiant=false) {
       // Bézier-útvonal a bázis kapujától a fertőzött körzetig.
       const u=1-t;
-      return {x:u*u*u*510+3*u*u*t*680+3*u*t*t*710+t*t*t*896,y:u*u*u*351+3*u*u*t*400+3*u*t*t*451+t*t*t*345};
+      return isGiant?{x:u*u*u*510+3*u*u*t*700+3*u*t*t*850+t*t*t*980,y:u*u*u*351+3*u*u*t*300+3*u*t*t*260+t*t*t*300}:{x:u*u*u*510+3*u*u*t*680+3*u*t*t*710+t*t*t*896,y:u*u*u*351+3*u*u*t*400+3*u*t*t*451+t*t*t*345};
     }
     function human(x,y,time,i,zombie=false,facing=1,moving=true,dead=false,scout=false) {
       ctx.save();ctx.translate(x,y);ctx.scale(facing,1);
@@ -89,7 +89,7 @@
     }
     function draw(now) {
       const state=getState(),time=now/1000;
-      if(previousMission&&!state.mission)aftermath={until:now+3500,win:previousMission.power>=previousMission.enemy,gold:root.Engine.goldReward(previousMission.zone)};
+      if(previousMission&&!state.mission)aftermath={until:now+3500,win:missionView(previousMission,previousMission.ends).win,gold:previousMission.kind==='giant'?root.Engine.giantRules.loot.gold:root.Engine.goldReward(previousMission.zone)};
       previousMission=state.mission;
       if(aftermath&&now>aftermath.until)aftermath=null;
       const view=missionView(state.mission,now),scout=scoutView(state.scout,now);
@@ -123,17 +123,18 @@
       poly([[708,211],[721,186],[736,211]],'#294c43');
       box(774,228,22,17,'#c0a16b','#d9bb7e');box(791,213,18,14,'#aa8b5e','#cbb37b');
       text('ELHAGYOTT ELLÁTÓHELY',735,143,11,'#c9f1df');
+      const bossMission=state.mission?.kind==='giant';
       const armySoldiers=state.mission?(state.mission.soldiers??root.Engine.availableSoldiers(state)):root.Engine.availableSoldiers(state);
       const armyCount=Math.min(24,armySoldiers);
-      let center=view.phase==='idle'?{x:395,y:340}:point(view.travel);
+      let center=view.phase==='idle'?{x:395,y:340}:point(view.travel,bossMission);
       let showCount=armyCount;
-      if(view.phase==='return'||view.phase==='done')showCount=Math.max(0,armyCount-Math.max(1,Math.ceil(armyCount*(view.win?.12:.35))));
+      if(view.phase==='return'||view.phase==='done')showCount=Math.max(0,armyCount-Math.max(1,Math.ceil(armyCount*(view.win?.12:bossMission?.25:.35))));
       const moving=view.phase==='outbound'||view.phase==='return';
       for(let i=0;i<showCount;i++){
         let x=center.x+(i%4)*13-25,y=center.y+Math.floor(i/4)*14-15;
         human(x,y,time,i,false,view.phase==='return'?-1:1,moving);
       }
-      if(showCount)text(`${view.phase==='idle'?'HELYŐRSÉG':'SEREG'} · ${view.phase==='return'?Math.max(0,armySoldiers-Math.max(1,Math.ceil(armySoldiers*(view.win?.12:.35)))):armySoldiers}`,center.x,center.y-57,11,'#f2f5d9');
+      if(showCount)text(`${view.phase==='idle'?'HELYŐRSÉG':'SEREG'} · ${view.phase==='return'?Math.max(0,armySoldiers-Math.max(1,Math.ceil(armySoldiers*(view.win?.12:bossMission?.25:.35)))):armySoldiers}`,center.x,center.y-57,11,'#f2f5d9');
       if(state.scout){
         const t=scout.travel,u=1-t;
         const sx=u*u*u*565+3*u*u*t*614+3*u*t*t*625+t*t*t*730;
@@ -152,7 +153,7 @@
       }
       const zombies=9;
       for(let i=0;i<zombies;i++){
-        const fighting=view.phase==='battle',dead=view.win&&(view.phase==='return'||view.phase==='done'||(fighting&&view.battle>(i+1)/zombies));
+        const fighting=!bossMission&&view.phase==='battle',dead=!bossMission&&view.win&&(view.phase==='return'||view.phase==='done'||(fighting&&view.battle>(i+1)/zombies));
         const x=958+(i%3)*17-(fighting?view.battle*20:0),y=335+Math.floor(i/3)*19;
         if(!dead||view.phase==='battle')human(x,y,time,i,true,-1,fighting,dead);
       }
@@ -164,6 +165,10 @@
         }
         text('ÖSSZECSAPÁS',916,290,13,'#ffe1a1');
       }
+      ctx.save();ctx.translate(1040,295);ctx.scale(3.5,3.5);human(0,0,time,0,true,-1,false,state.giant.hp===0);ctx.restore();
+      const giantPercent=root.Engine.giantPercent(state);
+      ctx.fillStyle='#2b231de8';ctx.fillRect(980,168,115,35);text(`ÓRIÁS · ${giantPercent}%`,1037,182,11,'#ffd7a6');
+      ctx.fillStyle='#59402c';ctx.fillRect(989,189,96,6);ctx.fillStyle='#df9c63';ctx.fillRect(989,189,96*state.giant.hp/root.Engine.giantRules.maxHp,6);
       if(aftermath){ctx.fillStyle='#14281ff0';ctx.fillRect(357,42,386,43);text(aftermath.win?`GYŐZELEM · +${aftermath.gold} ARANY ÉS ZSÁKMÁNY`:'VISSZAVONULÁS · Erősítsd a sereget!',550,69,14,aftermath.win?'#d6ed91':'#f0bc91');}
       // A térkép jelmagyarázata az alsó sávban.
       ctx.fillStyle='#152b25d9';ctx.fillRect(0,548,W,42);text('● SAJÁT BÁZIS',28,574,10,'#d6ed91','left');text('━ EXPEDÍCIÓ ÚTVONALA',210,574,10,'#d2caa6','left');text('● FERTŐZÖTTEK',W-30,574,10,'#e8bb8b','right');

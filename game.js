@@ -4,7 +4,7 @@ try{
   const raw=localStorage.getItem(key);
   if(raw){
     const s=E.migrate(JSON.parse(raw));
-    if(s.version===1&&Object.keys(E.buildings).every(k=>Number.isInteger(s.levels?.[k])&&s.levels[k]>=1)&&['wood','metal','food','soldiers','zone','last','wins','gold'].every(k=>Number.isFinite(s[k])&&s[k]>=0)&&Number.isInteger(s.morale)&&s.morale>=0&&s.morale<=E.maxMorale&&E.resourceTypes.every(type=>Number.isInteger(s.bonusInventory?.[type])&&s.bonusInventory[type]>=0&&Number.isFinite(s.boostUntil?.[type])&&s.boostUntil[type]>=0)&&Array.isArray(s.log))state=s;
+    if(s.version===1&&Object.keys(E.buildings).every(k=>Number.isInteger(s.levels?.[k])&&s.levels[k]>=1)&&['wood','metal','food','soldiers','zone','last','wins','gold'].every(k=>Number.isFinite(s[k])&&s[k]>=0)&&Number.isInteger(s.morale)&&s.morale>=0&&s.morale<=E.maxMorale&&E.resourceTypes.every(type=>Number.isInteger(s.bonusInventory?.[type])&&s.bonusInventory[type]>=0&&Number.isFinite(s.boostUntil?.[type])&&s.boostUntil[type]>=0)&&Number.isFinite(s.giant?.hp)&&s.giant.hp>=0&&s.giant.hp<=E.giantRules.maxHp&&typeof s.giant.rewardClaimed==='boolean'&&Array.isArray(s.log))state=s;
   }
 }catch{storageAvailable=false;}
 const $=id=>document.getElementById(id);
@@ -40,10 +40,24 @@ function renderExploration(now){
     card.querySelector('.bonus-time').textContent=state.boostUntil[type]>now?'Aktív: '+timeLeft(state.boostUntil[type]-now):'5 perc dupla termelés';
   });
 }
+function renderGiant(now){
+  const hp=E.giantPercent(state),dead=state.giant.hp===0,attacking=state.mission?.kind==='giant';
+  $('giant-hp').textContent=hp+'%';
+  // A fej fölötti jelző akkor is friss marad, ha a 3D renderelés éppen szünetel.
+  const mapPercent=$('giant-map-percent'),mapHealth=$('giant-world-health');
+  if(mapPercent)mapPercent.textContent=hp+'%';
+  if(mapHealth){mapHealth.querySelector('.giant-map-track>i').style.width=(state.giant.hp/E.giantRules.maxHp*100)+'%';mapHealth.setAttribute('aria-label',`Óriászombi életerő: ${hp}%. Kijelölés.`);}
+  $('giant-health').value=state.giant.hp;
+  $('giant-health').max=E.giantRules.maxHp;
+  $('giant-stats').textContent=`Harci erő: ${E.giantRules.power} · 10 alapzombi ereje`;
+  $('giant-state').textContent=dead?(state.giant.rewardClaimed?'Legyőzted! A zsákmány megérkezett.':'Az óriás elesett. A csapat hozza a zsákmányt.'):attacking?'A sereg az óriással harcol. A sebzések mentésre kerülnek.':state.giant.hp<E.giantRules.maxHp?'Megsebezve. A következő támadást erről az életerőről kezded.':'Külön célpont. Több támadással is legyőzheted; nem gyógyul vissza.';
+  $('attack-giant').disabled=dead||Boolean(state.mission)||E.availableSoldiers(state)<1;
+  $('attack-giant').textContent=dead?'Óriászombi legyőzve':attacking?`Támadás folyamatban · ${timeLeft(state.mission.ends-now)}`:'Óriászombi megtámadása →';
+}
 function render(){
-  const now=Date.now();renderExploration(now);
+  const now=Date.now();renderExploration(now);renderGiant(now);
   const data=[['wood','🪵','FA',E.productionRate(state,'wood',now)/60],['metal','⚙️','VAS',E.productionRate(state,'metal',now)/60],['food','🌾','ÉLELEM',E.productionRate(state,'food',now)/60],['gold','🪙','ARANY',null],['soldiers','🪖','KATONÁK',null]];
-  $('resources').innerHTML=data.map(([id,icon,label,rate])=>`<div class="resource ${id==='gold'?'gold-resource':''}"><span class="icon">${icon}</span><div><small>${label}</small><strong id="resource-${id}">${number(state[id])}</strong><em>${id==='gold'?'Zsákmány és felderítés':rate===null?(state.mission?`${state.mission.soldiers??E.availableSoldiers(state)} harcol${state.scout?' · 3 felderítő':''}`:`${E.availableSoldiers(state)} elérhető${state.scout?' · 3 felderítő':''}`):`+${(rate*60).toLocaleString('hu-HU',{maximumFractionDigits:0})} / perc`}</em></div></div>`).join('');
+  $('resources').innerHTML=data.map(([id,icon,label,rate])=>`<div class="resource ${id==='gold'?'gold-resource':''}"><span class="icon">${icon}</span><div><small>${label}</small><strong id="resource-${id}">${number(state[id])}</strong><em>${id==='gold'?'Zsákmány és felderítés':rate===null?(state.mission?`${state.mission.soldiers??E.availableSoldiers(state)} harcol${state.scout?' · 3 felderítő':''}`:`${E.availableSoldiers(state)} elérhető${state.scout?' · 3 felderítő':''}`):`+${(rate*60).toLocaleString('hu-HU',{maximumFractionDigits:1})} / perc`}</em></div></div>`).join('');
   const buildingMarkup=Object.entries(E.buildings).map(([id,b])=>{
     const c=E.cost(state,id),q=E.quote(state,c),locked=id!=='hq'&&state.levels[id]>=state.levels.hq+1;
     return `<article class="building ${selectedBuilding===id?'selected':''}"><span class="level">${state.levels[id]}. SZINT</span><span class="art" aria-hidden="true">${b.icon}</span><h3>${b.name}</h3><p>${b.desc}</p><button data-upgrade="${id}" ${state.mission||locked||q.gold?'disabled':''}>${locked?'Parancsnokság fejlesztése szükséges':`Fejlesztés · ${c.wood} fa / ${c.metal} vas`}</button>${q.gold&&!locked?`<button class="gold-button" data-gold-upgrade="${id}" ${state.mission||!q.canAfford?'disabled':''}>Hiány kiváltása · ${number(q.gold)} arany</button>`:''}</article>`;
@@ -111,6 +125,12 @@ $('boost-morale').onclick=()=>{
   sync();const before=state.gold,error=E.boostMorale(state);
   if(error)toast(error);
   else{const message=`A sereg morálja nőtt: +${E.moraleBonus(state)}% katonai harci erő. Költség: ${before-state.gold} arany.`;log(message);toast(message);}
+  save();render();
+};
+$('attack-giant').onclick=()=>{
+  sync();const error=E.launchGiant(state,Date.now());
+  if(error)toast(error);
+  else{worldView?.focusGiant?.();log('A sereg elindult az óriászombi ellen. A megszerzett sebzés akkor is megmarad, ha most nem győzöl.');$('world-title').scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});}
   save();render();
 };
 $('expedition').onclick=()=>{

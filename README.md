@@ -14,13 +14,13 @@ A GitHubon válaszd a **Code → Download ZIP** lehetőséget, majd csomagold ki
 
 ## Interaktív 3D játéktér
 
-A térképet most valódi, WebGL-alapú 3D jelenet rajzolja. A helyben csomagolt Three.js-megjelenítőnek nincs külső CDN- vagy hálózati függősége. Az épületek külön falakat, tetőket, ablakkereteket, üveget és felszereléseket kapnak. A karaktereken arc, egyenruha, sisak, felszerelés és tagolt, járás közben mozgó végtagok láthatók. Ezek saját, procedurális 3D modellek és anyagfelületek, nem fotogrammetriás vagy fotórealisztikus modellek.
+A térképet most valódi, WebGL-alapú 3D jelenet rajzolja. A helyben csomagolt Three.js-megjelenítőnek nincs külső CDN- vagy hálózati függősége. Az épületek külön falakat, tetőket, ablakkereteket, üveget és felszereléseket kapnak. A karaktereken nagy felbontású, arcra illesztett bőrtextúra, külön szem, írisz, pupilla, szemöldök, orr, száj és részletes kéz látható. A közeli egységek terepmintás egyenruhát, sisakot, felszerelést és tagolt, járás közben mozgó végtagokat kapnak. A távoli modelleken is megmarad az arctextúra. Ezek saját, procedurális 3D modellek és anyagfelületek, nem fotogrammetriás vagy fotórealisztikus modellek.
 
 A városban civil NPC-k járnak az utcákon; a falakon kívül 11 zombi bolyong a romok között. A kószáló zombik nem változtatják meg önkényesen a mentett játékmenetet: a harc az expedíció indításakor zajlik. Az épületekre és az emberekre kattintva adatlap nyílik. Az épület adatlapjáról elérhető a fejlesztőkártya. A katona vagy zombi közelnézete követi a kiválasztott szereplőt.
 
 - Bal egérgombbal húzás: a térkép mozgatása; jobb gombbal vagy Shift+húzással: forgatás és nézetdöntés.
 - Görgő vagy **+ / −** gombok: nagyítás és kicsinyítés. Dupla kattintás vagy az adatlapon a **Közelnézet**: a kiválasztott objektum közeli nézete.
-- **Bázis / Katonák / Zombik / Felderítők**: közvetlen kameranézetek. A házikó gomb visszaállítja az áttekintést.
+- **Bázis / Katonák / Zombik / Felderítők / Óriás**: közvetlen kameranézetek. A házikó gomb visszaállítja az áttekintést.
 - Telefonon egy ujjal húzható a térkép, két ujjal nagyítható és mozgatható.
 - Billentyűzettel: fókuszáld a térképet; nyilak: mozgatás, +/−: zoom, Home: áttekintés, Escape: kijelölés megszüntetése. A kameragombok és az épületcímkék Tab billentyűvel is elérhetők.
 
@@ -28,7 +28,7 @@ Közelítéskor a geometria újrarajzolódik, és a közeli karakterek részlete
 
 A 3D-hez modern, WebGL-t támogató böngésző és grafikus gyorsítás ajánlott. WebGL nélkül a játék jelzett 2D tartaléknézettel indul; a gazdaság és a küldetések továbbra is működnek. Az elérhető sebesség a gép grafikus képességeitől függ.
 
-Az expedíció 6 másodperc kivonulásból, 4,5 másodperc csatából és 4,5 másodperc hazatérésből áll. A korábbi játékszabályok és mentések megmaradnak. Legfeljebb 24 figura jeleníti meg a sereget; a számláló mindig a tényleges létszámot mutatja. A felderítők külön ösvényen mennek a táborhoz.
+Az expedíció 6 másodperc kivonulásból, 4,5 másodperc csatából és 4,5 másodperc hazatérésből áll. A korábbi játékszabályok és mentések megmaradnak. Legfeljebb 24 figura jeleníti meg a sereget; a számláló mindig a tényleges létszámot mutatja. A felderítők külön ösvényen mennek a sátor nyitott bejárata elé. A sátor önállóan kijelölhető és közelről is megvizsgálható; valódi ajtónyílása, feltekert ajtólapja, fekhelye, padlója és sátorkötelei vannak.
 
 ## Aranypénz és harci morál
 
@@ -52,9 +52,19 @@ A csomagokat külön kell aktiválni a **Termelési bónuszok** panelen. Egy cso
 
 A régi mentések új felderítés és bónuszok nélkül folytatódnak; a korábbi hadsereg, arany és épületek megmaradnak.
 
+## Az óriászombi
+
+Az **Óriás** kameragomb és a térkép alatti külön harci panel mutatja A Pusztítót. A referencia-alapzombi ereje 95, az óriásé ennek tízszerese: **950 harci erő**, és **950 életerőről** indul. A feje fölött életerősáv és százalékos érték követi a mentett állapotát; ugyanaz az érték jelenik meg a panelen is.
+
+Az **Óriászombi megtámadása** gomb külön, 15 másodperces expedíciót indít. A csapat egy másik útvonalon jut el hozzá. Egy támadás a sereg induláskori összesített harci erejének megfelelő sebzést ad, legfeljebb az óriás megmaradt életerejéig. A sebzés öt találatban, a csata alatt jelenik meg. Ha az óriás túléli, a sérülése **megmarad**, várakozáskor és újratöltéskor sem gyógyul vissza. Újabb csapatokkal tovább sebezheted, amíg el nem esik.
+
+A túlélő óriás elleni támadáskor a bevetett katonák 25%-a, a végső győzelemkor 12%-a vész el, felfelé kerekítve, legalább 1 katona. A felderítők nem vesznek részt ezekben a csatákban. Egyszerre csak egy harci expedíció folyhat, a külön felderítés közben folytatódhat. Az óriás elleni harc nem lépteti előre a normál körzeteket.
+
+A legyőzött óriás **egyszeri** zsákmánya: **1500 arany, 2400 fa, 1800 vas és 2000 élelem**. A jutalom a 15 másodperces expedíció végén kerül a készletbe; egy pusztán sebesítő támadásért nem jár. A mentés az egyes találatokat és a jutalom átvételét is megőrzi, így az újratöltés nem ismétli meg a sebzést vagy a zsákmányt. A legyőzött óriás 0%-on marad, nem támadható újra. Új település indításakor áll vissza.
+
 ## Játékmenet
 
-A fa, vas és élelem automatikusan termelődik. Az 1. szintű vasfeldolgozó alaptermelése **220 vas/perc**, minden további szint újabb 220 vas/percet ad; aktív vasbónusszal ez a termelés duplázódik. Az épületkártyákon fejleszthetsz; a parancsnokság szintje korlátozza a többi épületet. A laktanyában 5 katonát képezhetsz 50 élelemért és 20 vasért. A 15 másodperces expedíciók eredménye a kijelzett harci erőtől függ. Expedíció alatt a kiképzés és fejlesztés szünetel. A védelem és a laktanya növeli az erőt. Győzelemkor zsákmány jár és megnyílik a következő körzet, vereségkor erősítve újrapróbálhatod.
+A fa, vas és élelem automatikusan termelődik. Az 1. szintű vasfeldolgozó alaptermelése **176 vas/perc**, minden további szint újabb 176 vas/percet ad; aktív vasbónusszal ez a termelés duplázódik. A fa alaptermelése **52,8 fa/perc** épületszintenként. Az épületkártyákon fejleszthetsz; a parancsnokság szintje korlátozza a többi épületet. A laktanyában 5 katonát képezhetsz 50 élelemért és 20 vasért. A 15 másodperces expedíciók eredménye a kijelzett harci erőtől függ. Expedíció alatt a kiképzés és fejlesztés szünetel. A védelem és a laktanya növeli az erőt. Győzelemkor zsákmány jár és megnyílik a következő körzet, vereségkor erősítve újrapróbálhatod.
 
 A játék böngészőnként, localStorage-ba ment. Visszatéréskor legfeljebb 4 órányi nyersanyagtermelést számol el. Az „Új település” gomb megerősítés után törli a helyi haladást.
 
