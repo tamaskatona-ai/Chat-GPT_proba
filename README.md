@@ -34,7 +34,7 @@ Az expedíció 6 másodperc kivonulásból, 4,5 másodperc csatából és 4,5 m�
 
 Minden győztes expedícióért `25 + körzetszám × 10` aranyat zsákmányolsz a zombiktól. Az első körzet 35 aranyat ad. Vereségért és várakozásért nem jár arany; induláskor 0 aranyad van.
 
-A **Harci morál** panelen aranyért tartósan növelheted a katonák erejét. Öt szint van, mindegyik +10 százalékpont katonai harci erőt ad, legfeljebb +50%-ig. A szintek 30, 60, 90, 120 és 150 aranyba kerülnek. A védőfal erejét a morál nem szorozza meg. Expedíció közben a morál nem módosítható.
+A **Harci morál** panelen aranyért növelheted a katonák erejét. Öt szint van, mindegyik +10 százalékpont katonai harci erőt ad, legfeljebb +50%-ig. A morál **10 percenként 5 százalékponttal csökken**, legalább nulláig, offline is. A buzdítás legfeljebb +10 százalékpontot ad, maximum +50%-ig; ára a jelenlegi moráltól függően 30–150 arany. A védőfal erejét a morál nem szorozza meg. Expedíció közben a morál nem módosítható.
 
 Ha fejlesztéshez vagy kiképzéshez kevés a nyersanyag, külön aranygomb jelenik meg. A játék összeadja a hiányzó egész nyersanyagegységeket; minden megkezdett 10 egység kiváltása 1 arany. A meglévő nyersanyagokat is felhasználja, az arany csak a hiányt pótolja. Vásárlás előtt egy ablak mutatja a hiányt és a legnagyobb levonható aranyösszeget. Megerősítés nélkül nem költ aranyat. A parancsnokság szintkorlátját és a bevetés alatti tiltásokat arannyal sem lehet megkerülni.
 
@@ -60,11 +60,11 @@ Az **Óriászombi megtámadása** gomb külön, 15 másodperces expedíciót ind
 
 A túlélő óriás elleni támadáskor a bevetett katonák 25%-a, a végső győzelemkor 12%-a vész el, felfelé kerekítve, legalább 1 katona. A felderítők nem vesznek részt ezekben a csatákban. Egyszerre csak egy harci expedíció folyhat, a külön felderítés közben folytatódhat. Az óriás elleni harc nem lépteti előre a normál körzeteket.
 
-A legyőzött óriás **egyszeri** zsákmánya: **1500 arany, 2400 fa, 1800 vas és 2000 élelem**. A jutalom a 15 másodperces expedíció végén kerül a készletbe; egy pusztán sebesítő támadásért nem jár. A mentés az egyes találatokat és a jutalom átvételét is megőrzi, így az újratöltés nem ismétli meg a sebzést vagy a zsákmányt. A legyőzött óriás 0%-on marad, nem támadható újra. Új település indításakor áll vissza.
+Az óriás minden legyőzésének zsákmánya: **1500 arany, 2400 fa, 1800 vas és 2000 élelem**. A jutalom a 15 másodperces expedíció végén kerül a készletbe; egy pusztán sebesítő támadásért nem jár. A mentés az egyes találatokat és a jutalom átvételét is megőrzi, így az újratöltés nem ismétli meg a sebzést vagy a zsákmányt. A haláltól számítva **5 perc** múlva teljes életerővel újraéled, és ismét teljes zsákmányt ad. A visszaszámlálás offline is telik. Harcon kívül kószál; támadáskor a sereg az aktuális helyéhez vonul.
 
 ## Játékmenet
 
-A fa, vas és élelem automatikusan termelődik. Az 1. szintű vasfeldolgozó alaptermelése **176 vas/perc**, minden további szint újabb 176 vas/percet ad; aktív vasbónusszal ez a termelés duplázódik. A fa alaptermelése **52,8 fa/perc** épületszintenként. Az épületkártyákon fejleszthetsz; a parancsnokság szintje korlátozza a többi épületet. A laktanyában 5 katonát képezhetsz 50 élelemért és 20 vasért. A 15 másodperces expedíciók eredménye a kijelzett harci erőtől függ. Expedíció alatt a kiképzés és fejlesztés szünetel. A védelem és a laktanya növeli az erőt. Győzelemkor zsákmány jár és megnyílik a következő körzet, vereségkor erősítve újrapróbálhatod.
+A fa, vas és élelem automatikusan termelődik. Az 1. szintű vasfeldolgozó alaptermelése **176 vas/perc**, minden további szint újabb 176 vas/percet ad; aktív vasbónusszal ez a termelés duplázódik. A fa alaptermelése **105,6 fa/perc** épületszintenként. Az épületkártyákon fejleszthetsz; a parancsnokság szintje korlátozza a többi épületet. A laktanyában 5 katonát képezhetsz 50 élelemért és 20 vasért. A 15 másodperces expedíciók eredménye a kijelzett harci erőtől függ. Expedíció alatt a kiképzés és fejlesztés szünetel. A védelem és a laktanya növeli az erőt. Győzelemkor zsákmány jár és megnyílik a következő körzet, vereségkor erősítve újrapróbálhatod.
 
 A játék böngészőnként, localStorage-ba ment. Visszatéréskor legfeljebb 4 órányi nyersanyagtermelést számol el. Az „Új település” gomb megerősítés után törli a helyi haladást.
 
@@ -73,3 +73,5 @@ Ez egy egyjátékos prototípus, szerveroldali fiókok, többjátékos funkciók
 ## Külső összetevő
 
 Three.js 0.160.1, MIT licenc. A csomag és licenc a `vendor/` mappában található; eredet és ellenőrzőösszeg: `vendor/README.md`. Az önálló HTML tartalmazza a megjelenítőt és annak licencfejlécét.
+
+A normál expedíciók egymás után másik kószáló zombit céloznak. A térképen egy zombi kijelölésével és a **Zombi megtámadása** gombbal konkrét ellenfelet is választhatsz. A csata a célpont induláskori helyén zajlik.

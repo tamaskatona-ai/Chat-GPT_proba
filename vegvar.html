@@ -33,39 +33,61 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
---></head><body><div class="app"><header><a class="brand" href="#world-title">◈ VÉGVÁR <small>STRATÉGIA · TÚLÉLÉS</small></a><span class="saved" id="saved">● Helyi mentés aktív</span></header><main><section class="intro"><div><p class="eyebrow">AZ ÚJJÁÉPÍTÉS KORA</p><h1>A jövő a falakon<br>belül kezdődik.</h1><p>Építs bázist. Gyűjts erőforrásokat. Szerezd vissza a világot.</p></div><div class="day"><span>ELLENŐRZÖTT KÖRZET</span><strong id="zones">01</strong><span id="rank">Kezdő település</span></div></section><section class="resources" aria-label="Nyersanyagok" id="resources"></section><section class="world" aria-labelledby="world-title"><div class="world-toolbar"><div><p class="eyebrow">ÉLŐ HADMŰVELETI TÉRKÉP</p><h2 id="world-title">A túlélők völgye</h2></div><span id="scene-status" role="status" aria-live="polite">A helyőrség készen áll</span></div><div id="graphics-notice" class="graphics-notice" role="status" hidden></div><div class="world-viewport" id="world-viewport"><canvas id="world-canvas" width="1280" height="720" tabindex="0" aria-label="Interaktív 3D térkép. Nyilakkal mozgatható, plusz és mínusz billentyűvel nagyítható. Egérhúzás: mozgatás; jobb egérgomb: forgatás; görgő: nagyítás; dupla kattintás: közelnézet.">A térképhez Canvas-t támogató böngésző szükséges.</canvas><div id="world-labels" class="world-labels"></div><div class="map-controls" id="map-controls" aria-label="Térkép vezérlése"><div class="camera-buttons"><button id="zoom-in" aria-label="Nagyítás" title="Nagyítás (+)">+</button><output id="zoom-level" aria-label="Nagyítás mértéke">100%</output><button id="zoom-out" aria-label="Kicsinyítés" title="Kicsinyítés (−)">−</button><button id="camera-home" title="Teljes térkép" aria-label="Teljes térkép">⌂</button><button id="rotate-map" title="Nézet forgatása" aria-label="Nézet forgatása">↻</button></div><div class="camera-presets"><button data-camera="base">Bázis</button><button data-camera="army">Katonák</button><button data-camera="zombies">Zombik</button><button data-camera="scouts">Felderítők</button><button data-camera="giant">Óriás</button></div><label class="quality-label">Részletesség <select id="graphics-quality"><option value="high">Magas</option><option value="low">Kímélő</option></select></label></div><section id="map-inspector" class="map-inspector" aria-label="Kijelölt objektum" hidden><button id="inspector-close" class="inspector-close" aria-label="Kijelölés bezárása">×</button><p id="inspector-type" class="eyebrow"></p><h3 id="inspector-title"></h3><p id="inspector-description"></p><div><button id="inspect-closeup">Közelnézet</button><button id="inspect-upgrade" hidden>Fejlesztés</button><button id="inspect-giant-attack" hidden>Óriás megtámadása</button></div></section><div class="map-help" id="map-help">HÚZÁS: MOZGATÁS · GÖRGŐ: ZOOM · JOBB HÚZÁS: FORGATÁS</div></div><div class="march-track" aria-hidden="true"><div id="march-progress"></div></div><div class="world-actions"><span>Kattints egy épületre vagy karakterre. Dupla kattintás: közelnézet. Telefonon két ujjal nagyíthatsz.</span><button class="primary" id="map-expedition">Sereg indítása →</button></div></section><section class="exploration" aria-labelledby="scout-title"><section class="panel scout-panel"><p class="eyebrow">A VÁROS FALAIN TÚL</p><div class="section-title"><h2 id="scout-title">Felderítőcsapat</h2><span>3 KATONA</span></div><p>Keress ellátmányt az elhagyott táborban! A csapat 5 percig kutat, majd mindenki hazatér.</p><div class="scout-status-line"><strong id="scout-phase" role="status" aria-live="polite">Indulásra készen</strong><span id="scout-countdown">05:20</span></div><progress id="scout-progress" max="1" value="0" aria-label="Felderítés haladása"></progress><p class="scout-reward">Biztos zsákmány: 9 bónuszcsomag + 75 arany</p><button class="primary" id="launch-scout">3 felderítő indítása →</button><p class="subtle">10 mp kivonulás · 5 perc kutatás · 10 mp hazatérés<br>A többi katonával közben harcolhatsz.</p></section><section class="panel bonus-panel"><p class="eyebrow">FELDERÍTŐK ZSÁKMÁNYA</p><h2>Termelési bónuszok</h2><p>Minden csomag 5 percre megduplázza a választott nyersanyag termelését. Azonos bónusz újraaktiválása meghosszabbítja az időt.</p><div id="bonuses" class="bonus-grid"></div><p class="subtle">A csomagok aktiválásig a raktárban maradnak.<br>A felderítés és az aktív bónuszok bezárt böngésző mellett is lejárnak.</p></section></section><section class="giant-panel panel" aria-labelledby="giant-title"><div><p class="eyebrow">KÜLÖNLEGES ELLENFÉL</p><h2 id="giant-title">A Pusztító · Óriászombi</h2><p id="giant-stats"></p><p id="giant-state"></p></div><div class="giant-health-block"><div><span>ÉLETERŐ</span><strong id="giant-hp">100%</strong></div><progress id="giant-health" value="950" max="950" aria-label="Az óriászombi életereje"></progress><p>Jutalom: <strong>1500 arany</strong><br>2400 fa · 1800 vas · 2000 élelem</p><button id="attack-giant">Óriászombi megtámadása →</button></div></section><div class="columns"><section><div class="section-title"><h2>A településed</h2><span>ÉPÍTÉS & FEJLESZTÉS</span></div><div class="map"><div class="map-grid" id="buildings"></div><div class="map-caption"><span>● BIZTONSÁGOS TERÜLET</span><span>ÉSZAKI MENEDÉK · 47° N</span></div></div><div class="tip"><strong>Parancsnoki tanács</strong><p>Fejleszd a termelőépületeket a gyorsabb bevételhez. A parancsnokság új épületszinteket engedélyez. Az expedíciók előtt ellenőrizd az erőviszonyokat.</p></div></section><aside><section class="panel"><p class="eyebrow">HADMŰVELETI KÖZPONT</p><h2>A falakon túl</h2><div class="wilderness"><span>☣</span><div id="target">Elhagyott külváros</div><small>FERTŐZÖTT TERÜLET</small></div><div class="comparison"><div><small>SAJÁT ERŐ</small><strong id="power"></strong></div><span>VS</span><div><small>ELLENSÉG</small><strong id="enemy"></strong></div></div><p id="forecast"></p><button class="primary" id="expedition">Expedíció indítása <span>→</span></button><p class="loot-preview" id="loot-preview"></p><p class="subtle">15 másodperc · Arany csak győzelemért jár</p></section><section class="panel army"><div><p class="eyebrow">HELYŐRSÉG</p><h2><span id="soldiers">8</span> katona</h2></div><button id="train">+ 5 katona<small>50 élelem · 20 vas</small></button><button class="gold-button" id="train-gold" hidden></button></section><section class="panel morale-panel"><p class="eyebrow">A SEREG LELKE</p><div class="section-title"><h2>Harci morál</h2><span id="morale-level"></span></div><div class="morale-meter" id="morale-meter" aria-hidden="true"></div><strong class="morale-bonus" id="morale-bonus"></strong><p>A buzdítás tartósan növeli a katonák erejét. A védőfal bónusza külön számít.</p><button class="gold-button" id="boost-morale"></button><p class="subtle">Aranyat a zombik elleni győzelmekért kapsz.<br>Hiányzó nyersanyagok: 1 arany / 10 egység, felfelé kerekítve.</p></section><section class="panel"><div class="section-title"><h2>Eseménynapló</h2><span>ÉLŐ</span></div><ul id="log"></ul></section></aside></div><footer><span>VÉGVÁR / JÁTSZHATÓ PROTOTÍPUS</span><button class="reset" id="reset">Új település</button><span>A haladás ebben a böngészőben tárolódik.</span></footer></main></div><div id="toast" role="status" aria-live="polite"></div><dialog id="gold-dialog" aria-labelledby="gold-dialog-title"><form method="dialog"><p class="eyebrow">ARANY FELHASZNÁLÁSA</p><h2 id="gold-dialog-title">Hiányzó nyersanyagok kiváltása</h2><p id="gold-dialog-details"></p><p class="gold-total" id="gold-dialog-total"></p><p class="subtle">Csak a hiányzó részt fizeted arannyal. A meglévő nyersanyagok is levonódnak.</p><div class="dialog-actions"><button value="cancel">Mégse</button><button class="gold-button" type="button" id="confirm-gold">Kiváltás és végrehajtás</button></div></form></dialog><script>(function(root){
-const buildings={hq:{name:'Parancsnokság',icon:'🏛️',desc:'Minden épület szintkorlátját emeli.',cost:{wood:100,metal:70}},farm:{name:'Üvegház',icon:'🌱',desc:'Élelmet termel a kiképzéshez.',cost:{wood:45,metal:15}},sawmill:{name:'Fűrésztelep',icon:'🪵',desc:'Alaptermelés: 52,8 fa/perc szintenként.',cost:{wood:30,metal:20}},mine:{name:'Vasfeldolgozó',icon:'⚙️',desc:'Alaptermelés: 176 vas/perc szintenként.',cost:{wood:60,metal:25}},barracks:{name:'Laktanya',icon:'🪖',desc:'Katonákat képez. Szintenként +2 harci erő.',cost:{wood:70,metal:50}},wall:{name:'Védőfal',icon:'🛡️',desc:'Szintenként +15 harci erő.',cost:{wood:80,metal:40}}};
+--></head><body><div class="app"><header><a class="brand" href="#world-title">◈ VÉGVÁR <small>STRATÉGIA · TÚLÉLÉS</small></a><span class="saved" id="saved">● Helyi mentés aktív</span></header><main><section class="intro"><div><p class="eyebrow">AZ ÚJJÁÉPÍTÉS KORA</p><h1>A jövő a falakon<br>belül kezdődik.</h1><p>Építs bázist. Gyűjts erőforrásokat. Szerezd vissza a világot.</p></div><div class="day"><span>ELLENŐRZÖTT KÖRZET</span><strong id="zones">01</strong><span id="rank">Kezdő település</span></div></section><section class="resources" aria-label="Nyersanyagok" id="resources"></section><section class="world" aria-labelledby="world-title"><div class="world-toolbar"><div><p class="eyebrow">ÉLŐ HADMŰVELETI TÉRKÉP</p><h2 id="world-title">A túlélők völgye</h2></div><span id="scene-status" role="status" aria-live="polite">A helyőrség készen áll</span></div><div id="graphics-notice" class="graphics-notice" role="status" hidden></div><div class="world-viewport" id="world-viewport"><canvas id="world-canvas" width="1280" height="720" tabindex="0" aria-label="Interaktív 3D térkép. Nyilakkal mozgatható, plusz és mínusz billentyűvel nagyítható. Egérhúzás: mozgatás; jobb egérgomb: forgatás; görgő: nagyítás; dupla kattintás: közelnézet.">A térképhez Canvas-t támogató böngésző szükséges.</canvas><div id="world-labels" class="world-labels"></div><div class="map-controls" id="map-controls" aria-label="Térkép vezérlése"><div class="camera-buttons"><button id="zoom-in" aria-label="Nagyítás" title="Nagyítás (+)">+</button><output id="zoom-level" aria-label="Nagyítás mértéke">100%</output><button id="zoom-out" aria-label="Kicsinyítés" title="Kicsinyítés (−)">−</button><button id="camera-home" title="Teljes térkép" aria-label="Teljes térkép">⌂</button><button id="rotate-map" title="Nézet forgatása" aria-label="Nézet forgatása">↻</button></div><div class="camera-presets"><button data-camera="base">Bázis</button><button data-camera="army">Katonák</button><button data-camera="zombies">Zombik</button><button data-camera="scouts">Felderítők</button><button data-camera="giant">Óriás</button></div><label class="quality-label">Részletesség <select id="graphics-quality"><option value="high">Magas</option><option value="low">Kímélő</option></select></label></div><section id="map-inspector" class="map-inspector" aria-label="Kijelölt objektum" hidden><button id="inspector-close" class="inspector-close" aria-label="Kijelölés bezárása">×</button><p id="inspector-type" class="eyebrow"></p><h3 id="inspector-title"></h3><p id="inspector-description"></p><div><button id="inspect-closeup">Közelnézet</button><button id="inspect-upgrade" hidden>Fejlesztés</button><button id="inspect-zombie-attack" hidden>Zombi megtámadása</button><button id="inspect-giant-attack" hidden>Óriás megtámadása</button></div></section><div class="map-help" id="map-help">HÚZÁS: MOZGATÁS · GÖRGŐ: ZOOM · JOBB HÚZÁS: FORGATÁS</div></div><div class="march-track" aria-hidden="true"><div id="march-progress"></div></div><div class="world-actions"><span>Kattints egy épületre vagy karakterre. Dupla kattintás: közelnézet. Telefonon két ujjal nagyíthatsz.</span><button class="primary" id="map-expedition">Sereg indítása →</button></div></section><section class="exploration" aria-labelledby="scout-title"><section class="panel scout-panel"><p class="eyebrow">A VÁROS FALAIN TÚL</p><div class="section-title"><h2 id="scout-title">Felderítőcsapat</h2><span>3 KATONA</span></div><p>Keress ellátmányt az elhagyott táborban! A csapat 5 percig kutat, majd mindenki hazatér.</p><div class="scout-status-line"><strong id="scout-phase" role="status" aria-live="polite">Indulásra készen</strong><span id="scout-countdown">05:20</span></div><progress id="scout-progress" max="1" value="0" aria-label="Felderítés haladása"></progress><p class="scout-reward">Biztos zsákmány: 9 bónuszcsomag + 75 arany</p><button class="primary" id="launch-scout">3 felderítő indítása →</button><p class="subtle">10 mp kivonulás · 5 perc kutatás · 10 mp hazatérés<br>A többi katonával közben harcolhatsz.</p></section><section class="panel bonus-panel"><p class="eyebrow">FELDERÍTŐK ZSÁKMÁNYA</p><h2>Termelési bónuszok</h2><p>Minden csomag 5 percre megduplázza a választott nyersanyag termelését. Azonos bónusz újraaktiválása meghosszabbítja az időt.</p><div id="bonuses" class="bonus-grid"></div><p class="subtle">A csomagok aktiválásig a raktárban maradnak.<br>A felderítés és az aktív bónuszok bezárt böngésző mellett is lejárnak.</p></section></section><section class="giant-panel panel" aria-labelledby="giant-title"><div><p class="eyebrow">KÜLÖNLEGES ELLENFÉL</p><h2 id="giant-title">A Pusztító · Óriászombi</h2><p id="giant-stats"></p><p id="giant-state"></p></div><div class="giant-health-block"><div><span>ÉLETERŐ</span><strong id="giant-hp">100%</strong></div><progress id="giant-health" value="950" max="950" aria-label="Az óriászombi életereje"></progress><p>Jutalom: <strong>1500 arany</strong><br>2400 fa · 1800 vas · 2000 élelem</p><button id="attack-giant">Óriászombi megtámadása →</button></div></section><div class="columns"><section><div class="section-title"><h2>A településed</h2><span>ÉPÍTÉS & FEJLESZTÉS</span></div><div class="map"><div class="map-grid" id="buildings"></div><div class="map-caption"><span>● BIZTONSÁGOS TERÜLET</span><span>ÉSZAKI MENEDÉK · 47° N</span></div></div><div class="tip"><strong>Parancsnoki tanács</strong><p>Fejleszd a termelőépületeket a gyorsabb bevételhez. A parancsnokság új épületszinteket engedélyez. Az expedíciók előtt ellenőrizd az erőviszonyokat.</p></div></section><aside><section class="panel"><p class="eyebrow">HADMŰVELETI KÖZPONT</p><h2>A falakon túl</h2><div class="wilderness"><span>☣</span><div id="target">Elhagyott külváros</div><small>FERTŐZÖTT TERÜLET</small></div><div class="comparison"><div><small>SAJÁT ERŐ</small><strong id="power"></strong></div><span>VS</span><div><small>ELLENSÉG</small><strong id="enemy"></strong></div></div><p id="forecast"></p><button class="primary" id="expedition">Expedíció indítása <span>→</span></button><p class="loot-preview" id="loot-preview"></p><p class="subtle">15 másodperc · Arany csak győzelemért jár</p></section><section class="panel army"><div><p class="eyebrow">HELYŐRSÉG</p><h2><span id="soldiers">8</span> katona</h2></div><button id="train">+ 5 katona<small>50 élelem · 20 vas</small></button><button class="gold-button" id="train-gold" hidden></button></section><section class="panel morale-panel"><p class="eyebrow">A SEREG LELKE</p><div class="section-title"><h2>Harci morál</h2><span id="morale-level"></span></div><div class="morale-meter" id="morale-meter" aria-hidden="true"></div><strong class="morale-bonus" id="morale-bonus"></strong><p>A buzdítás növeli a katonák erejét. A morál 10 percenként 5 százalékponttal csökken, bezárt játék mellett is. A védőfal bónusza külön számít.</p><button class="gold-button" id="boost-morale"></button><p class="subtle">Aranyat a zombik elleni győzelmekért kapsz.<br>Hiányzó nyersanyagok: 1 arany / 10 egység, felfelé kerekítve.</p></section><section class="panel"><div class="section-title"><h2>Eseménynapló</h2><span>ÉLŐ</span></div><ul id="log"></ul></section></aside></div><footer><span>VÉGVÁR / JÁTSZHATÓ PROTOTÍPUS</span><button class="reset" id="reset">Új település</button><span>A haladás ebben a böngészőben tárolódik.</span></footer></main></div><div id="toast" role="status" aria-live="polite"></div><dialog id="gold-dialog" aria-labelledby="gold-dialog-title"><form method="dialog"><p class="eyebrow">ARANY FELHASZNÁLÁSA</p><h2 id="gold-dialog-title">Hiányzó nyersanyagok kiváltása</h2><p id="gold-dialog-details"></p><p class="gold-total" id="gold-dialog-total"></p><p class="subtle">Csak a hiányzó részt fizeted arannyal. A meglévő nyersanyagok is levonódnak.</p><div class="dialog-actions"><button value="cancel">Mégse</button><button class="gold-button" type="button" id="confirm-gold">Kiváltás és végrehajtás</button></div></form></dialog><script>(function(root){
+const buildings={hq:{name:'Parancsnokság',icon:'🏛️',desc:'Minden épület szintkorlátját emeli.',cost:{wood:100,metal:70}},farm:{name:'Üvegház',icon:'🌱',desc:'Élelmet termel a kiképzéshez.',cost:{wood:45,metal:15}},sawmill:{name:'Fűrésztelep',icon:'🪵',desc:'Alaptermelés: 105,6 fa/perc szintenként.',cost:{wood:30,metal:20}},mine:{name:'Vasfeldolgozó',icon:'⚙️',desc:'Alaptermelés: 176 vas/perc szintenként.',cost:{wood:60,metal:25}},barracks:{name:'Laktanya',icon:'🪖',desc:'Katonákat képez. Szintenként +2 harci erő.',cost:{wood:70,metal:50}},wall:{name:'Védőfal',icon:'🛡️',desc:'Szintenként +15 harci erő.',cost:{wood:80,metal:40}}};
 const trainingCost={food:50,metal:20},maxMorale=5,resourcesPerGold=10;
 const resourceTypes=['wood','metal','food'];
 const productionBuildings={wood:'sawmill',metal:'mine',food:'farm'};
-const baseProduction={wood:52.8,metal:176,food:60};
+const baseProduction={wood:105.6,metal:176,food:60};
 const scoutSize=3,scoutTravelTime=10000,scoutSearchTime=300000,bonusDuration=300000;
 const scoutLoot={bonuses:{wood:3,metal:3,food:3},gold:75};
 const normalZombiePower=95;
-const giantRules={power:normalZombiePower*10,maxHp:950,loot:{gold:1500,wood:2400,metal:1800,food:2000}};
-function initialGiant(){return {hp:giantRules.maxHp,rewardClaimed:false};}
+const giantRules={power:normalZombiePower*10,maxHp:950,respawnTime:300000,loot:{gold:1500,wood:2400,metal:1800,food:2000}};
+function initialGiant(){return {hp:giantRules.maxHp,rewardClaimed:false,respawnAt:0,generation:0};}
 function giantPercent(s){return Math.ceil(s.giant.hp/giantRules.maxHp*100);}
-function initial(){return {version:1,giant:initialGiant(),scout:null,bonusInventory:{wood:0,metal:0,food:0},boostUntil:{wood:0,metal:0,food:0},gold:0,morale:0,wood:220,metal:150,food:160,soldiers:8,zone:1,wins:0,levels:{hq:1,farm:1,sawmill:1,mine:1,barracks:1,wall:1},last:Date.now(),mission:null,log:['A túlélők megérkeztek. Építs biztonságos otthont!']};}
+function initial(){return {version:1,giant:initialGiant(),scout:null,bonusInventory:{wood:0,metal:0,food:0},boostUntil:{wood:0,metal:0,food:0},gold:0,morale:0,moraleUpdatedAt:Date.now(),encounters:0,wood:220,metal:150,food:160,soldiers:8,zone:1,wins:0,levels:{hq:1,farm:1,sawmill:1,mine:1,barracks:1,wall:1},last:Date.now(),mission:null,log:['A túlélők megérkeztek. Építs biztonságos otthont!']};}
 function migrate(s){
   // A korábbi mentések új mezőit alapértékkel egészítjük ki; a haladás megmarad.
   if(s.gold===undefined)s.gold=0;
   if(s.morale===undefined)s.morale=0;
+  if(s.moraleUpdatedAt===undefined)s.moraleUpdatedAt=s.last;
+  if(s.encounters===undefined)s.encounters=0;
   if(s.scout===undefined)s.scout=null;
   if(s.giant===undefined)s.giant=initialGiant();
+  if(s.giant.respawnAt===undefined)s.giant.respawnAt=s.giant.hp===0?s.last+giantRules.respawnTime:0;
+  if(s.giant.generation===undefined)s.giant.generation=0;
   if(s.bonusInventory===undefined)s.bonusInventory={wood:0,metal:0,food:0};
   if(s.boostUntil===undefined)s.boostUntil={wood:0,metal:0,food:0};
   return s;
 }
 function cost(s,id){return Object.fromEntries(Object.entries(buildings[id].cost).map(([k,v])=>[k,Math.round(v*Math.pow(1.65,s.levels[id]-1))]));}
 function moraleBonus(s){return (s.morale||0)*10;}
-function moraleCost(s){return 30*((s.morale||0)+1);}
+function moraleCost(s){return 30*(Math.floor(s.morale||0)+1);}
 function goldReward(zone){return 25+zone*10;}
 function availableSoldiers(s){return Math.max(0,s.soldiers-(s.scout?s.scout.soldiers:0));}
 function power(s){return Math.floor(availableSoldiers(s)*(8+s.levels.barracks*2)*(100+moraleBonus(s))/100)+s.levels.wall*15;}
 function enemy(s){return 70+s.zone*s.zone*25;}
 function baseRate(s,type){return baseProduction[type]*s.levels[productionBuildings[type]];}
 function productionRate(s,type,now){return baseRate(s,type)*((s.boostUntil?.[type]||0)>now?2:1);}
+function zombiePosition(index,now){
+  const t=now/1000*(.085+(index%3)*.009)+index*1.73;
+  return {x:24+Math.cos(t)*(4+(index%4)*1.1),z:Math.sin(t*.79)*(4+(index%3)*1.1)};
+}
+function giantPosition(s,now){
+  if(s.mission?.kind==='giant'&&s.mission.target)return s.mission.target;
+  if(s.giant.hp===0&&s.giant.deathPosition)return s.giant.deathPosition;
+  const t=now/1000*.035+(s.giant.generation||0)*2;
+  return {x:38+Math.cos(t)*3,z:-14+Math.sin(t)*5};
+}
+function respawnGiant(s,now){
+  if(s.giant.hp===0&&s.giant.rewardClaimed&&s.mission?.kind!=='giant'&&s.giant.respawnAt>0&&now>=s.giant.respawnAt){
+    s.giant={...initialGiant(),generation:(s.giant.generation||0)+1};return true;
+  }return false;
+}
 function advance(s,now){
+  const since=s.moraleUpdatedAt??s.last,steps=Math.floor(Math.max(0,now-since)/600000);
+  if(steps){s.morale=Math.max(0,s.morale-steps*.5);s.moraleUpdatedAt=since+steps*600000;}
+  respawnGiant(s,now);
   if(now<=s.last)return s;
   const start=s.last,end=Math.min(now,start+14400000);
   for(const type of resourceTypes){
@@ -125,15 +147,16 @@ function boostMorale(s){
   if((s.morale||0)>=maxMorale)return 'A sereg morálja már maximális.';
   const amount=moraleCost(s);
   if((s.gold||0)<amount)return `A morál növeléséhez ${amount} arany kell.`;
-  s.gold-=amount;s.morale=(s.morale||0)+1;return null;
+  s.gold-=amount;s.morale=Math.min(maxMorale,(s.morale||0)+1);return null;
 }
-function launch(s,now){if(s.mission)return 'Már folyamatban van egy expedíció.';if(availableSoldiers(s)<1)return 'Nincs szabad katona. Képezz katonákat vagy várd meg a felderítőket!';s.mission={kind:'zone',soldiers:availableSoldiers(s),ends:now+15000,power:power(s),enemy:enemy(s),zone:s.zone};return null;}
+function launch(s,now,targetId){if(s.mission)return 'Már folyamatban van egy expedíció.';if(availableSoldiers(s)<1)return 'Nincs szabad katona. Képezz katonákat vagy várd meg a felderítőket!';const zombie=Number.isInteger(targetId)&&targetId>=0&&targetId<11?targetId:(s.encounters||0)%11;s.encounters=(s.encounters||0)+1;s.mission={kind:'zone',targetId:zombie,target:zombiePosition(zombie,now),soldiers:availableSoldiers(s),ends:now+15000,power:power(s),enemy:enemy(s),zone:s.zone};return null;}
 function launchGiant(s,now){
   if(s.mission)return 'A katonák már bevetésen vannak.';
-  if(s.giant.hp<=0)return 'Az óriászombit már legyőzted.';
+  respawnGiant(s,now);
+  if(s.giant.hp<=0)return 'Az óriászombi 5 perccel a halála után éled újra.';
   if(availableSoldiers(s)<1)return 'Az óriás megtámadásához legalább 1 szabad katona szükséges.';
   const strength=power(s);
-  s.mission={kind:'giant',soldiers:availableSoldiers(s),ends:now+15000,power:strength,enemy:giantRules.power,giantHpAtStart:s.giant.hp,damageTotal:Math.min(s.giant.hp,strength),damageDealt:0,appliedTicks:0};
+  s.mission={kind:'giant',target:giantPosition(s,now),soldiers:availableSoldiers(s),ends:now+15000,power:strength,enemy:giantRules.power,giantHpAtStart:s.giant.hp,damageTotal:Math.min(s.giant.hp,strength),damageDealt:0,appliedTicks:0};
   return null;
 }
 function applyGiantDamage(s,now){
@@ -143,11 +166,16 @@ function applyGiantDamage(s,now){
   if(ticks<=m.appliedTicks)return 0;
   const total=Math.floor(m.damageTotal*ticks/5),damage=Math.min(s.giant.hp,Math.max(0,total-m.damageDealt));
   s.giant.hp-=damage;m.damageDealt+=damage;m.appliedTicks=ticks;
+  if(s.giant.hp===0&&damage>0){
+    const killingTick=Math.ceil(m.giantHpAtStart*5/m.damageTotal);
+    s.giant.respawnAt=m.ends-15000+6000+killingTick*900+giantRules.respawnTime;
+    s.giant.deathPosition=m.target||giantPosition(s,now);
+  }
   return damage;
 }
 function resolve(s,now){
   applyGiantDamage(s,now);
-  if(!s.mission||now<s.mission.ends)return null;
+  if(!s.mission||now<s.mission.ends){respawnGiant(s,now);return null;}
   const m=s.mission,deployed=m.soldiers??s.soldiers;
   if(m.kind==='giant'){
     const win=s.giant.hp===0;
@@ -155,7 +183,7 @@ function resolve(s,now){
     s.soldiers-=loss;s.mission=null;
     if(win&&!s.giant.rewardClaimed){
       for(const [type,amount] of Object.entries(giantRules.loot))s[type]+=amount;
-      s.giant.rewardClaimed=true;
+      s.giant.rewardClaimed=true;respawnGiant(s,now);
       return `Az óriászombi elesett! Zsákmány: 1500 arany, 2400 fa, 1800 vas, 2000 élelem. Veszteség: ${loss} katona.`;
     }
     return `Az óriászombi ${m.damageDealt} sebzést kapott. Életereje: ${giantPercent(s)}%. A sérülése megmarad a következő támadásra. Veszteség: ${loss} katona.`;
@@ -166,7 +194,7 @@ function resolve(s,now){
   s.mission=null;
   return win?`Győzelem a(z) ${m.zone}. körzetben! A zombik zsákmánya: +${goldReward(m.zone)} arany és nyersanyagok. Veszteség: ${loss} katona.`:`Visszavonulás a(z) ${m.zone}. körzetből. Veszteség: ${loss} katona. Erősítsd meg a sereget!`;
 }
-const api={normalZombiePower,giantRules,initialGiant,giantPercent,launchGiant,applyGiantDamage,resourceTypes,baseProduction,baseRate,productionRate,scoutSize,scoutTravelTime,scoutSearchTime,scoutLoot,bonusDuration,availableSoldiers,launchScout,resolveScout,activateBonus,buildings,trainingCost,maxMorale,resourcesPerGold,initial,migrate,cost,moraleBonus,moraleCost,goldReward,quote,power,enemy,advance,upgrade,train,boostMorale,launch,resolve};if(typeof module!=='undefined')module.exports=api;else root.Engine=api;
+const api={zombiePosition,giantPosition,respawnGiant,normalZombiePower,giantRules,initialGiant,giantPercent,launchGiant,applyGiantDamage,resourceTypes,baseProduction,baseRate,productionRate,scoutSize,scoutTravelTime,scoutSearchTime,scoutLoot,bonusDuration,availableSoldiers,launchScout,resolveScout,activateBonus,buildings,trainingCost,maxMorale,resourcesPerGold,initial,migrate,cost,moraleBonus,moraleCost,goldReward,quote,power,enemy,advance,upgrade,train,boostMorale,launch,resolve};if(typeof module!=='undefined')module.exports=api;else root.Engine=api;
 })(globalThis);
 </script><script>console.warn('Scripts "build/three.js" and "build/three.min.js" are deprecated with r150+, and will be removed with r160. Please use ES Modules or alternatives: https://threejs.org/docs/index.html#manual/en/introduction/Installation'),
 /**
@@ -455,7 +483,7 @@ for(let i=0;i<3;i++)scouts.push(character('scout',i));
 const zombies=[];for(let i=0;i<11;i++)zombies.push(character('zombie',i));
 for(let i=0;i<4;i++)civilians.push(character('civilian',i));
 const giant=character('giant',0);giant.group.scale.set(5.2,4.1,5.2);giant.body.scale.set(1.2,1.02,1.1);giant.arms.forEach(a=>{a.shoulder.position.x*=1.3;a.shoulder.scale.set(1.2,1,1.2);});giant.group.position.set(35,0,-15);
-giant.data.id='giant';giant.data.name='A Pusztító · Óriászombi';giant.data.description='Tíz alapzombi harci ereje. A megmaradt életerő minden támadás után mentésre kerül. Legyőzése egyszeri, hatalmas zsákmányt ad.';
+giant.data.id='giant';giant.data.name='A Pusztító · Óriászombi';giant.data.description='Tíz alapzombi harci ereje. A megmaradt életerő minden támadás után mentésre kerül. Minden legyőzése hatalmas zsákmányt ad; 5 perc után újraéled.';
 let lastGiantHp=getState().giant.hp,giantHitUntil=0;
 
 const flashMaterial=new T.MeshBasicMaterial({color:'#ffdf8f'});materials.push(flashMaterial);
@@ -486,7 +514,7 @@ function select(entry){
  $('inspector-title').textContent=entry.name;
  $('inspector-type').textContent=entry.kind==='building'?'BÁZISÉPÜLET':entry.kind==='landmark'?'FELDERÍTŐTÁBOR':entry.id==='giant'?'ÓRIÁSZOMBI · 10× HARCI ERŐ':entry.actor.kind==='zombie'?'KÓSZÁLÓ FERTŐZÖTT':entry.actor.kind==='civilian'?'A MENEDÉK LAKÓJA':'A SAJÁT CSAPATOD';
  $('inspector-description').textContent=entry.description;
- $('inspect-upgrade').hidden=entry.kind!=='building';$('inspect-giant-attack').hidden=entry.id!=='giant';
+ $('inspect-upgrade').hidden=entry.kind!=='building';$('inspect-giant-attack').hidden=entry.id!=='giant';$('inspect-zombie-attack').hidden=entry.actor?.kind!=='zombie';
  canvas.dataset.selected=entry.id;
 }
 function clearSelection(){selected=null;following=null;selectionRing.visible=false;$('map-inspector').hidden=true;delete canvas.dataset.selected;}
@@ -541,6 +569,7 @@ for(const [name,handler] of Object.entries(events))canvas.addEventListener(name,
 $('zoom-in').onclick=()=>zoom(.76);$('zoom-out').onclick=()=>zoom(1/.76);$('camera-home').onclick=home;
 $('rotate-map').onclick=()=>{following=null;cameraState.yaw+=Math.PI/4;updateCamera();};
 $('inspector-close').onclick=clearSelection;$('inspect-closeup').onclick=()=>focus(selected);
+$('inspect-zombie-attack').onclick=()=>{const index=zombies.findIndex(a=>a.data===selected);if(index>=0)canvas.dispatchEvent(new CustomEvent('attack-zombie',{detail:index}));};
 $('inspect-giant-attack').onclick=()=>$('attack-giant').click();
 $('inspect-upgrade').onclick=()=>{if(selected?.kind==='building')onUpgrade(selected.id);};
 for(const button of document.querySelectorAll('[data-camera]'))button.onclick=()=>{
@@ -574,7 +603,7 @@ function walk(actor,time,moving=true,zombie=false,battle=false){
  actor.arms.forEach((arm,i)=>{arm.shoulder.rotation.x=zombie?-1.05+Math.sin(phase+i)*.16:battle?-.9:Math.sin(phase+i*Math.PI+Math.PI)*amplitude*.7;arm.elbow.rotation.x=zombie?-.18:battle?-.85:-.3;});
 }
 function project(world){v.copy(world).project(camera);const r=canvas.getBoundingClientRect();return {x:(v.x*.5+.5)*r.width,y:(-.5*v.y+.5)*r.height,visible:v.z>-1&&v.z<1&&Math.abs(v.x)<1&&Math.abs(v.y)<1};}
-let oldLevelSignature='';
+let oldLevelSignature='',routeMission=null,missionRoute=null;
 const visibilityObserver=new IntersectionObserver(entries=>{inView=entries[0].isIntersecting;},{rootMargin:'80px'});visibilityObserver.observe(canvas);
 function animate(timestamp){
  if(destroyed)return;frameId=root.requestAnimationFrame(animate);if(!inView||document.hidden)return;if(timestamp-lastRendered<(software?120:32))return;lastRendered=timestamp;
@@ -582,26 +611,30 @@ function animate(timestamp){
  if(previousMission&&!state.mission)aftermath={until:now+3500,win:timing.missionView(previousMission,previousMission.ends).win};previousMission=state.mission;
  if(aftermath&&now>aftermath.until)aftermath=null;
  const actual=state.mission?(state.mission.soldiers??root.Engine.availableSoldiers(state)):root.Engine.availableSoldiers(state);
- const bossMission=state.mission?.kind==='giant',activeRoute=bossMission?giantRoute:battleRoute;
+ const bossMission=state.mission?.kind==='giant',target=state.mission?.target||(bossMission?root.Engine.giantPosition(state,now):{x:24,z:2});
+ if(routeMission!==state.mission){routeMission=state.mission;missionRoute=state.mission?.target?new T.CatmullRomCurve3([new T.Vector3(-1,0,3),new T.Vector3(5,0,3),new T.Vector3(13,0,target.z*.4),new T.Vector3(target.x-3,0,target.z)]):null;}
+ const activeRoute=missionRoute||(bossMission?giantRoute:battleRoute);
  const count=mission.phase==='return'?Math.max(0,actual-Math.max(1,Math.ceil(actual*(mission.win?.12:bossMission?.25:.35)))):actual;
  const center=state.mission?activeRoute.getPointAt(mission.travel):new T.Vector3(-8,0,3);
  const tangent=state.mission?activeRoute.getTangentAt(mission.travel):new T.Vector3(1,0,0),direction=Math.atan2(tangent.x,tangent.z)+(mission.phase==='return'?Math.PI:0);
  soldiers.forEach((actor,i)=>{actor.group.visible=i<Math.min(24,count);if(!actor.group.visible)return;const col=i%4-1.5,row=Math.floor(i/4);actor.group.position.set(center.x+col*.62,0,center.z+row*.72);actor.group.rotation.y=direction;walk(actor,time,mission.phase==='outbound'||mission.phase==='return',false,mission.phase==='battle');});
  scouts.forEach((actor,i)=>{actor.group.visible=Boolean(state.scout);if(!state.scout)return;const p=scoutRoute.getPointAt(scout.travel),d=scoutRoute.getTangentAt(scout.travel);actor.group.position.set(p.x+(i-1)*.65,0,p.z+(i%2)*.7);actor.group.rotation.y=Math.atan2(d.x,d.z)+(scout.phase==='return'?Math.PI:0);walk(actor,time,scout.phase!=='search');if(scout.phase==='search')actor.group.rotation.y+=Math.sin(time*.4+i)*.8;});
  zombies.forEach((actor,i)=>{
- const p=patrolPosition(i,time),q=patrolPosition(i,time+.1);actor.group.visible=!(!bossMission&&mission.win&&((mission.phase==='battle'&&mission.battle>(i+1)/11)||mission.phase==='return'));
- if(!bossMission&&mission.phase==='battle'){actor.group.position.set(24+(i%3)*.6,0,(Math.floor(i/3)-1)*.9+2);actor.group.rotation.y=-Math.PI/2;}else{actor.group.position.set(p.x,0,p.z);actor.group.rotation.y=Math.atan2(q.x-p.x,q.z-p.z);}
- walk(actor,time,true,true,!bossMission&&mission.phase==='battle');
+ const p=root.Engine.zombiePosition(i,now),q=root.Engine.zombiePosition(i,now+100),engaged=Boolean(state.mission)&&!bossMission&&i===(state.mission.targetId??0);
+ actor.group.visible=!(engaged&&mission.win&&(mission.phase==='return'||mission.phase==='battle'&&mission.battle>.8));
+ if(engaged){actor.group.position.set(target.x,0,target.z);actor.group.rotation.y=-Math.PI/2;}else{actor.group.position.set(p.x,0,p.z);actor.group.rotation.y=Math.atan2(q.x-p.x,q.z-p.z);}
+ walk(actor,time,!engaged,true,engaged&&mission.phase==='battle');
  });
  const deadGiant=state.giant.hp===0;
  if(state.giant.hp<lastGiantHp)giantHitUntil=now+350;lastGiantHp=state.giant.hp;
- giant.group.position.set(35,deadGiant?1.0:0,-15);giant.group.rotation.set(0,deadGiant?0:-.24,deadGiant?Math.PI/2:0);
- if(!deadGiant){walk(giant,time,false,true,bossMission&&mission.phase==='battle');if(now<giantHitUntil)giant.body.rotation.z+=Math.sin(time*35)*.09;}
+ const giantPos=root.Engine.giantPosition(state,now),nextGiant=root.Engine.giantPosition(state,now+100);giant.group.position.set(giantPos.x,deadGiant?1.0:0,giantPos.z);giant.group.rotation.set(0,deadGiant?0:Math.atan2(nextGiant.x-giantPos.x,nextGiant.z-giantPos.z),deadGiant?Math.PI/2:0);
+ if(!deadGiant){walk(giant,time,!bossMission,true,bossMission&&mission.phase==='battle');if(now<giantHitUntil)giant.body.rotation.z+=Math.sin(time*35)*.09;}
  else{giant.detail.visible=true;giant.low.visible=false;}
+ $('inspect-zombie-attack').disabled=Boolean(state.mission)||root.Engine.availableSoldiers(state)<1;
  $('inspect-giant-attack').disabled=Boolean(state.mission)||deadGiant||root.Engine.availableSoldiers(state)<1;
  if(selected?.id==='giant')$('inspector-description').textContent=`Életerő: ${root.Engine.giantPercent(state)}%. Harci erő: ${root.Engine.giantRules.power}. A sérülés megmarad. Jutalom: 1500 arany és nagy nyersanyagzsákmány.`;
  civilians.forEach((actor,i)=>{const t=time*.075+i*1.6;actor.group.position.set(-16+Math.sin(t)*11,0,3.5+Math.cos(t*.7+i)*.85);actor.group.rotation.y=Math.cos(t)>0?Math.PI/2:-Math.PI/2;walk(actor,time,true);});
- flashes.forEach((o,i)=>{o.visible=mission.phase==='battle'&&(time*7+i)%1<.5;if(o.visible){const t=(time*4+i/8)%1;o.position.set(center.x+((bossMission?35:24)-center.x)*t,1.22+(bossMission?2.3*t:0),center.z+((bossMission?-15:center.z)-center.z)*t+(i%3-1)*.3);}});
+ flashes.forEach((o,i)=>{o.visible=mission.phase==='battle'&&(time*7+i)%1<.5;if(o.visible){const t=(time*4+i/8)%1;o.position.set(center.x+(target.x-center.x)*t,1.22+(bossMission?2.3*t:0),center.z+(target.z-center.z)*t+(i%3-1)*.3);}});
  if(following){if(following.group.visible){following.group.getWorldPosition(cameraState.target);cameraState.target.y=following.id==='giant'?(state.giant.hp>0?4:1):1.05;}else following=null;}
  vegetation.visible=quality==='high'||cameraState.distance>25;
  const far=cameraState.distance<25?42:190;if(camera.far!==far){camera.far=far;camera.updateProjectionMatrix();}
@@ -612,7 +645,7 @@ function animate(timestamp){
  if(size!==lastSize&&r.width&&r.height){renderer.setSize(r.width,r.height,false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();lastSize=size;}
  const levelSignature=JSON.stringify(state.levels);
  for(const entry of buildingEntries){const p=project(entry.group.position.clone().add(new T.Vector3(0,entry.id==='hq'?7:5.2,0)));entry.label.hidden=!p.visible||cameraState.distance<25;entry.label.style.transform=`translate(${p.x}px,${p.y}px) translate(-50%,-100%)`;if(levelSignature!==oldLevelSignature)entry.label.textContent=`${entry.name} · ${state.levels[entry.id]}`;}
- const gp=project(new T.Vector3(35,deadGiant?2.2:8.6,-15));giantLabel.hidden=!gp.visible;
+ const gp=project(new T.Vector3(giantPos.x,deadGiant?2.2:8.6,giantPos.z));giantLabel.hidden=!gp.visible;
  const compactHealth=r.width<600&&gp.y<160;
  giantLabel.style.transform=`translate(${compactHealth?76:clamp(gp.x,80,r.width-80)}px,${Math.max(64,gp.y)}px) translate(-50%,-100%)`;
  const percent=root.Engine.giantPercent(state);$('giant-map-percent').textContent=percent+'%';giantLabel.querySelector('.giant-map-track>i').style.width=(state.giant.hp/root.Engine.giantRules.maxHp*100)+'%';
@@ -634,7 +667,7 @@ const onLost=e=>{e.preventDefault();$('graphics-notice').hidden=false;$('graphic
 return {
  focusBuilding(id){focus(buildingEntries.find(b=>b.id===id));},
  focusGiant(){focus(giant.data);},
- getSnapshot(){return {renderer:'webgl',zoom:81/cameraState.distance,target:cameraState.target.toArray(),camera:camera.position.toArray(),selected:selected?.id||null,pixelRatio:renderer.getPixelRatio(),width:canvas.width,height:canvas.height,detailedCharacters:npcEntries.filter(e=>e.group.visible&&e.actor.detail.visible).length,triangles:renderer.info.render.triangles,drawCalls:renderer.info.render.calls,buildings:buildingEntries.map(e=>({id:e.id,...project(e.group.position.clone().add(new T.Vector3(0,1,0)))})),npcs:zombies.map(a=>({id:a.data.id,x:a.group.position.x,z:a.group.position.z,visible:a.group.visible,screen:project(a.group.position.clone().add(new T.Vector3(0,1,0)))})),giant:{hp:getState().giant.hp,percent:root.Engine.giantPercent(getState()),screen:project(new T.Vector3(35,3.5,-15))},camp:{entranceDepth:new T.Raycaster(new T.Vector3(9,1.2,-7.3),new T.Vector3(0,0,-1)).intersectObject(camp,true)[0]?.distance||0},soldiers:soldiers.filter(a=>a.group.visible).length,scouts:scouts.filter(a=>a.group.visible).length};},
+ getSnapshot(){return {renderer:'webgl',zoom:81/cameraState.distance,target:cameraState.target.toArray(),camera:camera.position.toArray(),selected:selected?.id||null,pixelRatio:renderer.getPixelRatio(),width:canvas.width,height:canvas.height,detailedCharacters:npcEntries.filter(e=>e.group.visible&&e.actor.detail.visible).length,triangles:renderer.info.render.triangles,drawCalls:renderer.info.render.calls,buildings:buildingEntries.map(e=>({id:e.id,...project(e.group.position.clone().add(new T.Vector3(0,1,0)))})),npcs:zombies.map(a=>({id:a.data.id,x:a.group.position.x,z:a.group.position.z,visible:a.group.visible,screen:project(a.group.position.clone().add(new T.Vector3(0,1,0)))})),giant:{hp:getState().giant.hp,percent:root.Engine.giantPercent(getState()),x:giant.group.position.x,z:giant.group.position.z,screen:project(giant.group.position.clone().add(new T.Vector3(0,3.5,0)))},camp:{entranceDepth:new T.Raycaster(new T.Vector3(9,1.2,-7.3),new T.Vector3(0,0,-1)).intersectObject(camp,true)[0]?.distance||0},soldiers:soldiers.filter(a=>a.group.visible).length,scouts:scouts.filter(a=>a.group.visible).length};},
  destroy(){destroyed=true;root.cancelAnimationFrame(frameId);for(const [name,handler] of Object.entries(events))canvas.removeEventListener(name,handler);canvas.removeEventListener('webglcontextlost',onLost);geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());renderer.dispose();visibilityObserver.disconnect();labelLayer.replaceChildren();}
 };
 }
@@ -695,9 +728,10 @@ const api={mount,patrolPosition};if(typeof module!=='undefined')module.exports=a
       ctx.strokeStyle='#35433c';ctx.lineWidth=67;ctx.stroke();ctx.strokeStyle='#8f8e70';ctx.lineWidth=51;ctx.stroke();
       ctx.setLineDash([9,13]);ctx.strokeStyle='#c3ba8b77';ctx.lineWidth=2;ctx.stroke();ctx.setLineDash([]);
     }
-    function point(t,isGiant=false) {
+    function point(t,isGiant=false,target=null) {
       // Bézier-útvonal a bázis kapujától a fertőzött körzetig.
       const u=1-t;
+      if(target)return {x:510+(650+target.x*10-510)*t,y:351+(345+target.z*5-351)*t};
       return isGiant?{x:u*u*u*510+3*u*u*t*700+3*u*t*t*850+t*t*t*980,y:u*u*u*351+3*u*u*t*300+3*u*t*t*260+t*t*t*300}:{x:u*u*u*510+3*u*u*t*680+3*u*t*t*710+t*t*t*896,y:u*u*u*351+3*u*u*t*400+3*u*t*t*451+t*t*t*345};
     }
     function human(x,y,time,i,zombie=false,facing=1,moving=true,dead=false,scout=false) {
@@ -768,7 +802,7 @@ const api={mount,patrolPosition};if(typeof module!=='undefined')module.exports=a
       const bossMission=state.mission?.kind==='giant';
       const armySoldiers=state.mission?(state.mission.soldiers??root.Engine.availableSoldiers(state)):root.Engine.availableSoldiers(state);
       const armyCount=Math.min(24,armySoldiers);
-      let center=view.phase==='idle'?{x:395,y:340}:point(view.travel,bossMission);
+      let center=view.phase==='idle'?{x:395,y:340}:point(view.travel,bossMission,state.mission?.target);
       let showCount=armyCount;
       if(view.phase==='return'||view.phase==='done')showCount=Math.max(0,armyCount-Math.max(1,Math.ceil(armyCount*(view.win?.12:bossMission?.25:.35))));
       const moving=view.phase==='outbound'||view.phase==='return';
@@ -796,7 +830,8 @@ const api={mount,patrolPosition};if(typeof module!=='undefined')module.exports=a
       const zombies=9;
       for(let i=0;i<zombies;i++){
         const fighting=!bossMission&&view.phase==='battle',dead=!bossMission&&view.win&&(view.phase==='return'||view.phase==='done'||(fighting&&view.battle>(i+1)/zombies));
-        const x=958+(i%3)*17-(fighting?view.battle*20:0),y=335+Math.floor(i/3)*19;
+        const p=root.Engine.zombiePosition(i,now),engaged=Boolean(state.mission)&&!bossMission&&i===(state.mission.targetId??0),target=engaged?(state.mission.target||p):p;
+        const x=650+target.x*10,y=345+target.z*5;
         if(!dead||view.phase==='battle')human(x,y,time,i,true,-1,fighting,dead);
       }
       if(view.phase==='battle'){
@@ -807,10 +842,11 @@ const api={mount,patrolPosition};if(typeof module!=='undefined')module.exports=a
         }
         text('ÖSSZECSAPÁS',916,290,13,'#ffe1a1');
       }
-      ctx.save();ctx.translate(1040,295);ctx.scale(3.5,3.5);human(0,0,time,0,true,-1,false,state.giant.hp===0);ctx.restore();
+      const gp=root.Engine.giantPosition(state,now),gx=650+gp.x*10,gy=345+gp.z*5;
+      ctx.save();ctx.translate(gx,gy);ctx.scale(3.5,3.5);human(0,0,time,0,true,-1,false,state.giant.hp===0);ctx.restore();
       const giantPercent=root.Engine.giantPercent(state);
-      ctx.fillStyle='#2b231de8';ctx.fillRect(980,168,115,35);text(`ÓRIÁS · ${giantPercent}%`,1037,182,11,'#ffd7a6');
-      ctx.fillStyle='#59402c';ctx.fillRect(989,189,96,6);ctx.fillStyle='#df9c63';ctx.fillRect(989,189,96*state.giant.hp/root.Engine.giantRules.maxHp,6);
+      ctx.fillStyle='#2b231de8';ctx.fillRect(gx-57,gy-127,115,35);text(`ÓRIÁS · ${giantPercent}%`,gx,gy-113,11,'#ffd7a6');
+      ctx.fillStyle='#59402c';ctx.fillRect(gx-48,gy-106,96,6);ctx.fillStyle='#df9c63';ctx.fillRect(gx-48,gy-106,96*state.giant.hp/root.Engine.giantRules.maxHp,6);
       if(aftermath){ctx.fillStyle='#14281ff0';ctx.fillRect(357,42,386,43);text(aftermath.win?`GYŐZELEM · +${aftermath.gold} ARANY ÉS ZSÁKMÁNY`:'VISSZAVONULÁS · Erősítsd a sereget!',550,69,14,aftermath.win?'#d6ed91':'#f0bc91');}
       // A térkép jelmagyarázata az alsó sávban.
       ctx.fillStyle='#152b25d9';ctx.fillRect(0,548,W,42);text('● SAJÁT BÁZIS',28,574,10,'#d6ed91','left');text('━ EXPEDÍCIÓ ÚTVONALA',210,574,10,'#d2caa6','left');text('● FERTŐZÖTTEK',W-30,574,10,'#e8bb8b','right');
@@ -848,7 +884,7 @@ try{
   const raw=localStorage.getItem(key);
   if(raw){
     const s=E.migrate(JSON.parse(raw));
-    if(s.version===1&&Object.keys(E.buildings).every(k=>Number.isInteger(s.levels?.[k])&&s.levels[k]>=1)&&['wood','metal','food','soldiers','zone','last','wins','gold'].every(k=>Number.isFinite(s[k])&&s[k]>=0)&&Number.isInteger(s.morale)&&s.morale>=0&&s.morale<=E.maxMorale&&E.resourceTypes.every(type=>Number.isInteger(s.bonusInventory?.[type])&&s.bonusInventory[type]>=0&&Number.isFinite(s.boostUntil?.[type])&&s.boostUntil[type]>=0)&&Number.isFinite(s.giant?.hp)&&s.giant.hp>=0&&s.giant.hp<=E.giantRules.maxHp&&typeof s.giant.rewardClaimed==='boolean'&&Array.isArray(s.log))state=s;
+    if(s.version===1&&Object.keys(E.buildings).every(k=>Number.isInteger(s.levels?.[k])&&s.levels[k]>=1)&&['wood','metal','food','soldiers','zone','last','wins','gold'].every(k=>Number.isFinite(s[k])&&s[k]>=0)&&Number.isFinite(s.morale)&&s.morale>=0&&s.morale<=E.maxMorale&&E.resourceTypes.every(type=>Number.isInteger(s.bonusInventory?.[type])&&s.bonusInventory[type]>=0&&Number.isFinite(s.boostUntil?.[type])&&s.boostUntil[type]>=0)&&Number.isFinite(s.giant?.hp)&&s.giant.hp>=0&&s.giant.hp<=E.giantRules.maxHp&&typeof s.giant.rewardClaimed==='boolean'&&Number.isFinite(s.giant.respawnAt)&&s.giant.respawnAt>=0&&Number.isInteger(s.giant.generation)&&s.giant.generation>=0&&Number.isFinite(s.moraleUpdatedAt)&&s.moraleUpdatedAt>=0&&Number.isInteger(s.encounters)&&s.encounters>=0&&Array.isArray(s.log))state=s;
   }
 }catch{storageAvailable=false;}
 const $=id=>document.getElementById(id);
@@ -894,9 +930,9 @@ function renderGiant(now){
   $('giant-health').value=state.giant.hp;
   $('giant-health').max=E.giantRules.maxHp;
   $('giant-stats').textContent=`Harci erő: ${E.giantRules.power} · 10 alapzombi ereje`;
-  $('giant-state').textContent=dead?(state.giant.rewardClaimed?'Legyőzted! A zsákmány megérkezett.':'Az óriás elesett. A csapat hozza a zsákmányt.'):attacking?'A sereg az óriással harcol. A sebzések mentésre kerülnek.':state.giant.hp<E.giantRules.maxHp?'Megsebezve. A következő támadást erről az életerőről kezded.':'Külön célpont. Több támadással is legyőzheted; nem gyógyul vissza.';
+  $('giant-state').textContent=dead&&state.giant.rewardClaimed?`Újraéledés: ${timeLeft(state.giant.respawnAt-now)} · A következő óriás ismét teljes zsákmányt ad.`:dead?(state.giant.rewardClaimed?'Legyőzted! A zsákmány megérkezett.':'Az óriás elesett. A csapat hozza a zsákmányt.'):attacking?'A sereg az óriással harcol. A sebzések mentésre kerülnek.':state.giant.hp<E.giantRules.maxHp?'Megsebezve. A következő támadást erről az életerőről kezded.':'Külön célpont. Több támadással is legyőzheted; nem gyógyul vissza.';
   $('attack-giant').disabled=dead||Boolean(state.mission)||E.availableSoldiers(state)<1;
-  $('attack-giant').textContent=dead?'Óriászombi legyőzve':attacking?`Támadás folyamatban · ${timeLeft(state.mission.ends-now)}`:'Óriászombi megtámadása →';
+  $('attack-giant').textContent=dead?`Újraéledés · ${timeLeft(state.giant.respawnAt-now)}`:attacking?`Támadás folyamatban · ${timeLeft(state.mission.ends-now)}`:'Óriászombi megtámadása →';
 }
 function render(){
   const now=Date.now();renderExploration(now);renderGiant(now);
@@ -920,7 +956,7 @@ function render(){
   $('train-gold').hidden=training.gold===0;
   $('train-gold').disabled=Boolean(state.mission)||!training.canAfford;
   $('train-gold').textContent=`Kiképzés · hiány kiváltása ${number(training.gold)} arany`;
-  $('morale-level').textContent=`${state.morale} / ${E.maxMorale}. SZINT`;
+  $('morale-level').textContent=`${E.moraleBonus(state)} / 50%`;
   $('morale-bonus').textContent=`+${E.moraleBonus(state)}% katonai harci erő`;
   $('morale-meter').innerHTML=Array.from({length:E.maxMorale},(_,i)=>`<span class="${i<state.morale?'filled':''}"></span>`).join('');
   const maxed=state.morale>=E.maxMorale;
@@ -977,12 +1013,14 @@ $('attack-giant').onclick=()=>{
   else{worldView?.focusGiant?.();log('A sereg elindult az óriászombi ellen. A megszerzett sebzés akkor is megmarad, ha most nem győzöl.');$('world-title').scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});}
   save();render();
 };
-$('expedition').onclick=()=>{
-  sync();const error=E.launch(state,Date.now());
+function attackZombie(targetId){
+  sync();const error=E.launch(state,Date.now(),targetId);
   if(error)toast(error);
   else{log(`Az expedíció elindult a(z) ${state.zone}. körzetbe.`);$('world-title').scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});}
   save();render();
 };
+$('expedition').onclick=()=>attackZombie();
+$('world-canvas').addEventListener('attack-zombie',event=>attackZombie(event.detail));
 $('reset').onclick=()=>{if(confirm('Új települést kezdesz? A jelenlegi haladás törlődik.')){state=E.initial();save();render();}};
 $('map-expedition').onclick=()=>$('expedition').click();
 $('launch-scout').onclick=()=>{

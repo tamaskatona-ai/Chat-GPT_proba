@@ -278,7 +278,7 @@ for(let i=0;i<3;i++)scouts.push(character('scout',i));
 const zombies=[];for(let i=0;i<11;i++)zombies.push(character('zombie',i));
 for(let i=0;i<4;i++)civilians.push(character('civilian',i));
 const giant=character('giant',0);giant.group.scale.set(5.2,4.1,5.2);giant.body.scale.set(1.2,1.02,1.1);giant.arms.forEach(a=>{a.shoulder.position.x*=1.3;a.shoulder.scale.set(1.2,1,1.2);});giant.group.position.set(35,0,-15);
-giant.data.id='giant';giant.data.name='A Pusztító · Óriászombi';giant.data.description='Tíz alapzombi harci ereje. A megmaradt életerő minden támadás után mentésre kerül. Legyőzése egyszeri, hatalmas zsákmányt ad.';
+giant.data.id='giant';giant.data.name='A Pusztító · Óriászombi';giant.data.description='Tíz alapzombi harci ereje. A megmaradt életerő minden támadás után mentésre kerül. Minden legyőzése hatalmas zsákmányt ad; 5 perc után újraéled.';
 let lastGiantHp=getState().giant.hp,giantHitUntil=0;
 
 const flashMaterial=new T.MeshBasicMaterial({color:'#ffdf8f'});materials.push(flashMaterial);
@@ -309,7 +309,7 @@ function select(entry){
  $('inspector-title').textContent=entry.name;
  $('inspector-type').textContent=entry.kind==='building'?'BÁZISÉPÜLET':entry.kind==='landmark'?'FELDERÍTŐTÁBOR':entry.id==='giant'?'ÓRIÁSZOMBI · 10× HARCI ERŐ':entry.actor.kind==='zombie'?'KÓSZÁLÓ FERTŐZÖTT':entry.actor.kind==='civilian'?'A MENEDÉK LAKÓJA':'A SAJÁT CSAPATOD';
  $('inspector-description').textContent=entry.description;
- $('inspect-upgrade').hidden=entry.kind!=='building';$('inspect-giant-attack').hidden=entry.id!=='giant';
+ $('inspect-upgrade').hidden=entry.kind!=='building';$('inspect-giant-attack').hidden=entry.id!=='giant';$('inspect-zombie-attack').hidden=entry.actor?.kind!=='zombie';
  canvas.dataset.selected=entry.id;
 }
 function clearSelection(){selected=null;following=null;selectionRing.visible=false;$('map-inspector').hidden=true;delete canvas.dataset.selected;}
@@ -364,6 +364,7 @@ for(const [name,handler] of Object.entries(events))canvas.addEventListener(name,
 $('zoom-in').onclick=()=>zoom(.76);$('zoom-out').onclick=()=>zoom(1/.76);$('camera-home').onclick=home;
 $('rotate-map').onclick=()=>{following=null;cameraState.yaw+=Math.PI/4;updateCamera();};
 $('inspector-close').onclick=clearSelection;$('inspect-closeup').onclick=()=>focus(selected);
+$('inspect-zombie-attack').onclick=()=>{const index=zombies.findIndex(a=>a.data===selected);if(index>=0)canvas.dispatchEvent(new CustomEvent('attack-zombie',{detail:index}));};
 $('inspect-giant-attack').onclick=()=>$('attack-giant').click();
 $('inspect-upgrade').onclick=()=>{if(selected?.kind==='building')onUpgrade(selected.id);};
 for(const button of document.querySelectorAll('[data-camera]'))button.onclick=()=>{
@@ -397,7 +398,7 @@ function walk(actor,time,moving=true,zombie=false,battle=false){
  actor.arms.forEach((arm,i)=>{arm.shoulder.rotation.x=zombie?-1.05+Math.sin(phase+i)*.16:battle?-.9:Math.sin(phase+i*Math.PI+Math.PI)*amplitude*.7;arm.elbow.rotation.x=zombie?-.18:battle?-.85:-.3;});
 }
 function project(world){v.copy(world).project(camera);const r=canvas.getBoundingClientRect();return {x:(v.x*.5+.5)*r.width,y:(-.5*v.y+.5)*r.height,visible:v.z>-1&&v.z<1&&Math.abs(v.x)<1&&Math.abs(v.y)<1};}
-let oldLevelSignature='';
+let oldLevelSignature='',routeMission=null,missionRoute=null;
 const visibilityObserver=new IntersectionObserver(entries=>{inView=entries[0].isIntersecting;},{rootMargin:'80px'});visibilityObserver.observe(canvas);
 function animate(timestamp){
  if(destroyed)return;frameId=root.requestAnimationFrame(animate);if(!inView||document.hidden)return;if(timestamp-lastRendered<(software?120:32))return;lastRendered=timestamp;
@@ -405,26 +406,30 @@ function animate(timestamp){
  if(previousMission&&!state.mission)aftermath={until:now+3500,win:timing.missionView(previousMission,previousMission.ends).win};previousMission=state.mission;
  if(aftermath&&now>aftermath.until)aftermath=null;
  const actual=state.mission?(state.mission.soldiers??root.Engine.availableSoldiers(state)):root.Engine.availableSoldiers(state);
- const bossMission=state.mission?.kind==='giant',activeRoute=bossMission?giantRoute:battleRoute;
+ const bossMission=state.mission?.kind==='giant',target=state.mission?.target||(bossMission?root.Engine.giantPosition(state,now):{x:24,z:2});
+ if(routeMission!==state.mission){routeMission=state.mission;missionRoute=state.mission?.target?new T.CatmullRomCurve3([new T.Vector3(-1,0,3),new T.Vector3(5,0,3),new T.Vector3(13,0,target.z*.4),new T.Vector3(target.x-3,0,target.z)]):null;}
+ const activeRoute=missionRoute||(bossMission?giantRoute:battleRoute);
  const count=mission.phase==='return'?Math.max(0,actual-Math.max(1,Math.ceil(actual*(mission.win?.12:bossMission?.25:.35)))):actual;
  const center=state.mission?activeRoute.getPointAt(mission.travel):new T.Vector3(-8,0,3);
  const tangent=state.mission?activeRoute.getTangentAt(mission.travel):new T.Vector3(1,0,0),direction=Math.atan2(tangent.x,tangent.z)+(mission.phase==='return'?Math.PI:0);
  soldiers.forEach((actor,i)=>{actor.group.visible=i<Math.min(24,count);if(!actor.group.visible)return;const col=i%4-1.5,row=Math.floor(i/4);actor.group.position.set(center.x+col*.62,0,center.z+row*.72);actor.group.rotation.y=direction;walk(actor,time,mission.phase==='outbound'||mission.phase==='return',false,mission.phase==='battle');});
  scouts.forEach((actor,i)=>{actor.group.visible=Boolean(state.scout);if(!state.scout)return;const p=scoutRoute.getPointAt(scout.travel),d=scoutRoute.getTangentAt(scout.travel);actor.group.position.set(p.x+(i-1)*.65,0,p.z+(i%2)*.7);actor.group.rotation.y=Math.atan2(d.x,d.z)+(scout.phase==='return'?Math.PI:0);walk(actor,time,scout.phase!=='search');if(scout.phase==='search')actor.group.rotation.y+=Math.sin(time*.4+i)*.8;});
  zombies.forEach((actor,i)=>{
- const p=patrolPosition(i,time),q=patrolPosition(i,time+.1);actor.group.visible=!(!bossMission&&mission.win&&((mission.phase==='battle'&&mission.battle>(i+1)/11)||mission.phase==='return'));
- if(!bossMission&&mission.phase==='battle'){actor.group.position.set(24+(i%3)*.6,0,(Math.floor(i/3)-1)*.9+2);actor.group.rotation.y=-Math.PI/2;}else{actor.group.position.set(p.x,0,p.z);actor.group.rotation.y=Math.atan2(q.x-p.x,q.z-p.z);}
- walk(actor,time,true,true,!bossMission&&mission.phase==='battle');
+ const p=root.Engine.zombiePosition(i,now),q=root.Engine.zombiePosition(i,now+100),engaged=Boolean(state.mission)&&!bossMission&&i===(state.mission.targetId??0);
+ actor.group.visible=!(engaged&&mission.win&&(mission.phase==='return'||mission.phase==='battle'&&mission.battle>.8));
+ if(engaged){actor.group.position.set(target.x,0,target.z);actor.group.rotation.y=-Math.PI/2;}else{actor.group.position.set(p.x,0,p.z);actor.group.rotation.y=Math.atan2(q.x-p.x,q.z-p.z);}
+ walk(actor,time,!engaged,true,engaged&&mission.phase==='battle');
  });
  const deadGiant=state.giant.hp===0;
  if(state.giant.hp<lastGiantHp)giantHitUntil=now+350;lastGiantHp=state.giant.hp;
- giant.group.position.set(35,deadGiant?1.0:0,-15);giant.group.rotation.set(0,deadGiant?0:-.24,deadGiant?Math.PI/2:0);
- if(!deadGiant){walk(giant,time,false,true,bossMission&&mission.phase==='battle');if(now<giantHitUntil)giant.body.rotation.z+=Math.sin(time*35)*.09;}
+ const giantPos=root.Engine.giantPosition(state,now),nextGiant=root.Engine.giantPosition(state,now+100);giant.group.position.set(giantPos.x,deadGiant?1.0:0,giantPos.z);giant.group.rotation.set(0,deadGiant?0:Math.atan2(nextGiant.x-giantPos.x,nextGiant.z-giantPos.z),deadGiant?Math.PI/2:0);
+ if(!deadGiant){walk(giant,time,!bossMission,true,bossMission&&mission.phase==='battle');if(now<giantHitUntil)giant.body.rotation.z+=Math.sin(time*35)*.09;}
  else{giant.detail.visible=true;giant.low.visible=false;}
+ $('inspect-zombie-attack').disabled=Boolean(state.mission)||root.Engine.availableSoldiers(state)<1;
  $('inspect-giant-attack').disabled=Boolean(state.mission)||deadGiant||root.Engine.availableSoldiers(state)<1;
  if(selected?.id==='giant')$('inspector-description').textContent=`Életerő: ${root.Engine.giantPercent(state)}%. Harci erő: ${root.Engine.giantRules.power}. A sérülés megmarad. Jutalom: 1500 arany és nagy nyersanyagzsákmány.`;
  civilians.forEach((actor,i)=>{const t=time*.075+i*1.6;actor.group.position.set(-16+Math.sin(t)*11,0,3.5+Math.cos(t*.7+i)*.85);actor.group.rotation.y=Math.cos(t)>0?Math.PI/2:-Math.PI/2;walk(actor,time,true);});
- flashes.forEach((o,i)=>{o.visible=mission.phase==='battle'&&(time*7+i)%1<.5;if(o.visible){const t=(time*4+i/8)%1;o.position.set(center.x+((bossMission?35:24)-center.x)*t,1.22+(bossMission?2.3*t:0),center.z+((bossMission?-15:center.z)-center.z)*t+(i%3-1)*.3);}});
+ flashes.forEach((o,i)=>{o.visible=mission.phase==='battle'&&(time*7+i)%1<.5;if(o.visible){const t=(time*4+i/8)%1;o.position.set(center.x+(target.x-center.x)*t,1.22+(bossMission?2.3*t:0),center.z+(target.z-center.z)*t+(i%3-1)*.3);}});
  if(following){if(following.group.visible){following.group.getWorldPosition(cameraState.target);cameraState.target.y=following.id==='giant'?(state.giant.hp>0?4:1):1.05;}else following=null;}
  vegetation.visible=quality==='high'||cameraState.distance>25;
  const far=cameraState.distance<25?42:190;if(camera.far!==far){camera.far=far;camera.updateProjectionMatrix();}
@@ -435,7 +440,7 @@ function animate(timestamp){
  if(size!==lastSize&&r.width&&r.height){renderer.setSize(r.width,r.height,false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();lastSize=size;}
  const levelSignature=JSON.stringify(state.levels);
  for(const entry of buildingEntries){const p=project(entry.group.position.clone().add(new T.Vector3(0,entry.id==='hq'?7:5.2,0)));entry.label.hidden=!p.visible||cameraState.distance<25;entry.label.style.transform=`translate(${p.x}px,${p.y}px) translate(-50%,-100%)`;if(levelSignature!==oldLevelSignature)entry.label.textContent=`${entry.name} · ${state.levels[entry.id]}`;}
- const gp=project(new T.Vector3(35,deadGiant?2.2:8.6,-15));giantLabel.hidden=!gp.visible;
+ const gp=project(new T.Vector3(giantPos.x,deadGiant?2.2:8.6,giantPos.z));giantLabel.hidden=!gp.visible;
  const compactHealth=r.width<600&&gp.y<160;
  giantLabel.style.transform=`translate(${compactHealth?76:clamp(gp.x,80,r.width-80)}px,${Math.max(64,gp.y)}px) translate(-50%,-100%)`;
  const percent=root.Engine.giantPercent(state);$('giant-map-percent').textContent=percent+'%';giantLabel.querySelector('.giant-map-track>i').style.width=(state.giant.hp/root.Engine.giantRules.maxHp*100)+'%';
@@ -457,7 +462,7 @@ const onLost=e=>{e.preventDefault();$('graphics-notice').hidden=false;$('graphic
 return {
  focusBuilding(id){focus(buildingEntries.find(b=>b.id===id));},
  focusGiant(){focus(giant.data);},
- getSnapshot(){return {renderer:'webgl',zoom:81/cameraState.distance,target:cameraState.target.toArray(),camera:camera.position.toArray(),selected:selected?.id||null,pixelRatio:renderer.getPixelRatio(),width:canvas.width,height:canvas.height,detailedCharacters:npcEntries.filter(e=>e.group.visible&&e.actor.detail.visible).length,triangles:renderer.info.render.triangles,drawCalls:renderer.info.render.calls,buildings:buildingEntries.map(e=>({id:e.id,...project(e.group.position.clone().add(new T.Vector3(0,1,0)))})),npcs:zombies.map(a=>({id:a.data.id,x:a.group.position.x,z:a.group.position.z,visible:a.group.visible,screen:project(a.group.position.clone().add(new T.Vector3(0,1,0)))})),giant:{hp:getState().giant.hp,percent:root.Engine.giantPercent(getState()),screen:project(new T.Vector3(35,3.5,-15))},camp:{entranceDepth:new T.Raycaster(new T.Vector3(9,1.2,-7.3),new T.Vector3(0,0,-1)).intersectObject(camp,true)[0]?.distance||0},soldiers:soldiers.filter(a=>a.group.visible).length,scouts:scouts.filter(a=>a.group.visible).length};},
+ getSnapshot(){return {renderer:'webgl',zoom:81/cameraState.distance,target:cameraState.target.toArray(),camera:camera.position.toArray(),selected:selected?.id||null,pixelRatio:renderer.getPixelRatio(),width:canvas.width,height:canvas.height,detailedCharacters:npcEntries.filter(e=>e.group.visible&&e.actor.detail.visible).length,triangles:renderer.info.render.triangles,drawCalls:renderer.info.render.calls,buildings:buildingEntries.map(e=>({id:e.id,...project(e.group.position.clone().add(new T.Vector3(0,1,0)))})),npcs:zombies.map(a=>({id:a.data.id,x:a.group.position.x,z:a.group.position.z,visible:a.group.visible,screen:project(a.group.position.clone().add(new T.Vector3(0,1,0)))})),giant:{hp:getState().giant.hp,percent:root.Engine.giantPercent(getState()),x:giant.group.position.x,z:giant.group.position.z,screen:project(giant.group.position.clone().add(new T.Vector3(0,3.5,0)))},camp:{entranceDepth:new T.Raycaster(new T.Vector3(9,1.2,-7.3),new T.Vector3(0,0,-1)).intersectObject(camp,true)[0]?.distance||0},soldiers:soldiers.filter(a=>a.group.visible).length,scouts:scouts.filter(a=>a.group.visible).length};},
  destroy(){destroyed=true;root.cancelAnimationFrame(frameId);for(const [name,handler] of Object.entries(events))canvas.removeEventListener(name,handler);canvas.removeEventListener('webglcontextlost',onLost);geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());renderer.dispose();visibilityObserver.disconnect();labelLayer.replaceChildren();}
 };
 }
