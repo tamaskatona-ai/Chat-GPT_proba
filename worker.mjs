@@ -19,7 +19,7 @@ export class VegvarWorld {
       const ip=request.headers.get('cf-connecting-ip')||'local',now=Date.now();let rate=this.rates.get(ip);
       if(!rate||now-rate.at>60000){rate={at:now,count:0,joins:0};this.rates.set(ip,rate);}
       if(this.rates.size>4096)for(const [k,v] of this.rates)if(now-v.at>60000)this.rates.delete(k);
-      if(++rate.count>240||(new URL(request.url).pathname==='/api/players'&&request.method==='POST'&&++rate.joins>10))return new Response(JSON.stringify({error:'Túl sok kérés. Várj egy percet.'}),{status:429,headers:{'Content-Type':'application/json','Retry-After':'60'}});
+      if(++rate.count>240||(['/api/players','/api/cloud/register','/api/cloud/login'].includes(new URL(request.url).pathname)&&request.method==='POST'&&++rate.joins>10))return new Response(JSON.stringify({error:'Túl sok kérés. Várj egy percet.'}),{status:429,headers:{'Content-Type':'application/json','Retry-After':'60'}});
       const before=JSON.stringify(this.world.data);
       try{
         const response=await online.handleRequest(this.world,request,{allowedOrigins:this.env.ALLOWED_ORIGINS?.split(',')});

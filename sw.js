@@ -1,12 +1,12 @@
 /* A build.js a teljes alkalmazás tartalmából számolja az új kiadás azonosítóját. */
 'use strict';
-const CACHE_VERSION = '900ae655e79ba9ea';
+const CACHE_VERSION = '74eff8bc15352132';
 const SCOPE = new URL('./', self.location.href);
 const CACHE_PREFIX = 'vegvar-app-' + SCOPE.pathname + '-';
 const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;
 const CORE_FILES = [
   './', 'index.html', 'style.css', 'engine.js', 'game.js', 'scene.js', 'world3d.js',
-  'vendor/three.min.js', 'multiplayer-client.js', 'pwa.js', 'manifest.webmanifest',
+  'vendor/three.min.js', 'multiplayer-client.js','cloud-client.js', 'pwa.js', 'manifest.webmanifest',
   'icons/apple-touch-icon.png', 'icons/icon-192.png', 'icons/icon-512.png'
 ];
 self.addEventListener('install', event => {

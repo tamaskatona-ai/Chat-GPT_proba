@@ -12,6 +12,30 @@ A szerver alapértelmezett portja 3000, a `PORT` változóval módosítható. El
 
 A GitHubon válaszd a **Code → Download ZIP** lehetőséget, majd csomagold ki a letöltött fájlt. Nyisd meg a `vegvar.html` fájlt Chrome-ban vagy Edge-ben: az egyetlen fájl tartalmazza a teljes játékot, Node.js nélkül is használható. Az `index.html` fájl is megnyitható, ha a mellette lévő CSS- és JavaScript-fájlok ugyanabban a mappában maradnak.
 
+## Felhőmentés: ugyanaz az állás PC-n és telefonon
+
+A **Felhőmentés és bejelentkezés** panelen saját játékfiókot hozhatsz létre felhasználónévvel és legalább 10 karakteres jelszóval. Ez a játék saját fiókja, nem a Cloudflare- vagy GitHub-jelszavad.
+
+1. **Először azon a PC-n nyisd meg a frissített játékot, ahol a magasabb szintű bázis megvan.** Válaszd az **Új fiók és a meglévő állás mentése** gombot. A jelenlegi egyjátékos bázis, épületszintek, katonák, készletek, morál, óriássérülések, felderítés és folyamatban lévő PvE-csata kerül a felhőbe. A helyi eredeti mentés megmarad.
+2. Várd meg a **Mentve a felhőbe** jelzést, vagy nyomd meg a **Mentés most** gombot.
+3. Telefonon ugyanannál a felhőszervernél ugyanazzal a felhasználónévvel és jelszóval válaszd a **Bejelentkezés** gombot. A telefonon látható új, 1. szintű bázis nem írhatja felül a meglévő fiókot.
+
+Ha már előbb létrehoztál egy fiókot a telefonos, alacsonyabb szintű állásból, a PC-n jelentkezz be, majd az **Eredeti helyi bázis átvétele a felhőbe** gombbal, külön megerősítéssel emelheted át az eredeti PC-s egyjátékos mentést. Bejelentkezéskor ez sosem történik meg automatikusan.
+
+A változások fél másodperces késleltetéssel, illetve legfeljebb öt másodpercenként mentődnek. A szerveren változat- és készülékellenőrzés védi az állást: egy korábban nyitva maradt PC-ablak nem írhatja felül a telefon újabb állását. Szükség esetén a **Folytatás ezen a készüléken** gomb tölti be a legfrissebb felhőmentést és adja át a személyes játék vezérlését. Hálózati hiba esetén a felhős egyjátékos mód módosításai szünetelnek, amíg helyreáll a kapcsolat. A jelszó nincs a böngésző tárhelyén vagy a szerveren olvasható formában; a szerver sózott, 600 000 körös PBKDF2-SHA256 jelszólenyomatot és lejáró, hash-elt munkamenetkulcsokat tárol.
+
+Ha a magasabb állás **már online játékszobában** van, azon a PC-n hozd létre a fiókot, miközben be vagy lépve a régi online bázisba. A fiók ahhoz a szerveres játékoshoz kapcsolódik. Telefonos bejelentkezéskor ugyanaz az online játékos tölthető be, vagy később a **Kapcsolt online bázis folytatása** gomb használható. Meglévő fiókhoz az **Ezt az online bázist is a fiókomhoz kapcsolom** gombbal kapcsolható a jelenlegi online bázis. A korábbi visszatérési kód is megmarad használhatónak.
+
+Az egyjátékos import külön személyes mentés. Nem írja felül és nem növeli mesterségesen a közös szoba szerveren kezelt, versengő bázisának készleteit. E-mailes jelszó-visszaállítás nincs, ezért a saját játékjelszót őrizd meg.
+
+### A régi PC-s mentés helye számít
+
+A böngésző tárhelye webcímenként különbözik: a GitHub Pages, a Workers-játékcím, egy másik böngésző és a letöltött HTML nem olvassa egymás helyi mentését. A régi bázisnál kell indítani a felhőbe mentést. A friss GitHub-változat alapértelmezetten a `https://vegvar-online.tamas-katona.workers.dev` szerverhez csatlakozik, és a már engedélyezett GitHub-originből is feltölthető a személyes állás. Másik szerverhez a **Felhőszerver címe** mező módosítható.
+
+Letöltött HTML esetén a friss `vegvar.html`-t az eredeti fájl helyén, azonos fájlnéven nyisd meg ugyanabban a böngészőben; az eredeti fájlról előbb készíts másolatot. Fájlokhoz tartozó tárhely viselkedése böngészőfüggő. A felhőmentéshez internet és a friss szerververzió szükséges; az alkalmazásban a **Frissítés és újraindítás** gombbal válthatsz az új kiadásra.
+
+A Cloudflare SQLite-tárolója a már meglévő online világ mellé menti a személyes fiókokat, külön adatbázis-beállítás vagy migrációs törlés nélkül. Az `/api/online` válaszában a `cloudSaves: true` jelzi az új szerver képességét. Helyi Node-szervernél ugyanaz a védett `data/online.json` mentés tárolja a fiókokat is. Egy szervervilág legfeljebb 128 személyes fiókot enged.
+
 ## Többjátékos mód: egymás megtámadása
 
 A **Közös játékszoba** panelen legfeljebb nyolcan játszhattok egymás ellen. Név, szoba és meghívólink, szerveren mentett bázisok, 15 másodperces portyák, automatikus védekezés, veszteségek, valós zsákmányátadás és mindkét játékosnak csatajelentés tartozik hozzá. Az egyjátékos mentés külön megmarad.

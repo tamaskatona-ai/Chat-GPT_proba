@@ -1,5 +1,6 @@
 'use strict';
 const E=require('./engine');
+const cloud=require('./cloud-saves');
 const {randomBytes,randomUUID,createHash}=require('node:crypto');
 const RULES={duration:15000,cooldown:60000,shield:120000,minSoldiers:5,maxPlayers:8,maxWorldPlayers:256};
 class GameError extends Error{constructor(message,status=400){super(message);this.status=status;}}
@@ -7,6 +8,7 @@ const fail=(message,status)=>{throw new GameError(message,status);};
 const hash=token=>createHash('sha256').update(token).digest('hex');
 function createWorld(saved){
  const data=saved||{version:1,revision:0,players:[]};if(data.version!==1||!Array.isArray(data.players))throw Error('Érvénytelen online mentés.');
+ if(data.accounts===undefined)data.accounts=[];
  if(data.revision===undefined)data.revision=0;
  for(const p of data.players)E.migrate(p.state);
  const players=()=>data.players;
@@ -35,7 +37,7 @@ function createWorld(saved){
    log(defender,`${p.name} megtámadta a bázisodat. ${win?'A támadó győzött.':'A védők győztek!'} Veszteség: ${defenseLoss} katona. Elveszett arany: ${loot.gold}.`);
   }
  }
- function authenticate(token){if(typeof token!=='string'||! /^[a-f0-9]{48}$/.test(token))fail('Hiányzó vagy érvénytelen visszatérési kód.',401);const p=players().find(p=>p.tokenHash===hash(token));if(!p)fail('A visszatérési kód nem található.',401);return p;}
+ function authenticate(token){if(typeof token!=='string'||! /^[a-f0-9]{48}$/.test(token))fail('Hiányzó vagy érvénytelen visszatérési kód.',401);const account=cloud.accountFor(data,token);const p=players().find(p=>p.tokenHash===hash(token)||(account&&p.id===account.playerId));if(!p)fail('A visszatérési kód nem található.',401);return p;}
  function join(name,room,now){
   if(typeof name!=='string'||name.trim().length<2||name.trim().length>24||/[\u0000-\u001f<>]/.test(name))fail('A parancsnok neve 2–24 karakter legyen, HTML-jelek nélkül.');
   name=name.trim();
@@ -81,23 +83,24 @@ function createWorld(saved){
 }
 async function handleRequest(world,request,options={}){
  const now=options.now??Date.now(),url=new URL(request.url),origin=request.headers.get('origin');
- const origins=options.allowedOrigins||['https://tamaskatona-ai.github.io'];
+ const origins=options.allowedOrigins||['https://tamaskatona-ai.github.io','null'];
  const headers={'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Vary':'Origin'};
  if(origin&&origin!==url.origin&&!origins.includes(origin))return new Response(JSON.stringify({error:'Ez a webcím nincs engedélyezve a szerveren.'}),{status:403,headers});
  if(origin){headers['Access-Control-Allow-Origin']=origin;headers['Access-Control-Allow-Methods']='GET, POST, OPTIONS';headers['Access-Control-Allow-Headers']='Authorization, Content-Type';}
  const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers});
  if(request.method==='OPTIONS')return new Response(null,{status:204,headers});
  try{
-  if(url.pathname==='/api/online'&&request.method==='GET')return json({game:'vegvar',version:1});
+  if(url.pathname==='/api/online'&&request.method==='GET')return json({game:'vegvar',version:1,cloudSaves:true});
   if(!['GET','POST'].includes(request.method))return json({error:'Nem támogatott kérés.'},405);
   let body;
   if(request.method==='POST'){
    if(!request.headers.get('content-type')?.startsWith('application/json'))return json({error:'JSON-kérés szükséges.'},415);
-   const text=await request.text();if(text.length>8192)return json({error:'Túl nagy kérés.'},413);
+   const text=await request.text();if(text.length>65536)return json({error:'Túl nagy kérés.'},413);
    try{body=JSON.parse(text);}catch{return json({error:'Érvénytelen JSON.'},400);}
    if(!body||typeof body!=='object'||Array.isArray(body))return json({error:'Érvénytelen kérés.'},400);
   }
   world.tick(now);
+  if(url.pathname.startsWith('/api/cloud/'))return await cloud.handleCloud(world,request,url,body,now,json);
   if(url.pathname==='/api/players'&&request.method==='POST'){
    const {player,token}=world.join(body.name,body.room,now);return json({...world.view(player,now),token},201);
   }
@@ -105,6 +108,6 @@ async function handleRequest(world,request,options={}){
   if(url.pathname==='/api/state'&&request.method==='GET')return json(world.view(p,now));
   if(url.pathname==='/api/action'&&request.method==='POST'){world.action(p,body,now);return json(world.view(p,now));}
   return json({error:'Nincs ilyen végpont.'},404);
- }catch(error){if(error instanceof GameError)return json({error:error.message},error.status);throw error;}
+ }catch(error){if(error instanceof GameError||error instanceof cloud.CloudError)return json({error:error.message},error.status);throw error;}
 }
 module.exports={createWorld,handleRequest,RULES};

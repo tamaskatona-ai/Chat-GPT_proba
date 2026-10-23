@@ -11,12 +11,12 @@ selectedGiant=state.mission?.kind==='giant'?(state.mission.giantId??0):0;
 const $=id=>document.getElementById(id);
 const resourceNames={wood:'fa',metal:'vas',food:'élelem'};
 const number=value=>Math.floor(value).toLocaleString('hu-HU');
-function save(){if(window.OnlineGame?.active()){$('saved').textContent='● Online mentés a szerveren';return;}try{localStorage.setItem(key,JSON.stringify(state));}catch{storageAvailable=false;}$('saved').textContent=storageAvailable?'● Helyi mentés aktív':'○ Mentés nem elérhető';}
+function save(){if(window.OnlineGame?.active()){$('saved').textContent='● Online mentés a szerveren';return;}if(window.CloudSave?.active()){window.CloudSave.cache(state);$('saved').textContent='● Felhőfiók aktív';return;}try{localStorage.setItem(key,JSON.stringify(state));}catch{storageAvailable=false;}$('saved').textContent=storageAvailable?'● Helyi mentés aktív':'○ Mentés nem elérhető';}
 let timer;
 function toast(message){$('toast').textContent=message;$('toast').style.display='block';clearTimeout(timer);timer=setTimeout(()=>$('toast').style.display='none',5000);}
-function log(message){state.log.unshift(message);state.log=state.log.slice(0,5);}
+function log(message){window.CloudSave?.changed();state.log.unshift(message);state.log=state.log.slice(0,5);}
 function sync(){
-  if(window.OnlineGame?.active())return;
+  if(window.OnlineGame?.active()||window.CloudSave?.blocked())return;
   const now=Date.now();E.advance(state,now);
   for(const result of [E.resolve(state,now),E.resolveScout(state,now)])if(result){log(result);toast(result);}
 }
@@ -88,8 +88,8 @@ function render(){
   const maxed=state.morale>=E.maxMorale;
   $('boost-morale').disabled=Boolean(state.mission)||maxed||state.gold<E.moraleCost(state);
   $('boost-morale').textContent=maxed?'Maximális morál':`Morál +10% · ${E.moraleCost(state)} arany`;
-  if(window.OnlineGame?.blocked()){for(const el of document.querySelectorAll('[data-upgrade],[data-gold-upgrade],[data-activate-bonus],#train,#train-gold,#boost-morale,#attack-giant,#expedition,#map-expedition,#launch-scout'))el.disabled=true;}
-  $('reset').disabled=Boolean(window.OnlineGame?.active());
+  if(window.OnlineGame?.blocked()||window.CloudSave?.blocked()){for(const el of document.querySelectorAll('[data-upgrade],[data-gold-upgrade],[data-activate-bonus],#train,#train-gold,#boost-morale,#attack-giant,#expedition,#map-expedition,#launch-scout'))el.disabled=true;}
+  $('reset').disabled=Boolean(window.OnlineGame?.active()||window.CloudSave?.blocked());
   $('log').replaceChildren(...state.log.map(message=>{const li=document.createElement('li');li.textContent=message;return li;}));
 }
 function perform(kind,id,useGold=false){
@@ -186,8 +186,19 @@ const worldView=BattleScene.mount($('world-canvas'),()=>state,id=>{
 // Online módban kizárólag szerverválaszt rajzolunk; a helyi mentés külön megmarad.
 if(window.OnlineGame){
  let offlineState=null;
+ window.OnlineGame.soloState=()=>offlineState||state;
  window.OnlineGame.start=()=>{if(!offlineState){offlineState=structuredClone(state);}};
  window.OnlineGame.stop=()=>{if(offlineState){state=offlineState;offlineState=null;lastBuildingMarkup='';sync();save();render();}};
  window.OnlineGame.applyState=s=>{const oldMission=state.mission?.ends;state=E.migrate(s);lastBuildingMarkup='';lastBonusMarkup='';render();save();if(state.mission&&state.mission.ends!==oldMission)$('world-title').scrollIntoView({block:'start',behavior:'instant'});};
  window.OnlineGame.refreshControls=()=>{lastBuildingMarkup='';lastBonusMarkup='';render();};window.OnlineGame.notify=toast;
 }
+
+let cloudLocalOriginal=null;
+window.GameSave={
+ original(){return structuredClone(cloudLocalOriginal||state);},
+ beginCloud(){if(!cloudLocalOriginal)cloudLocalOriginal=structuredClone(state);},
+ endCloud(){if(cloudLocalOriginal){state=cloudLocalOriginal;cloudLocalOriginal=null;lastBuildingMarkup='';lastBonusMarkup='';sync();save();render();}},
+ load(s){state=E.migrate(structuredClone(s));lastBuildingMarkup='';lastBonusMarkup='';sync();save();render();},
+ readSolo(){return structuredClone(window.OnlineGame?.active()?window.OnlineGame.soloState():state);},
+ refresh(){lastBuildingMarkup='';lastBonusMarkup='';render();}
+};

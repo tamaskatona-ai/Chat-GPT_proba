@@ -22,6 +22,7 @@
  }
  function apply(data){if(snapshot&&data.revision<snapshot.revision)return;snapshot=data;data.state.incomingRaid=data.me.incoming;data.state.lastPvpLootGold=data.reports[0]?.attackerId===data.me.id?data.reports[0].loot.gold:0;connected=true;window.OnlineGame.applyState(data.state);draw();}
  function draw(){
+  window.CloudSave?.draw?.();
   $('online-setup').hidden=active;$('online-game').hidden=!active;
   if(!active)return;
   const {me,players,reports,serverTime}=snapshot;
@@ -61,10 +62,16 @@
  $('online-copy-code').onclick=async()=>{try{await navigator.clipboard.writeText(token);message('Saját visszatérési kód másolva. Mentsd el magadnak!');}catch{const input=$('online-recovery-code');input.type='text';input.focus();input.select();message('Másold és mentsd el a saját kódodat.');}};
  $('online-copy').onclick=async()=>{try{await navigator.clipboard.writeText($('online-invite').value);message('Meghívólink másolva. Küldd el a barátodnak!');}catch{$('online-invite').focus();$('online-invite').select();message('Jelöld ki és másold a meghívólinket.');}};
  window.OnlineGame={
+  credentials:()=>active?{server:base,token}:null,leave:()=>$('online-leave').onclick(),
+  async loginWithCloud(server,auth){
+   if(busy)throw Error('Várd meg az online művelet végét.');
+   const response=await fetch(server+'/api/state',{cache:'no-store',headers:{Authorization:'Bearer '+auth}});const data=await response.json();if(!response.ok)throw Error(data.error);
+   if(active){active=false;generation++;window.OnlineGame.stop();}base=server;token=auth;active=true;generation++;store(storageKey(),token);store('vegvar-online-server',base);window.OnlineGame.start();apply(data);
+  },
   active:()=>active,blocked:()=>active&&(!connected||busy||Boolean(snapshot?.me.incoming)),
   start(){},stop(){},applyState(){},
   async action(command){
-   if(!active||busy)return;if(!connected){message('Nincs kapcsolat. Az online állás nem módosítható internet nélkül.');return;}
+   if(!active||busy||window.CloudSave?.switching())return;if(!connected){message('Nincs kapcsolat. Az online állás nem módosítható internet nélkül.');return;}
    busy=true;window.OnlineGame.refreshControls?.();draw();
    try{apply(await api('/api/action',command));}
    catch(error){message(error.message);window.OnlineGame.notify?.(error.message);}
@@ -86,6 +93,6 @@
  window.addEventListener('offline',()=>{if(active){connected=false;draw();window.OnlineGame.refreshControls?.();}});
  // Automatikus visszatérés csak az ehhez a szerverhez korábban eltett saját kulccsal.
  window.addEventListener('load',async()=>{
-  try{const current=generation;base=normalize($('online-server').value);const saved=stored(storageKey());if(!saved)return;token=saved;const data=await api('/api/state');if(current!==generation||busy)return;active=true;generation++;window.OnlineGame.start();apply(data);}catch{message('Az online módhoz csatlakozz vagy add meg a saját visszatérési kódodat.');}
+  try{const current=generation;base=normalize($('online-server').value);const saved=stored(storageKey());if(!saved)return;token=saved;const data=await api('/api/state');if(current!==generation||busy||window.CloudSave?.active())return;active=true;generation++;window.OnlineGame.start();apply(data);}catch{message('Az online módhoz csatlakozz vagy add meg a saját visszatérési kódodat.');}
  });
 })();

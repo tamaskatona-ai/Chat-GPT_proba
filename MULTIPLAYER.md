@@ -51,7 +51,7 @@ A Node.js 22+ szerverhez nincsen külső futásidejű függőség. A `PORT` vál
 
 A Node-szerver a `data/online.json` fájlba ment, atomikus fájlcserével. A könyvtár Gitből kizárt, a fájl nem érhető el HTTP-n. A szervergépen készíts róla biztonsági másolatot. Olyan tárhelyen, ahol újraindításkor törlődik a fájlrendszer, ez a változat nem tartós: ott a Cloudflare-változatot vagy állandó lemezt használj. Több Node-folyamat nem használhatja egyszerre ugyanazt a mentésfájlt.
 
-Másik weboldalról való csatlakozáshoz az `ALLOWED_ORIGINS` környezeti változóban, vesszővel elválasztva adhatók meg az engedélyezett origin-ek. Alapértelmezetten a saját origin és `https://tamaskatona-ai.github.io` engedélyezett. A visszatérési kulcsok Bearer fejlécben mennek, az állásválaszok `no-store` jelölést kapnak.
+Másik weboldalról való csatlakozáshoz az `ALLOWED_ORIGINS` környezeti változóban, vesszővel elválasztva adhatók meg az engedélyezett origin-ek. Alapértelmezetten a saját origin, `https://tamaskatona-ai.github.io` és a letöltött HTML-ből érkező `null` origin engedélyezett. A JSON API nem használ sütis hitelesítést: személyes mentéshez és műveletekhez a saját Bearer-kulcs vagy bejelentkezés szükséges. A visszatérési kulcsok Bearer fejlécben mennek, az állásválaszok `no-store` jelölést kapnak.
 
 Cloudflare helyi tesztje:
 
