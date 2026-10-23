@@ -8,6 +8,13 @@
     const travel = progress < .4 ? progress / .4 : progress < .7 ? 1 : Math.max(0, 1 - (progress - .7) / .3);
     return { phase, progress, travel, battle: Math.max(0, Math.min(1, (progress - .4) / .3)), win: mission.power >= mission.enemy };
   }
+  function scoutView(scout, now) {
+    if(!scout)return {phase:'idle',progress:0,travel:0};
+    const progress=Math.max(0,Math.min(1,(now-scout.started)/(scout.ends-scout.started)));
+    const phase=now<scout.searchStarts?'outbound':now<scout.searchEnds?'search':now<scout.ends?'return':'done';
+    const travel=phase==='outbound'?Math.max(0,(now-scout.started)/(scout.searchStarts-scout.started)):phase==='search'?1:Math.max(0,1-(now-scout.searchEnds)/(scout.ends-scout.searchEnds));
+    return {phase,progress,travel};
+  }
   const sites = [
     { id: 'hq', x: 170, y: 270, w: 102, h: 75, color: '#829a78', roof: '#445d52' },
     { id: 'farm', x: 315, y: 260, w: 92, h: 53, color: '#93bea0', roof: '#578d80' },
@@ -51,16 +58,16 @@
       const u=1-t;
       return {x:u*u*u*510+3*u*u*t*680+3*u*t*t*710+t*t*t*896,y:u*u*u*351+3*u*u*t*400+3*u*t*t*451+t*t*t*345};
     }
-    function human(x,y,time,i,zombie=false,facing=1,moving=true,dead=false) {
+    function human(x,y,time,i,zombie=false,facing=1,moving=true,dead=false,scout=false) {
       ctx.save();ctx.translate(x,y);ctx.scale(facing,1);
       if(dead){ctx.rotate(-Math.PI/2);ctx.globalAlpha=.4;}
       ellipse(1,2,8,3,'#11201d66');
       const step=moving?Math.sin(time*11+i*1.9)*4:Math.sin(time*2+i)*.5;
       ctx.lineWidth=3;ctx.lineCap='round';ctx.strokeStyle=zombie?'#514c42':'#273e3b';
       ctx.beginPath();ctx.moveTo(-3,-7);ctx.lineTo(-4+step,1);ctx.moveTo(3,-7);ctx.lineTo(4-step,1);ctx.stroke();
-      ctx.fillStyle=zombie?'#7c8861':'#5d8172';ctx.fillRect(-5,-19,10,12);
+      ctx.fillStyle=zombie?'#7c8861':scout?'#6bb9be':'#5d8172';ctx.fillRect(-5,-19,10,12);
       ctx.fillStyle=zombie?'#9ba56b':'#e0b78a';ctx.fillRect(-4,-27,8,8);
-      if(!zombie){ellipse(0,-27,6,3,'#3c6255');ctx.fillStyle='#253733';ctx.fillRect(1,-17,12,3);ctx.fillStyle='#93a283';ctx.fillRect(-7,-18,3,9);}
+      if(!zombie){ellipse(0,-27,6,3,scout?'#367f8c':'#3c6255');ctx.fillStyle='#253733';ctx.fillRect(1,-17,12,3);ctx.fillStyle='#93a283';ctx.fillRect(-7,-18,3,9);}
       else {ctx.strokeStyle='#99a56f';ctx.beginPath();ctx.moveTo(3,-17);ctx.lineTo(12,-14+step*.3);ctx.stroke();}
       ctx.restore();
     }
@@ -85,7 +92,7 @@
       if(previousMission&&!state.mission)aftermath={until:now+3500,win:previousMission.power>=previousMission.enemy,gold:root.Engine.goldReward(previousMission.zone)};
       previousMission=state.mission;
       if(aftermath&&now>aftermath.until)aftermath=null;
-      const view=missionView(state.mission,now);
+      const view=missionView(state.mission,now),scout=scoutView(state.scout,now);
       const dpr=Math.min(root.devicePixelRatio||1,2),width=Math.round(canvas.clientWidth*dpr),height=Math.round(canvas.clientHeight*dpr);
       if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}
       ctx.setTransform(canvas.width/W,0,0,canvas.height/H,0,0);
@@ -93,6 +100,9 @@
       poly([[0,45],[170,20],[340,93],[550,25],[760,56],[990,10],[1100,49],[1100,0],[0,0]],'#92a382');
       for(let i=0;i<170;i++){const x=(i*137.7)%W,y=(i*97.3)%H;ellipse(x,y,1+(i%3),1,'#d2d1971a');}
       road();
+      ctx.beginPath();ctx.moveTo(565,350);ctx.bezierCurveTo(614,315,625,225,730,215);
+      ctx.strokeStyle='#93c1b355';ctx.lineWidth=17;ctx.stroke();
+      ctx.setLineDash([4,7]);ctx.strokeStyle='#a4dbcc';ctx.lineWidth=2;ctx.stroke();ctx.setLineDash([]);
       for(let i=0;i<35;i++){const x=(i*131)%W,y=(i*79)%H;if((x>75&&x<580&&y>130&&y<500)||(y>295&&y<470))continue;tree(x,y,.65+(i%4)*.12);}
       // Sol en pierre et enceinte du camp.
       poly([[87,172],[526,172],[557,470],[87,470]],'#a7ab8066','#bbc09255');
@@ -106,7 +116,15 @@
       for(let i=0;i<4;i++){let x=874+(i%2)*116,y=208+Math.floor(i/2)*244;box(x,y,65,50+(i%3)*17,'#78817a','#4c5d56');poly([[x-30,y-50],[x-10,y-65],[x+2,y-45],[x+17,y-56],[x+32,y-50]],'#43574b');ctx.fillStyle='#2a3934';ctx.fillRect(x-12,y-29,14,29);}
       text(`FERTŐZÖTT KÖRZET · ${state.mission?.zone||state.zone}`,924,104,14,'#f1d3a5');
       ellipse(913,353,80,50,'#d6a36a12');
-      const armyCount=Math.min(24,state.soldiers);
+      // A felderítők külön táborban kutatnak, távol a harcoló seregtől.
+      ellipse(730,211,62,30,'#b3d9bc22');
+      poly([[690,211],[721,169],[754,211]],'#78a69b');
+      poly([[721,169],[754,211],[774,198],[745,164]],'#486f68');
+      poly([[708,211],[721,186],[736,211]],'#294c43');
+      box(774,228,22,17,'#c0a16b','#d9bb7e');box(791,213,18,14,'#aa8b5e','#cbb37b');
+      text('ELHAGYOTT ELLÁTÓHELY',735,143,11,'#c9f1df');
+      const armySoldiers=state.mission?(state.mission.soldiers??root.Engine.availableSoldiers(state)):root.Engine.availableSoldiers(state);
+      const armyCount=Math.min(24,armySoldiers);
       let center=view.phase==='idle'?{x:395,y:340}:point(view.travel);
       let showCount=armyCount;
       if(view.phase==='return'||view.phase==='done')showCount=Math.max(0,armyCount-Math.max(1,Math.ceil(armyCount*(view.win?.12:.35))));
@@ -115,7 +133,23 @@
         let x=center.x+(i%4)*13-25,y=center.y+Math.floor(i/4)*14-15;
         human(x,y,time,i,false,view.phase==='return'?-1:1,moving);
       }
-      if(showCount)text(`${view.phase==='idle'?'HELYŐRSÉG':'SEREG'} · ${view.phase==='return'?Math.max(0,state.soldiers-Math.max(1,Math.ceil(state.soldiers*(view.win?.12:.35)))):state.soldiers}`,center.x,center.y-57,11,'#f2f5d9');
+      if(showCount)text(`${view.phase==='idle'?'HELYŐRSÉG':'SEREG'} · ${view.phase==='return'?Math.max(0,armySoldiers-Math.max(1,Math.ceil(armySoldiers*(view.win?.12:.35)))):armySoldiers}`,center.x,center.y-57,11,'#f2f5d9');
+      if(state.scout){
+        const t=scout.travel,u=1-t;
+        const sx=u*u*u*565+3*u*u*t*614+3*u*t*t*625+t*t*t*730;
+        const sy=u*u*u*350+3*u*u*t*315+3*u*t*t*225+t*t*t*215;
+        for(let i=0;i<state.scout.soldiers;i++){
+          const x=sx+(i-1)*16,y=sy+(i%2)*11;
+          human(x,y,time,i,false,scout.phase==='return'?-1:1,scout.phase!=='search',false,true);
+          if(scout.phase==='return'){ctx.fillStyle='#e1bd74';ctx.fillRect(x-9,y-19,6,9);}
+          if(scout.phase==='search'){
+            ctx.strokeStyle='#b0e8e4';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x+11+Math.sin(time*2+i)*3,y-19,4,0,Math.PI*2);ctx.moveTo(x+14,y-16);ctx.lineTo(x+19,y-10);ctx.stroke();
+          }
+        }
+        const remaining=Math.max(0,Math.ceil((state.scout.ends-now)/1000));
+        const clock=`${Math.floor(remaining/60)}:${String(remaining%60).padStart(2,'0')}`;
+        text(`3 FELDERÍTŐ · ${scout.phase==='search'?'KUTATÁS':scout.phase==='return'?'HAZATÉRÉS':'KIVONULÁS'} · ${clock}`,sx,sy-46,10,'#d2fff5');
+      }
       const zombies=9;
       for(let i=0;i<zombies;i++){
         const fighting=view.phase==='battle',dead=view.win&&(view.phase==='return'||view.phase==='done'||(fighting&&view.battle>(i+1)/zombies));
@@ -133,7 +167,7 @@
       if(aftermath){ctx.fillStyle='#14281ff0';ctx.fillRect(357,42,386,43);text(aftermath.win?`GYŐZELEM · +${aftermath.gold} ARANY ÉS ZSÁKMÁNY`:'VISSZAVONULÁS · Erősítsd a sereget!',550,69,14,aftermath.win?'#d6ed91':'#f0bc91');}
       // A térkép jelmagyarázata az alsó sávban.
       ctx.fillStyle='#152b25d9';ctx.fillRect(0,548,W,42);text('● SAJÁT BÁZIS',28,574,10,'#d6ed91','left');text('━ EXPEDÍCIÓ ÚTVONALA',210,574,10,'#d2caa6','left');text('● FERTŐZÖTTEK',W-30,574,10,'#e8bb8b','right');
-      const label=aftermath?(aftermath.win?'Győzelem! A sereg hazatért.':'A sereg visszavonult.'):phaseText[view.phase];
+      const label=state.scout&&view.phase==='idle'?`Felderítők: ${scout.phase==='search'?'ellátmányt keresnek':scout.phase==='return'?'hazafelé tartanak':'elhagyják a várost'}`:aftermath?(aftermath.win?'Győzelem! A sereg hazatért.':'A sereg visszavonult.'):phaseText[view.phase];
       if(label!==lastStatus){status.textContent=label;lastStatus=label;}
       progressBar.style.width=`${view.progress*100}%`;
       frameId=root.requestAnimationFrame(()=>draw(Date.now()));
@@ -147,6 +181,6 @@
     draw(Date.now());
     return { destroy(){root.cancelAnimationFrame(frameId);canvas.removeEventListener('click',selectAt);} };
   }
-  const api={missionView,mount};
+  const api={missionView,scoutView,mount};
   if(typeof module!=='undefined')module.exports=api;else root.BattleScene=api;
 })(globalThis);

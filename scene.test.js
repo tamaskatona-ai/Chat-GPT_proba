@@ -22,3 +22,17 @@ test('visual battle outcome matches actual army and enemy strengths',()=>{
   assert.equal(missionView(mission,8000).win,true);
   assert.equal(missionView({...mission,power:50},8000).win,false);
 });
+
+test('scout graphics search for a full five minutes between outbound and return animations',()=>{
+  const E=require('./engine'),{scoutView}=require('./scene'),s=E.initial(),now=s.last;
+  E.launchScout(s,now);
+  assert.equal(scoutView(s.scout,now).phase,'outbound');
+  assert.equal(scoutView(s.scout,now+5000).travel,.5);
+  assert.equal(scoutView(s.scout,now+10000).phase,'search');
+  assert.equal(scoutView(s.scout,now+309999).phase,'search');
+  assert.equal(scoutView(s.scout,now+310000).phase,'return');
+  assert.equal(scoutView(s.scout,now+315000).travel,.5);
+  assert.equal(scoutView(s.scout,now+320000).phase,'done');
+  assert.equal(scoutView(s.scout,now+320000).travel,0);
+  assert.equal(scoutView(null,now).phase,'idle');
+});

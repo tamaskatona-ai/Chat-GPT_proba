@@ -3,23 +3,66 @@
 .world{margin:0 0 34px;border:1px solid #53654a;border-radius:12px;overflow:hidden;background:#1b2b23;box-shadow:0 20px 50px #0002}.world-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 24px;background:#1b2b23}.world-toolbar .eyebrow{margin:0 0 7px}.world-toolbar h2{font-size:21px}#scene-status{font-size:11px;color:var(--green);text-align:right}.world-scroll{overflow-x:auto;scrollbar-color:#879a65 #263e30}#world-canvas{display:block;width:100%;height:auto;aspect-ratio:1100/590;cursor:pointer}.march-track{height:4px;background:#2b3f2b}#march-progress{height:100%;width:0;background:var(--green);transition:width .1s linear}.world-actions{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:16px 24px}.world-actions>span{font-size:10px;color:#adbaa5}.world-actions .primary{width:auto;min-width:190px;justify-content:center}.building.selected{border-color:var(--green);box-shadow:0 0 0 2px #d6ed9133}.intro{padding-top:28px;padding-bottom:22px}h1{font-size:36px}.resources{margin-bottom:24px}@media(max-width:700px){#world-canvas{min-width:760px}.world-toolbar{padding:15px;align-items:flex-start}.world-toolbar h2{font-size:17px}#scene-status{max-width:130px;font-size:10px}.world-actions{padding:14px;flex-direction:column;align-items:stretch}.world-actions .primary{width:100%}.world-actions>span{line-height:1.7}.world-toolbar .eyebrow{font-size:8px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 
 .resources{grid-template-columns:repeat(5,minmax(0,1fr))}.resource{min-width:0;padding:16px 12px;gap:10px}.resource strong{overflow-wrap:anywhere}.resource em{font-size:9px}.gold-resource{border-color:#74633b;background:#302d20}.gold-resource em,.gold-resource strong{color:#f3d486}.gold-button{background:#443b25!important;border:1px solid #87713e!important;color:#ffe0a0!important;padding:12px;font-size:11px;font-weight:700}.building .gold-button{margin-top:8px}.army{flex-wrap:wrap}.army>#train-gold{flex-basis:100%;font-size:10px}.morale-panel p{font-size:11px}.morale-meter{display:flex;gap:6px;margin:17px 0}.morale-meter span{height:9px;flex:1;background:#354437;border-radius:3px}.morale-meter .filled{background:#e7c36b;box-shadow:0 0 10px #e7c36b22}.morale-bonus{color:#efcf84;font-size:18px}.morale-panel>.gold-button{width:100%;margin-top:5px}.loot-preview{color:#efcf84;font-size:11px;text-align:center}.gold-total{font-size:18px;font-weight:800;color:#f2d48b}dialog{width:min(440px,calc(100vw - 32px));color:#eef1e8;background:#1b2b23;border:1px solid #8b7948;border-radius:12px;padding:26px;box-shadow:0 20px 80px #0009}dialog::backdrop{background:#07130fc9;backdrop-filter:blur(5px)}dialog h2{line-height:1.5}dialog p{font-size:12px;line-height:1.8}dialog .gold-total{font-size:17px}.dialog-actions{display:flex;gap:12px;margin-top:22px;justify-content:flex-end}.dialog-actions button{padding:12px;background:#2c3c30;color:#d8e1d0}[hidden]{display:none!important}@media(max-width:1050px){.resources{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:560px){.resources{grid-template-columns:repeat(2,minmax(0,1fr))}.resource:last-child{grid-column:1/-1}.resource{padding:12px}.dialog-actions{flex-direction:column}.dialog-actions button{width:100%}}
-</style></head><body><div class="app"><header><a class="brand" href="#world-title">◈ VÉGVÁR <small>STRATÉGIA · TÚLÉLÉS</small></a><span class="saved" id="saved">● Helyi mentés aktív</span></header><main><section class="intro"><div><p class="eyebrow">AZ ÚJJÁÉPÍTÉS KORA</p><h1>A jövő a falakon<br>belül kezdődik.</h1><p>Építs bázist. Gyűjts erőforrásokat. Szerezd vissza a világot.</p></div><div class="day"><span>ELLENŐRZÖTT KÖRZET</span><strong id="zones">01</strong><span id="rank">Kezdő település</span></div></section><section class="resources" aria-label="Nyersanyagok" id="resources"></section><section class="world" aria-labelledby="world-title"><div class="world-toolbar"><div><p class="eyebrow">ÉLŐ HADMŰVELETI TÉRKÉP</p><h2 id="world-title">A túlélők völgye</h2></div><span id="scene-status" role="status" aria-live="polite">A helyőrség készen áll</span></div><div class="world-scroll"><canvas id="world-canvas" width="1100" height="590" aria-label="Élő játéktér: balra a saját bázis, jobbra a zombik körzete. Az expedíció indításakor a katonák végigvonulnak az úton. Az épületek a térkép alatti gombokkal is fejleszthetők.">A térkép megjelenítéséhez Canvas-t támogató böngésző szükséges.</canvas></div><div class="march-track" aria-hidden="true"><div id="march-progress"></div></div><div class="world-actions"><span>Kattints egy épületre a fejlesztéshez. Telefonon a térkép oldalra görgethető.</span><button class="primary" id="map-expedition">Sereg indítása →</button></div></section><div class="columns"><section><div class="section-title"><h2>A településed</h2><span>ÉPÍTÉS & FEJLESZTÉS</span></div><div class="map"><div class="map-grid" id="buildings"></div><div class="map-caption"><span>● BIZTONSÁGOS TERÜLET</span><span>ÉSZAKI MENEDÉK · 47° N</span></div></div><div class="tip"><strong>Parancsnoki tanács</strong><p>Fejleszd a termelőépületeket a gyorsabb bevételhez. A parancsnokság új épületszinteket engedélyez. Az expedíciók előtt ellenőrizd az erőviszonyokat.</p></div></section><aside><section class="panel"><p class="eyebrow">HADMŰVELETI KÖZPONT</p><h2>A falakon túl</h2><div class="wilderness"><span>☣</span><div id="target">Elhagyott külváros</div><small>FERTŐZÖTT TERÜLET</small></div><div class="comparison"><div><small>SAJÁT ERŐ</small><strong id="power"></strong></div><span>VS</span><div><small>ELLENSÉG</small><strong id="enemy"></strong></div></div><p id="forecast"></p><button class="primary" id="expedition">Expedíció indítása <span>→</span></button><p class="loot-preview" id="loot-preview"></p><p class="subtle">15 másodperc · Arany csak győzelemért jár</p></section><section class="panel army"><div><p class="eyebrow">HELYŐRSÉG</p><h2><span id="soldiers">8</span> katona</h2></div><button id="train">+ 5 katona<small>50 élelem · 20 fém</small></button><button class="gold-button" id="train-gold" hidden></button></section><section class="panel morale-panel"><p class="eyebrow">A SEREG LELKE</p><div class="section-title"><h2>Harci morál</h2><span id="morale-level"></span></div><div class="morale-meter" id="morale-meter" aria-hidden="true"></div><strong class="morale-bonus" id="morale-bonus"></strong><p>A buzdítás tartósan növeli a katonák erejét. A védőfal bónusza külön számít.</p><button class="gold-button" id="boost-morale"></button><p class="subtle">Aranyat a zombik elleni győzelmekért kapsz.<br>Hiányzó nyersanyagok: 1 arany / 10 egység, felfelé kerekítve.</p></section><section class="panel"><div class="section-title"><h2>Eseménynapló</h2><span>ÉLŐ</span></div><ul id="log"></ul></section></aside></div><footer><span>VÉGVÁR / JÁTSZHATÓ PROTOTÍPUS</span><button class="reset" id="reset">Új település</button><span>A haladás ebben a böngészőben tárolódik.</span></footer></main></div><div id="toast" role="status" aria-live="polite"></div><dialog id="gold-dialog" aria-labelledby="gold-dialog-title"><form method="dialog"><p class="eyebrow">ARANY FELHASZNÁLÁSA</p><h2 id="gold-dialog-title">Hiányzó nyersanyagok kiváltása</h2><p id="gold-dialog-details"></p><p class="gold-total" id="gold-dialog-total"></p><p class="subtle">Csak a hiányzó részt fizeted arannyal. A meglévő nyersanyagok is levonódnak.</p><div class="dialog-actions"><button value="cancel">Mégse</button><button class="gold-button" type="button" id="confirm-gold">Kiváltás és végrehajtás</button></div></form></dialog><script>(function(root){
-const buildings={hq:{name:'Parancsnokság',icon:'🏛️',desc:'Minden épület szintkorlátját emeli.',cost:{wood:100,metal:70}},farm:{name:'Üvegház',icon:'🌱',desc:'Élelmet termel a kiképzéshez.',cost:{wood:45,metal:15}},sawmill:{name:'Fűrésztelep',icon:'🪵',desc:'Fát termel az építkezéshez.',cost:{wood:30,metal:20}},mine:{name:'Fémfeldolgozó',icon:'⚙️',desc:'Fémet termel a fejlesztésekhez.',cost:{wood:60,metal:25}},barracks:{name:'Laktanya',icon:'🪖',desc:'Katonákat képez. Szintenként +2 harci erő.',cost:{wood:70,metal:50}},wall:{name:'Védőfal',icon:'🛡️',desc:'Szintenként +15 harci erő.',cost:{wood:80,metal:40}}};
+
+.exploration{display:grid;grid-template-columns:minmax(280px,1fr) minmax(0,1.55fr);gap:24px;margin:0 0 32px}.exploration>.panel{border-color:#3e6259}.exploration .eyebrow{color:#9adbd1}.exploration p{font-size:12px}.scout-status-line{display:flex;justify-content:space-between;align-items:center;gap:15px;margin:20px 0 10px}.scout-status-line strong{font-size:12px;color:#b9ece2}.scout-status-line>span{font-variant-numeric:tabular-nums;color:#d8f1ca;font-size:23px;font-weight:800}#scout-progress{width:100%;height:8px;accent-color:#91d6c4;border:0;border-radius:5px;overflow:hidden;background:#30483b}#scout-progress::-webkit-progress-bar{background:#30483b}#scout-progress::-webkit-progress-value{background:#91d6c4}.scout-reward{color:#edcc84!important;font-weight:700}.bonus-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0}.bonus-card{padding:14px 10px;background:#15241e;border:1px solid #354c3f;border-radius:7px;min-width:0}.bonus-card.active{border-color:#9ad7b0;background:#223b2b}.bonus-icon{font-size:26px}.bonus-card h3{font-size:15px;margin:12px 0 8px}.bonus-card p{font-size:10px;margin:0 0 10px}.bonus-card p strong{font-size:20px;color:#d6ed91}.bonus-time{display:block;font-size:10px;color:#b4d9bd;min-height:30px;font-variant-numeric:tabular-nums}.bonus-card button{width:100%;background:#344b37;color:#d6ed91;padding:10px 5px;font-size:10px}.bonus-panel>.subtle,.scout-panel>.subtle{font-size:10px}@media(max-width:1000px){.exploration{grid-template-columns:1fr}.bonus-card{padding:16px}.bonus-time{min-height:24px}}@media(max-width:560px){.exploration{gap:18px}.bonus-grid{gap:7px}.bonus-card{padding:12px 7px}.bonus-card button{font-size:9px;min-height:42px}.bonus-card p{font-size:9px}.scout-status-line strong{max-width:190px;font-size:11px}.bonus-panel{padding:18px 12px}.bonus-card h3{font-size:13px}}
+</style></head><body><div class="app"><header><a class="brand" href="#world-title">◈ VÉGVÁR <small>STRATÉGIA · TÚLÉLÉS</small></a><span class="saved" id="saved">● Helyi mentés aktív</span></header><main><section class="intro"><div><p class="eyebrow">AZ ÚJJÁÉPÍTÉS KORA</p><h1>A jövő a falakon<br>belül kezdődik.</h1><p>Építs bázist. Gyűjts erőforrásokat. Szerezd vissza a világot.</p></div><div class="day"><span>ELLENŐRZÖTT KÖRZET</span><strong id="zones">01</strong><span id="rank">Kezdő település</span></div></section><section class="resources" aria-label="Nyersanyagok" id="resources"></section><section class="world" aria-labelledby="world-title"><div class="world-toolbar"><div><p class="eyebrow">ÉLŐ HADMŰVELETI TÉRKÉP</p><h2 id="world-title">A túlélők völgye</h2></div><span id="scene-status" role="status" aria-live="polite">A helyőrség készen áll</span></div><div class="world-scroll"><canvas id="world-canvas" width="1100" height="590" aria-label="Élő játéktér: balra a saját bázis, jobbra a zombik körzete. Az expedíció indításakor a katonák végigvonulnak az úton. A kék felderítők külön ösvényen mennek a városon kívüli táborba. Az épületek a térkép alatti gombokkal is fejleszthetők.">A térkép megjelenítéséhez Canvas-t támogató böngésző szükséges.</canvas></div><div class="march-track" aria-hidden="true"><div id="march-progress"></div></div><div class="world-actions"><span>Kattints egy épületre a fejlesztéshez. Telefonon a térkép oldalra görgethető.</span><button class="primary" id="map-expedition">Sereg indítása →</button></div></section><section class="exploration" aria-labelledby="scout-title"><section class="panel scout-panel"><p class="eyebrow">A VÁROS FALAIN TÚL</p><div class="section-title"><h2 id="scout-title">Felderítőcsapat</h2><span>3 KATONA</span></div><p>Keress ellátmányt az elhagyott táborban! A csapat 5 percig kutat, majd mindenki hazatér.</p><div class="scout-status-line"><strong id="scout-phase" role="status" aria-live="polite">Indulásra készen</strong><span id="scout-countdown">05:20</span></div><progress id="scout-progress" max="1" value="0" aria-label="Felderítés haladása"></progress><p class="scout-reward">Biztos zsákmány: 9 bónuszcsomag + 75 arany</p><button class="primary" id="launch-scout">3 felderítő indítása →</button><p class="subtle">10 mp kivonulás · 5 perc kutatás · 10 mp hazatérés<br>A többi katonával közben harcolhatsz.</p></section><section class="panel bonus-panel"><p class="eyebrow">FELDERÍTŐK ZSÁKMÁNYA</p><h2>Termelési bónuszok</h2><p>Minden csomag 5 percre megduplázza a választott nyersanyag termelését. Azonos bónusz újraaktiválása meghosszabbítja az időt.</p><div id="bonuses" class="bonus-grid"></div><p class="subtle">A csomagok aktiválásig a raktárban maradnak.<br>A felderítés és az aktív bónuszok bezárt böngésző mellett is lejárnak.</p></section></section><div class="columns"><section><div class="section-title"><h2>A településed</h2><span>ÉPÍTÉS & FEJLESZTÉS</span></div><div class="map"><div class="map-grid" id="buildings"></div><div class="map-caption"><span>● BIZTONSÁGOS TERÜLET</span><span>ÉSZAKI MENEDÉK · 47° N</span></div></div><div class="tip"><strong>Parancsnoki tanács</strong><p>Fejleszd a termelőépületeket a gyorsabb bevételhez. A parancsnokság új épületszinteket engedélyez. Az expedíciók előtt ellenőrizd az erőviszonyokat.</p></div></section><aside><section class="panel"><p class="eyebrow">HADMŰVELETI KÖZPONT</p><h2>A falakon túl</h2><div class="wilderness"><span>☣</span><div id="target">Elhagyott külváros</div><small>FERTŐZÖTT TERÜLET</small></div><div class="comparison"><div><small>SAJÁT ERŐ</small><strong id="power"></strong></div><span>VS</span><div><small>ELLENSÉG</small><strong id="enemy"></strong></div></div><p id="forecast"></p><button class="primary" id="expedition">Expedíció indítása <span>→</span></button><p class="loot-preview" id="loot-preview"></p><p class="subtle">15 másodperc · Arany csak győzelemért jár</p></section><section class="panel army"><div><p class="eyebrow">HELYŐRSÉG</p><h2><span id="soldiers">8</span> katona</h2></div><button id="train">+ 5 katona<small>50 élelem · 20 vas</small></button><button class="gold-button" id="train-gold" hidden></button></section><section class="panel morale-panel"><p class="eyebrow">A SEREG LELKE</p><div class="section-title"><h2>Harci morál</h2><span id="morale-level"></span></div><div class="morale-meter" id="morale-meter" aria-hidden="true"></div><strong class="morale-bonus" id="morale-bonus"></strong><p>A buzdítás tartósan növeli a katonák erejét. A védőfal bónusza külön számít.</p><button class="gold-button" id="boost-morale"></button><p class="subtle">Aranyat a zombik elleni győzelmekért kapsz.<br>Hiányzó nyersanyagok: 1 arany / 10 egység, felfelé kerekítve.</p></section><section class="panel"><div class="section-title"><h2>Eseménynapló</h2><span>ÉLŐ</span></div><ul id="log"></ul></section></aside></div><footer><span>VÉGVÁR / JÁTSZHATÓ PROTOTÍPUS</span><button class="reset" id="reset">Új település</button><span>A haladás ebben a böngészőben tárolódik.</span></footer></main></div><div id="toast" role="status" aria-live="polite"></div><dialog id="gold-dialog" aria-labelledby="gold-dialog-title"><form method="dialog"><p class="eyebrow">ARANY FELHASZNÁLÁSA</p><h2 id="gold-dialog-title">Hiányzó nyersanyagok kiváltása</h2><p id="gold-dialog-details"></p><p class="gold-total" id="gold-dialog-total"></p><p class="subtle">Csak a hiányzó részt fizeted arannyal. A meglévő nyersanyagok is levonódnak.</p><div class="dialog-actions"><button value="cancel">Mégse</button><button class="gold-button" type="button" id="confirm-gold">Kiváltás és végrehajtás</button></div></form></dialog><script>(function(root){
+const buildings={hq:{name:'Parancsnokság',icon:'🏛️',desc:'Minden épület szintkorlátját emeli.',cost:{wood:100,metal:70}},farm:{name:'Üvegház',icon:'🌱',desc:'Élelmet termel a kiképzéshez.',cost:{wood:45,metal:15}},sawmill:{name:'Fűrésztelep',icon:'🪵',desc:'Fát termel az építkezéshez.',cost:{wood:30,metal:20}},mine:{name:'Vasfeldolgozó',icon:'⚙️',desc:'Alaptermelés: 220 vas/perc szintenként.',cost:{wood:60,metal:25}},barracks:{name:'Laktanya',icon:'🪖',desc:'Katonákat képez. Szintenként +2 harci erő.',cost:{wood:70,metal:50}},wall:{name:'Védőfal',icon:'🛡️',desc:'Szintenként +15 harci erő.',cost:{wood:80,metal:40}}};
 const trainingCost={food:50,metal:20},maxMorale=5,resourcesPerGold=10;
-function initial(){return {version:1,gold:0,morale:0,wood:220,metal:150,food:160,soldiers:8,zone:1,wins:0,levels:{hq:1,farm:1,sawmill:1,mine:1,barracks:1,wall:1},last:Date.now(),mission:null,log:['A túlélők megérkeztek. Építs biztonságos otthont!']};}
+const resourceTypes=['wood','metal','food'];
+const productionBuildings={wood:'sawmill',metal:'mine',food:'farm'};
+const baseProduction={wood:48,metal:220,food:60};
+const scoutSize=3,scoutTravelTime=10000,scoutSearchTime=300000,bonusDuration=300000;
+const scoutLoot={bonuses:{wood:3,metal:3,food:3},gold:75};
+function initial(){return {version:1,scout:null,bonusInventory:{wood:0,metal:0,food:0},boostUntil:{wood:0,metal:0,food:0},gold:0,morale:0,wood:220,metal:150,food:160,soldiers:8,zone:1,wins:0,levels:{hq:1,farm:1,sawmill:1,mine:1,barracks:1,wall:1},last:Date.now(),mission:null,log:['A túlélők megérkeztek. Építs biztonságos otthont!']};}
 function migrate(s){
   // A korábbi mentések új mezőit alapértékkel egészítjük ki; a haladás megmarad.
   if(s.gold===undefined)s.gold=0;
   if(s.morale===undefined)s.morale=0;
+  if(s.scout===undefined)s.scout=null;
+  if(s.bonusInventory===undefined)s.bonusInventory={wood:0,metal:0,food:0};
+  if(s.boostUntil===undefined)s.boostUntil={wood:0,metal:0,food:0};
   return s;
 }
 function cost(s,id){return Object.fromEntries(Object.entries(buildings[id].cost).map(([k,v])=>[k,Math.round(v*Math.pow(1.65,s.levels[id]-1))]));}
 function moraleBonus(s){return (s.morale||0)*10;}
 function moraleCost(s){return 30*((s.morale||0)+1);}
 function goldReward(zone){return 25+zone*10;}
-function power(s){return Math.floor(s.soldiers*(8+s.levels.barracks*2)*(100+moraleBonus(s))/100)+s.levels.wall*15;}
+function availableSoldiers(s){return Math.max(0,s.soldiers-(s.scout?s.scout.soldiers:0));}
+function power(s){return Math.floor(availableSoldiers(s)*(8+s.levels.barracks*2)*(100+moraleBonus(s))/100)+s.levels.wall*15;}
 function enemy(s){return 70+s.zone*s.zone*25;}
-function advance(s,now){let seconds=Math.max(0,Math.min(14400,(now-s.last)/1000));s.wood+=seconds*s.levels.sawmill*.8;s.metal+=seconds*s.levels.mine*.45;s.food+=seconds*s.levels.farm; s.last=now;return s;}
+function baseRate(s,type){return baseProduction[type]*s.levels[productionBuildings[type]];}
+function productionRate(s,type,now){return baseRate(s,type)*((s.boostUntil?.[type]||0)>now?2:1);}
+function advance(s,now){
+  if(now<=s.last)return s;
+  const start=s.last,end=Math.min(now,start+14400000);
+  for(const type of resourceTypes){
+    const boostedMs=Math.max(0,Math.min(end,s.boostUntil?.[type]||0)-start);
+    s[type]+=baseRate(s,type)*((end-start)+boostedMs)/60000;
+  }
+  s.last=now;return s;
+}
+function activateBonus(s,type,now){
+  if(!resourceTypes.includes(type))return 'Ismeretlen termelési bónusz.';
+  if(!(s.bonusInventory?.[type]>0))return 'Nincs ilyen bónuszod. Küldj ki felderítőket!';
+  // Előbb elszámoljuk a korábbi időszakot: a bónusz nem hat visszamenőleg.
+  const at=Math.max(now,s.last);advance(s,at);
+  s.bonusInventory[type]--;
+  s.boostUntil[type]=Math.max(at,s.boostUntil[type])+bonusDuration;
+  return null;
+}
+function launchScout(s,now){
+  if(s.scout)return 'A felderítőcsapat már úton van.';
+  if(s.mission)return 'A felderítőket a harcoló sereg hazatérése után küldheted ki.';
+  if(availableSoldiers(s)<scoutSize)return 'A felderítéshez 3 katona szükséges.';
+  s.scout={started:now,searchStarts:now+scoutTravelTime,searchEnds:now+scoutTravelTime+scoutSearchTime,ends:now+scoutTravelTime*2+scoutSearchTime,soldiers:scoutSize};
+  return null;
+}
+function resolveScout(s,now){
+  if(!s.scout||now<s.scout.ends)return null;
+  for(const type of resourceTypes)s.bonusInventory[type]+=scoutLoot.bonuses[type];
+  s.gold+=scoutLoot.gold;s.scout=null;
+  return 'A 3 felderítő hazatért! Zsákmány: 9 termelési bónusz (3 fa, 3 vas, 3 élelem) és 75 arany.';
+}
 function quote(s,required){
   const missing=Object.fromEntries(Object.entries(required).map(([k,v])=>[k,Math.max(0,v-Math.floor(s[k]))]).filter(([,v])=>v>0));
   const gold=Math.ceil(Object.values(missing).reduce((a,b)=>a+b,0)/resourcesPerGold);
@@ -51,9 +94,9 @@ function boostMorale(s){
   if((s.gold||0)<amount)return `A morál növeléséhez ${amount} arany kell.`;
   s.gold-=amount;s.morale=(s.morale||0)+1;return null;
 }
-function launch(s,now){if(s.mission)return 'Már folyamatban van egy expedíció.';if(s.soldiers<1)return 'Először képezz katonákat!';s.mission={ends:now+15000,power:power(s),enemy:enemy(s),zone:s.zone};return null;}
-function resolve(s,now){if(!s.mission||now<s.mission.ends)return null;let m=s.mission;let win=m.power>=m.enemy;let loss=Math.min(s.soldiers,Math.max(1,Math.ceil(s.soldiers*(win?.12:.35))));s.soldiers-=loss;if(win){s.wood+=100+m.zone*35;s.metal+=60+m.zone*20;s.food+=80+m.zone*25;s.gold=(s.gold||0)+goldReward(m.zone);s.zone++;s.wins++;}s.mission=null;return win?`Győzelem a(z) ${m.zone}. körzetben! A zombik zsákmánya: +${goldReward(m.zone)} arany és nyersanyagok. Veszteség: ${loss} katona.`:`Visszavonulás a(z) ${m.zone}. körzetből. Veszteség: ${loss} katona. Erősítsd meg a sereget!`;}
-const api={buildings,trainingCost,maxMorale,resourcesPerGold,initial,migrate,cost,moraleBonus,moraleCost,goldReward,quote,power,enemy,advance,upgrade,train,boostMorale,launch,resolve};if(typeof module!=='undefined')module.exports=api;else root.Engine=api;
+function launch(s,now){if(s.mission)return 'Már folyamatban van egy expedíció.';if(availableSoldiers(s)<1)return 'Nincs szabad katona. Képezz katonákat vagy várd meg a felderítőket!';s.mission={soldiers:availableSoldiers(s),ends:now+15000,power:power(s),enemy:enemy(s),zone:s.zone};return null;}
+function resolve(s,now){if(!s.mission||now<s.mission.ends)return null;let m=s.mission;let win=m.power>=m.enemy;let loss=Math.min(s.soldiers,Math.max(1,Math.ceil((m.soldiers??s.soldiers)*(win?.12:.35))));s.soldiers-=loss;if(win){s.wood+=100+m.zone*35;s.metal+=60+m.zone*20;s.food+=80+m.zone*25;s.gold=(s.gold||0)+goldReward(m.zone);s.zone++;s.wins++;}s.mission=null;return win?`Győzelem a(z) ${m.zone}. körzetben! A zombik zsákmánya: +${goldReward(m.zone)} arany és nyersanyagok. Veszteség: ${loss} katona.`:`Visszavonulás a(z) ${m.zone}. körzetből. Veszteség: ${loss} katona. Erősítsd meg a sereget!`;}
+const api={resourceTypes,baseProduction,baseRate,productionRate,scoutSize,scoutTravelTime,scoutSearchTime,scoutLoot,bonusDuration,availableSoldiers,launchScout,resolveScout,activateBonus,buildings,trainingCost,maxMorale,resourcesPerGold,initial,migrate,cost,moraleBonus,moraleCost,goldReward,quote,power,enemy,advance,upgrade,train,boostMorale,launch,resolve};if(typeof module!=='undefined')module.exports=api;else root.Engine=api;
 })(globalThis);
 </script><script>/* A térkép kizárólag megjelenít: a csata eredményét továbbra is az Engine dönti el. */
 (function (root) {
@@ -64,6 +107,13 @@ const api={buildings,trainingCost,maxMorale,resourcesPerGold,initial,migrate,cos
     const phase = progress < .4 ? 'outbound' : progress < .7 ? 'battle' : progress < 1 ? 'return' : 'done';
     const travel = progress < .4 ? progress / .4 : progress < .7 ? 1 : Math.max(0, 1 - (progress - .7) / .3);
     return { phase, progress, travel, battle: Math.max(0, Math.min(1, (progress - .4) / .3)), win: mission.power >= mission.enemy };
+  }
+  function scoutView(scout, now) {
+    if(!scout)return {phase:'idle',progress:0,travel:0};
+    const progress=Math.max(0,Math.min(1,(now-scout.started)/(scout.ends-scout.started)));
+    const phase=now<scout.searchStarts?'outbound':now<scout.searchEnds?'search':now<scout.ends?'return':'done';
+    const travel=phase==='outbound'?Math.max(0,(now-scout.started)/(scout.searchStarts-scout.started)):phase==='search'?1:Math.max(0,1-(now-scout.searchEnds)/(scout.ends-scout.searchEnds));
+    return {phase,progress,travel};
   }
   const sites = [
     { id: 'hq', x: 170, y: 270, w: 102, h: 75, color: '#829a78', roof: '#445d52' },
@@ -108,16 +158,16 @@ const api={buildings,trainingCost,maxMorale,resourcesPerGold,initial,migrate,cos
       const u=1-t;
       return {x:u*u*u*510+3*u*u*t*680+3*u*t*t*710+t*t*t*896,y:u*u*u*351+3*u*u*t*400+3*u*t*t*451+t*t*t*345};
     }
-    function human(x,y,time,i,zombie=false,facing=1,moving=true,dead=false) {
+    function human(x,y,time,i,zombie=false,facing=1,moving=true,dead=false,scout=false) {
       ctx.save();ctx.translate(x,y);ctx.scale(facing,1);
       if(dead){ctx.rotate(-Math.PI/2);ctx.globalAlpha=.4;}
       ellipse(1,2,8,3,'#11201d66');
       const step=moving?Math.sin(time*11+i*1.9)*4:Math.sin(time*2+i)*.5;
       ctx.lineWidth=3;ctx.lineCap='round';ctx.strokeStyle=zombie?'#514c42':'#273e3b';
       ctx.beginPath();ctx.moveTo(-3,-7);ctx.lineTo(-4+step,1);ctx.moveTo(3,-7);ctx.lineTo(4-step,1);ctx.stroke();
-      ctx.fillStyle=zombie?'#7c8861':'#5d8172';ctx.fillRect(-5,-19,10,12);
+      ctx.fillStyle=zombie?'#7c8861':scout?'#6bb9be':'#5d8172';ctx.fillRect(-5,-19,10,12);
       ctx.fillStyle=zombie?'#9ba56b':'#e0b78a';ctx.fillRect(-4,-27,8,8);
-      if(!zombie){ellipse(0,-27,6,3,'#3c6255');ctx.fillStyle='#253733';ctx.fillRect(1,-17,12,3);ctx.fillStyle='#93a283';ctx.fillRect(-7,-18,3,9);}
+      if(!zombie){ellipse(0,-27,6,3,scout?'#367f8c':'#3c6255');ctx.fillStyle='#253733';ctx.fillRect(1,-17,12,3);ctx.fillStyle='#93a283';ctx.fillRect(-7,-18,3,9);}
       else {ctx.strokeStyle='#99a56f';ctx.beginPath();ctx.moveTo(3,-17);ctx.lineTo(12,-14+step*.3);ctx.stroke();}
       ctx.restore();
     }
@@ -142,7 +192,7 @@ const api={buildings,trainingCost,maxMorale,resourcesPerGold,initial,migrate,cos
       if(previousMission&&!state.mission)aftermath={until:now+3500,win:previousMission.power>=previousMission.enemy,gold:root.Engine.goldReward(previousMission.zone)};
       previousMission=state.mission;
       if(aftermath&&now>aftermath.until)aftermath=null;
-      const view=missionView(state.mission,now);
+      const view=missionView(state.mission,now),scout=scoutView(state.scout,now);
       const dpr=Math.min(root.devicePixelRatio||1,2),width=Math.round(canvas.clientWidth*dpr),height=Math.round(canvas.clientHeight*dpr);
       if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}
       ctx.setTransform(canvas.width/W,0,0,canvas.height/H,0,0);
@@ -150,6 +200,9 @@ const api={buildings,trainingCost,maxMorale,resourcesPerGold,initial,migrate,cos
       poly([[0,45],[170,20],[340,93],[550,25],[760,56],[990,10],[1100,49],[1100,0],[0,0]],'#92a382');
       for(let i=0;i<170;i++){const x=(i*137.7)%W,y=(i*97.3)%H;ellipse(x,y,1+(i%3),1,'#d2d1971a');}
       road();
+      ctx.beginPath();ctx.moveTo(565,350);ctx.bezierCurveTo(614,315,625,225,730,215);
+      ctx.strokeStyle='#93c1b355';ctx.lineWidth=17;ctx.stroke();
+      ctx.setLineDash([4,7]);ctx.strokeStyle='#a4dbcc';ctx.lineWidth=2;ctx.stroke();ctx.setLineDash([]);
       for(let i=0;i<35;i++){const x=(i*131)%W,y=(i*79)%H;if((x>75&&x<580&&y>130&&y<500)||(y>295&&y<470))continue;tree(x,y,.65+(i%4)*.12);}
       // Sol en pierre et enceinte du camp.
       poly([[87,172],[526,172],[557,470],[87,470]],'#a7ab8066','#bbc09255');
@@ -163,7 +216,15 @@ const api={buildings,trainingCost,maxMorale,resourcesPerGold,initial,migrate,cos
       for(let i=0;i<4;i++){let x=874+(i%2)*116,y=208+Math.floor(i/2)*244;box(x,y,65,50+(i%3)*17,'#78817a','#4c5d56');poly([[x-30,y-50],[x-10,y-65],[x+2,y-45],[x+17,y-56],[x+32,y-50]],'#43574b');ctx.fillStyle='#2a3934';ctx.fillRect(x-12,y-29,14,29);}
       text(`FERTŐZÖTT KÖRZET · ${state.mission?.zone||state.zone}`,924,104,14,'#f1d3a5');
       ellipse(913,353,80,50,'#d6a36a12');
-      const armyCount=Math.min(24,state.soldiers);
+      // A felderítők külön táborban kutatnak, távol a harcoló seregtől.
+      ellipse(730,211,62,30,'#b3d9bc22');
+      poly([[690,211],[721,169],[754,211]],'#78a69b');
+      poly([[721,169],[754,211],[774,198],[745,164]],'#486f68');
+      poly([[708,211],[721,186],[736,211]],'#294c43');
+      box(774,228,22,17,'#c0a16b','#d9bb7e');box(791,213,18,14,'#aa8b5e','#cbb37b');
+      text('ELHAGYOTT ELLÁTÓHELY',735,143,11,'#c9f1df');
+      const armySoldiers=state.mission?(state.mission.soldiers??root.Engine.availableSoldiers(state)):root.Engine.availableSoldiers(state);
+      const armyCount=Math.min(24,armySoldiers);
       let center=view.phase==='idle'?{x:395,y:340}:point(view.travel);
       let showCount=armyCount;
       if(view.phase==='return'||view.phase==='done')showCount=Math.max(0,armyCount-Math.max(1,Math.ceil(armyCount*(view.win?.12:.35))));
@@ -172,7 +233,23 @@ const api={buildings,trainingCost,maxMorale,resourcesPerGold,initial,migrate,cos
         let x=center.x+(i%4)*13-25,y=center.y+Math.floor(i/4)*14-15;
         human(x,y,time,i,false,view.phase==='return'?-1:1,moving);
       }
-      if(showCount)text(`${view.phase==='idle'?'HELYŐRSÉG':'SEREG'} · ${view.phase==='return'?Math.max(0,state.soldiers-Math.max(1,Math.ceil(state.soldiers*(view.win?.12:.35)))):state.soldiers}`,center.x,center.y-57,11,'#f2f5d9');
+      if(showCount)text(`${view.phase==='idle'?'HELYŐRSÉG':'SEREG'} · ${view.phase==='return'?Math.max(0,armySoldiers-Math.max(1,Math.ceil(armySoldiers*(view.win?.12:.35)))):armySoldiers}`,center.x,center.y-57,11,'#f2f5d9');
+      if(state.scout){
+        const t=scout.travel,u=1-t;
+        const sx=u*u*u*565+3*u*u*t*614+3*u*t*t*625+t*t*t*730;
+        const sy=u*u*u*350+3*u*u*t*315+3*u*t*t*225+t*t*t*215;
+        for(let i=0;i<state.scout.soldiers;i++){
+          const x=sx+(i-1)*16,y=sy+(i%2)*11;
+          human(x,y,time,i,false,scout.phase==='return'?-1:1,scout.phase!=='search',false,true);
+          if(scout.phase==='return'){ctx.fillStyle='#e1bd74';ctx.fillRect(x-9,y-19,6,9);}
+          if(scout.phase==='search'){
+            ctx.strokeStyle='#b0e8e4';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x+11+Math.sin(time*2+i)*3,y-19,4,0,Math.PI*2);ctx.moveTo(x+14,y-16);ctx.lineTo(x+19,y-10);ctx.stroke();
+          }
+        }
+        const remaining=Math.max(0,Math.ceil((state.scout.ends-now)/1000));
+        const clock=`${Math.floor(remaining/60)}:${String(remaining%60).padStart(2,'0')}`;
+        text(`3 FELDERÍTŐ · ${scout.phase==='search'?'KUTATÁS':scout.phase==='return'?'HAZATÉRÉS':'KIVONULÁS'} · ${clock}`,sx,sy-46,10,'#d2fff5');
+      }
       const zombies=9;
       for(let i=0;i<zombies;i++){
         const fighting=view.phase==='battle',dead=view.win&&(view.phase==='return'||view.phase==='done'||(fighting&&view.battle>(i+1)/zombies));
@@ -190,7 +267,7 @@ const api={buildings,trainingCost,maxMorale,resourcesPerGold,initial,migrate,cos
       if(aftermath){ctx.fillStyle='#14281ff0';ctx.fillRect(357,42,386,43);text(aftermath.win?`GYŐZELEM · +${aftermath.gold} ARANY ÉS ZSÁKMÁNY`:'VISSZAVONULÁS · Erősítsd a sereget!',550,69,14,aftermath.win?'#d6ed91':'#f0bc91');}
       // A térkép jelmagyarázata az alsó sávban.
       ctx.fillStyle='#152b25d9';ctx.fillRect(0,548,W,42);text('● SAJÁT BÁZIS',28,574,10,'#d6ed91','left');text('━ EXPEDÍCIÓ ÚTVONALA',210,574,10,'#d2caa6','left');text('● FERTŐZÖTTEK',W-30,574,10,'#e8bb8b','right');
-      const label=aftermath?(aftermath.win?'Győzelem! A sereg hazatért.':'A sereg visszavonult.'):phaseText[view.phase];
+      const label=state.scout&&view.phase==='idle'?`Felderítők: ${scout.phase==='search'?'ellátmányt keresnek':scout.phase==='return'?'hazafelé tartanak':'elhagyják a várost'}`:aftermath?(aftermath.win?'Győzelem! A sereg hazatért.':'A sereg visszavonult.'):phaseText[view.phase];
       if(label!==lastStatus){status.textContent=label;lastStatus=label;}
       progressBar.style.width=`${view.progress*100}%`;
       frameId=root.requestAnimationFrame(()=>draw(Date.now()));
@@ -204,7 +281,7 @@ const api={buildings,trainingCost,maxMorale,resourcesPerGold,initial,migrate,cos
     draw(Date.now());
     return { destroy(){root.cancelAnimationFrame(frameId);canvas.removeEventListener('click',selectAt);} };
   }
-  const api={missionView,mount};
+  const api={missionView,scoutView,mount};
   if(typeof module!=='undefined')module.exports=api;else root.BattleScene=api;
 })(globalThis);
 </script><script>const E=Engine, key='vegvar-save-v1';
@@ -213,31 +290,57 @@ try{
   const raw=localStorage.getItem(key);
   if(raw){
     const s=E.migrate(JSON.parse(raw));
-    if(s.version===1&&Object.keys(E.buildings).every(k=>Number.isInteger(s.levels?.[k])&&s.levels[k]>=1)&&['wood','metal','food','soldiers','zone','last','wins','gold'].every(k=>Number.isFinite(s[k])&&s[k]>=0)&&Number.isInteger(s.morale)&&s.morale>=0&&s.morale<=E.maxMorale&&Array.isArray(s.log))state=s;
+    if(s.version===1&&Object.keys(E.buildings).every(k=>Number.isInteger(s.levels?.[k])&&s.levels[k]>=1)&&['wood','metal','food','soldiers','zone','last','wins','gold'].every(k=>Number.isFinite(s[k])&&s[k]>=0)&&Number.isInteger(s.morale)&&s.morale>=0&&s.morale<=E.maxMorale&&E.resourceTypes.every(type=>Number.isInteger(s.bonusInventory?.[type])&&s.bonusInventory[type]>=0&&Number.isFinite(s.boostUntil?.[type])&&s.boostUntil[type]>=0)&&Array.isArray(s.log))state=s;
   }
 }catch{storageAvailable=false;}
 const $=id=>document.getElementById(id);
-const resourceNames={wood:'fa',metal:'fém',food:'élelem'};
+const resourceNames={wood:'fa',metal:'vas',food:'élelem'};
 const number=value=>Math.floor(value).toLocaleString('hu-HU');
 function save(){try{localStorage.setItem(key,JSON.stringify(state));}catch{storageAvailable=false;}$('saved').textContent=storageAvailable?'● Helyi mentés aktív':'○ Mentés nem elérhető';}
 let timer;
 function toast(message){$('toast').textContent=message;$('toast').style.display='block';clearTimeout(timer);timer=setTimeout(()=>$('toast').style.display='none',5000);}
 function log(message){state.log.unshift(message);state.log=state.log.slice(0,5);}
-function sync(){E.advance(state,Date.now());const result=E.resolve(state,Date.now());if(result){log(result);toast(result);}}
+function sync(){
+  const now=Date.now();E.advance(state,now);
+  for(const result of [E.resolve(state,now),E.resolveScout(state,now)])if(result){log(result);toast(result);}
+}
+function timeLeft(ms){const seconds=Math.max(0,Math.ceil(ms/1000));return `${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`;}
+let lastBonusMarkup='';
+function renderExploration(now){
+  const view=BattleScene.scoutView(state.scout,now);
+  const labels={idle:'Indulásra készen',outbound:'Kivonulás a táborhoz',search:'A csapat ellátmány után kutat',return:'Hazatérés a zsákmánnyal',done:'A felderítés befejeződött'};
+  if($('scout-phase').textContent!==labels[view.phase])$('scout-phase').textContent=labels[view.phase];
+  $('scout-countdown').textContent=state.scout?timeLeft(state.scout.ends-now):'05:20';
+  $('scout-progress').value=view.progress;
+  $('launch-scout').disabled=Boolean(state.scout)||Boolean(state.mission)||E.availableSoldiers(state)<E.scoutSize;
+  $('launch-scout').textContent=state.scout?'A felderítőcsapat már úton van':state.mission?'Várd meg a harcoló sereget':E.availableSoldiers(state)<E.scoutSize?'Legalább 3 katona szükséges':'3 felderítő indítása →';
+  const markup=E.resourceTypes.map(type=>{
+    const active=state.boostUntil[type]>now;
+    return `<article class="bonus-card ${active?'active':''}"><span class="bonus-icon">${{wood:'🪵',metal:'⚙️',food:'🌾'}[type]}</span><h3>${{wood:'Fa',metal:'Vas',food:'Élelem'}[type]} ×2</h3><p><strong data-bonus-count="${type}">${state.bonusInventory[type]}</strong> csomag a raktárban</p><span class="bonus-time">${active?'Aktív: '+timeLeft(state.boostUntil[type]-now):'5 perc dupla termelés'}</span><button data-activate-bonus="${type}" ${state.bonusInventory[type]<1?'disabled':''}>${active?'Idő +5 perc':'Aktiválás · 1 csomag'}</button></article>`;
+  }).join('');
+  // A csomaggombok fókuszát a másodpercenként változó óra nem törli.
+  const signature=JSON.stringify([state.bonusInventory,E.resourceTypes.map(t=>state.boostUntil[t]>now)]);
+  if(signature!==lastBonusMarkup){$('bonuses').innerHTML=markup;lastBonusMarkup=signature;}
+  E.resourceTypes.forEach(type=>{
+    const card=$('bonuses').querySelector(`[data-activate-bonus="${type}"]`).closest('.bonus-card');
+    card.querySelector('.bonus-time').textContent=state.boostUntil[type]>now?'Aktív: '+timeLeft(state.boostUntil[type]-now):'5 perc dupla termelés';
+  });
+}
 function render(){
-  const data=[['wood','🪵','FA',state.levels.sawmill*.8],['metal','⚙️','FÉM',state.levels.mine*.45],['food','🌾','ÉLELEM',state.levels.farm],['gold','🪙','ARANY',null],['soldiers','🪖','KATONÁK',null]];
-  $('resources').innerHTML=data.map(([id,icon,label,rate])=>`<div class="resource ${id==='gold'?'gold-resource':''}"><span class="icon">${icon}</span><div><small>${label}</small><strong id="resource-${id}">${number(state[id])}</strong><em>${id==='gold'?'Zombiktól zsákmányolva':rate===null?(state.mission?'Expedíción':'Bevetésre készen'):`+${(rate*60).toLocaleString('hu-HU')} / perc`}</em></div></div>`).join('');
+  const now=Date.now();renderExploration(now);
+  const data=[['wood','🪵','FA',E.productionRate(state,'wood',now)/60],['metal','⚙️','VAS',E.productionRate(state,'metal',now)/60],['food','🌾','ÉLELEM',E.productionRate(state,'food',now)/60],['gold','🪙','ARANY',null],['soldiers','🪖','KATONÁK',null]];
+  $('resources').innerHTML=data.map(([id,icon,label,rate])=>`<div class="resource ${id==='gold'?'gold-resource':''}"><span class="icon">${icon}</span><div><small>${label}</small><strong id="resource-${id}">${number(state[id])}</strong><em>${id==='gold'?'Zsákmány és felderítés':rate===null?(state.mission?`${state.mission.soldiers??E.availableSoldiers(state)} harcol${state.scout?' · 3 felderítő':''}`:`${E.availableSoldiers(state)} elérhető${state.scout?' · 3 felderítő':''}`):`+${(rate*60).toLocaleString('hu-HU',{maximumFractionDigits:0})} / perc`}</em></div></div>`).join('');
   const buildingMarkup=Object.entries(E.buildings).map(([id,b])=>{
     const c=E.cost(state,id),q=E.quote(state,c),locked=id!=='hq'&&state.levels[id]>=state.levels.hq+1;
-    return `<article class="building ${selectedBuilding===id?'selected':''}"><span class="level">${state.levels[id]}. SZINT</span><span class="art" aria-hidden="true">${b.icon}</span><h3>${b.name}</h3><p>${b.desc}</p><button data-upgrade="${id}" ${state.mission||locked||q.gold?'disabled':''}>${locked?'Parancsnokság fejlesztése szükséges':`Fejlesztés · ${c.wood} fa / ${c.metal} fém`}</button>${q.gold&&!locked?`<button class="gold-button" data-gold-upgrade="${id}" ${state.mission||!q.canAfford?'disabled':''}>Hiány kiváltása · ${number(q.gold)} arany</button>`:''}</article>`;
+    return `<article class="building ${selectedBuilding===id?'selected':''}"><span class="level">${state.levels[id]}. SZINT</span><span class="art" aria-hidden="true">${b.icon}</span><h3>${b.name}</h3><p>${b.desc}</p><button data-upgrade="${id}" ${state.mission||locked||q.gold?'disabled':''}>${locked?'Parancsnokság fejlesztése szükséges':`Fejlesztés · ${c.wood} fa / ${c.metal} vas`}</button>${q.gold&&!locked?`<button class="gold-button" data-gold-upgrade="${id}" ${state.mission||!q.canAfford?'disabled':''}>Hiány kiváltása · ${number(q.gold)} arany</button>`:''}</article>`;
   }).join('');
   if(lastBuildingMarkup!==buildingMarkup){$('buildings').innerHTML=buildingMarkup;lastBuildingMarkup=buildingMarkup;}
-  $('power').textContent=E.power(state);$('enemy').textContent=E.enemy(state);$('soldiers').textContent=state.soldiers;
+  $('power').textContent=state.mission?.power??E.power(state);$('enemy').textContent=E.enemy(state);$('soldiers').textContent=state.soldiers;
   $('zones').textContent=String(state.wins).padStart(2,'0');$('rank').textContent=state.levels.hq>3?'Túlélők erődje':'Kezdő település';
   $('target').textContent=`${state.zone}. körzet · ${['Elhagyott külváros','Romos ipartelep','Fertőzött raktár','Elveszett városközpont'][(state.zone-1)%4]}`;
   $('forecast').textContent=state.mission?'A csapat bevetésen van…':E.power(state)>=E.enemy(state)?'Erőfölényben vagy. A győzelem várható.':'Az ellenség erősebb. Képezz katonákat vagy növeld a morált!';
   $('loot-preview').textContent=`Győzelmi zsákmány: ${E.goldReward(state.mission?.zone||state.zone)} arany + nyersanyagok`;
-  $('expedition').disabled=Boolean(state.mission)||state.soldiers<1;$('map-expedition').disabled=$('expedition').disabled;
+  $('expedition').disabled=Boolean(state.mission)||E.availableSoldiers(state)<1;$('map-expedition').disabled=$('expedition').disabled;
   $('map-expedition').textContent=state.mission?'A sereg bevetésen van…':'Sereg indítása →';
   $('expedition').textContent=state.mission?`Expedíció folyamatban · ${Math.max(0,Math.ceil((state.mission.ends-Date.now())/1000))} mp`:'Expedíció indítása →';
   const training=E.quote(state,E.trainingCost);
@@ -304,6 +407,19 @@ $('expedition').onclick=()=>{
 };
 $('reset').onclick=()=>{if(confirm('Új települést kezdesz? A jelenlegi haladás törlődik.')){state=E.initial();save();render();}};
 $('map-expedition').onclick=()=>$('expedition').click();
+$('launch-scout').onclick=()=>{
+  sync();const error=E.launchScout(state,Date.now());
+  if(error)toast(error);
+  else{log('3 felderítő elindult a városon kívüli ellátóhelyre. Kutatás: 5 perc.');toast('A felderítők elindultak! A többi katonával közben harcolhatsz.');$('world-title').scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});}
+  save();render();
+};
+$('bonuses').addEventListener('click',event=>{
+  const button=event.target.closest('[data-activate-bonus]');if(!button||button.disabled)return;
+  sync();const type=button.dataset.activateBonus,error=E.activateBonus(state,type,Date.now());
+  if(error)toast(error);
+  else{const message=`${resourceNames[type]} termelési bónusz aktiválva: ×2 termelés, +5 perc.`;log(message);toast(message);}
+  save();render();
+});
 sync();save();render();setInterval(()=>{sync();render();save();},1000);
 document.addEventListener('visibilitychange',()=>{sync();save();render();});
 BattleScene.mount($('world-canvas'),()=>state,id=>{
