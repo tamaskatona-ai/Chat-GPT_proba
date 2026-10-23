@@ -9,13 +9,13 @@ test('giant respawns exactly five minutes after death, with new loot available e
  let s=E.initial(),t=s.last;s.giant.hp=1;E.launchGiant(s,t);E.resolve(s,t+15000);
  const at=s.giant.respawnAt;assert.equal(at,t+10500+300000);assert.equal(s.gold,1500);
  E.advance(s,at-1);assert.equal(s.giant.hp,0);s=E.migrate(JSON.parse(JSON.stringify(s)));E.advance(s,at);
- assert.equal(s.giant.hp,950);assert.equal(s.giant.rewardClaimed,false);assert.equal(s.giant.generation,1);
+ assert.equal(s.giant.hp,9500);assert.equal(s.giant.rewardClaimed,false);assert.equal(s.giant.generation,1);
  s.giant.hp=1;E.launchGiant(s,at);E.resolve(s,at+15000);assert.equal(s.gold,3000);
 });
 test('offline finishing battle settles reward before respawning, without duplicated loot',()=>{
  let s=E.initial(),t=s.last;s.giant.hp=40;E.launchGiant(s,t);E.resolve(s,t+10500);
  s=E.migrate(JSON.parse(JSON.stringify(s)));E.advance(s,t+900000);E.resolve(s,t+900000);
- assert.equal(s.gold,1500);assert.equal(s.giant.hp,950);assert.equal(s.giant.generation,1);E.resolve(s,t+1000000);assert.equal(s.gold,1500);
+ assert.equal(s.gold,1500);assert.equal(s.giant.hp,9500);assert.equal(s.giant.generation,1);E.resolve(s,t+1000000);assert.equal(s.gold,1500);
 });
 test('mobile targets roam, freeze at the encounter location, and consecutive fights select different zombies',()=>{
  const s=E.initial(),t=s.last;assert.notDeepEqual(E.giantPosition(s,t),E.giantPosition(s,t+10000));

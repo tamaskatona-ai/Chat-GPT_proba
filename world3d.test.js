@@ -1,8 +1,7 @@
-const {test}=require('node:test');const assert=require('node:assert/strict');
-const {patrolPosition}=require('./world3d');
-test('roaming zombies move over time and stay outside the base and buildings',()=>{
- for(let i=0;i<11;i++){
-  const first=patrolPosition(i,0),next=patrolPosition(i,10);assert.notDeepEqual(first,next);
-  for(let t=0;t<600;t+=7){const p=patrolPosition(i,t);assert.ok(p.x>=16.7&&p.x<=31.3);assert.ok(Math.abs(p.z)<=6.2);}
+const {test}=require('node:test');const assert=require('node:assert/strict');const E=require('./engine');
+test('all roaming zombies move within the larger map, outside the base and lake',()=>{
+ for(let i=0;i<E.zombieCount;i++){
+  assert.notDeepEqual(E.zombiePosition(i,0),E.zombiePosition(i,10000));
+  for(let t=0;t<600000;t+=7000){const p=E.zombiePosition(i,t);assert.ok(p.x>=E.mapBounds.minX&&p.x<=E.mapBounds.maxX);assert.ok(p.z>=E.mapBounds.minZ&&p.z<=E.mapBounds.maxZ);assert.ok(!(p.x>-34&&p.x<0&&Math.abs(p.z)<17));assert.ok(!E.inLake(p.x,p.z,1));}
  }
 });

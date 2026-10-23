@@ -5,8 +5,7 @@ const clamp=(v,min,max)=>Math.min(max,Math.max(min,v));
 function seeded(seed){return ()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};}
 function patrolPosition(index,time){
   // A kószáló fertőzöttek a romok között maradnak, a bázis falain kívül.
-  const t=time*(.085+(index%3)*.009)+index*1.73;
-  return {x:24+Math.cos(t)*(4+(index%4)*1.1),z:Math.sin(t*.79)*(4+(index%3)*1.1)};
+  return (root.Engine||(typeof require==='function'?require('./engine'):null)).zombiePosition(index,time*1000);
 }
 function mount(canvas,getState,onUpgrade,timing){
 const T=root.THREE;if(!T)throw Error('A 3D megjelenítő nem tölthető be.');
@@ -19,7 +18,8 @@ const light=new T.DirectionalLight('#fff0cf',3.3);light.position.set(-22,40,22);
 light.shadow.mapSize.set(2048,2048);light.shadow.camera.left=-52;light.shadow.camera.right=52;light.shadow.camera.top=45;light.shadow.camera.bottom=-45;light.shadow.camera.far=120;light.shadow.normalBias=.015;light.shadow.bias=-.00025;
 scene.add(light);scene.add(new T.HemisphereLight('#d6e9f6','#65704b',2.05));
 const raycaster=new T.Raycaster(),pointer=new T.Vector2(),groundPlane=new T.Plane(new T.Vector3(0,1,0),0);
-const cameraState={target:new T.Vector3(-1,0,0),distance:81,yaw:.18,pitch:.87};
+const E=root.Engine;
+const cameraState={target:new T.Vector3(-1,0,0),distance:162,yaw:.18,pitch:.87};
 const objects=[],buildingEntries=[],npcEntries=[],soldiers=[],scouts=[],civilians=[],geometries=new Map(),textures=[],materials=[];
 const random=seeded(7319),v=new T.Vector3();let inView=true;let selected=null,following=null,destroyed=false,frameId,previousMission=null,aftermath=null,lastStatus='',lastSize='',lastRendered=0,frameCount=0,quality='high';
 const $=id=>document.getElementById(id);
@@ -61,7 +61,39 @@ function bake(g){
  return g;
 }
 function flat(parent,w,d,x,z,material,y=.015){const o=mesh(parent,geometry('plane',()=>new T.PlaneGeometry(1,1)),material,x,y,z,w,d,1);o.rotation.x=-Math.PI/2;o.castShadow=false;return o;}
-const ground=flat(scene,185,160,0,0,M.grass,-.08);maps.grass.repeat.set(13,11);
+const terrainGeometry=new T.PlaneGeometry(370,320,185,160);terrainGeometry.rotateX(-Math.PI/2);
+const terrainVertices=terrainGeometry.attributes.position;
+const terrainColors=[];
+for(let i=0;i<terrainVertices.count;i++){
+ const h=E.terrainHeight(terrainVertices.getX(i),terrainVertices.getZ(i));terrainVertices.setY(i,h-.08);
+ const shade=new T.Color('#8d9e68').lerp(new T.Color('#c4b88a'),Math.max(0,h)/8);terrainColors.push(shade.r,shade.g,shade.b);
+}
+terrainGeometry.setAttribute('color',new T.Float32BufferAttribute(terrainColors,3));
+const terrainMaterial=M.grass.clone();terrainMaterial.vertexColors=true;materials.push(terrainMaterial);
+terrainGeometry.computeVertexNormals();geometries.set('terrain',terrainGeometry);const ground=mesh(scene,terrainGeometry,terrainMaterial);ground.castShadow=false;maps.grass.repeat.set(26,22);
+const terrainLandmarks=[];
+function landmark(id,name,x,z,description){const g=group(scene,x,E.terrainHeight(x,z),z),entry={kind:'landmark',id,name,description,group:g};terrainLandmarks.push(entry);return entry;}
+const lakeEntry=landmark('lake','Nádas-tó',E.lake.x,E.lake.z,'Kis tó homokos parttal, náddal és vízi növényekkel. A zombik szárazföldön járőröznek.');
+const waterMaterial=mat('#608d98',null,.22,.28);waterMaterial.transparent=true;waterMaterial.opacity=.88;
+const shore=mesh(scene,geometry('shore',()=>new T.RingGeometry(.82,1,72)),M.dirt,E.lake.x,.04,E.lake.z,E.lake.rx+2,E.lake.rz+2,1);shore.rotation.x=-Math.PI/2;
+const water=mesh(scene,geometry('water',()=>new T.CircleGeometry(1,72)),waterMaterial,E.lake.x,.07,E.lake.z,E.lake.rx,E.lake.rz,1);water.rotation.x=-Math.PI/2;water.castShadow=false;entity(water,lakeEntry);entity(shore,lakeEntry);
+const scenery=group(scene);
+for(let i=0;i<55;i++){const a=i*2.4,x=E.lake.x+Math.cos(a)*(E.lake.rx+1.1),z=E.lake.z+Math.sin(a)*(E.lake.rz+1.1);box(scenery,.055,.8+(i%4)*.2,.055,x,.45,z,M.leaf);box(scenery,.12,.26,.12,x,.95+(i%4)*.1,z,M.wood);}
+for(let i=0;i<14;i++){const a=i*2.4,r=.25+(i%4)*.13;const leaf=mesh(scenery,geometry('lily',()=>new T.CircleGeometry(.35,12)),M.leaf,E.lake.x+Math.cos(a)*E.lake.rx*r,.09,E.lake.z+Math.sin(a)*E.lake.rz*r);leaf.rotation.x=-Math.PI/2;}
+const soil=mat('#776346','dirt'),wheat=mat('#c3b270'),crop=mat('#71834a');
+const fieldEntry=landmark('fields','Elhagyott szántóföld',-58,5,'Barázdált termőföld, gabonasorok, kerítés és elhagyott gazdasági eszközök.');
+for(const field of [{x:-58,z:5,w:26,d:18},{x:-32,z:37,w:19,d:12}]){
+ for(let row=0;row<12;row++)for(let col=0;col<22;col++){
+  const x=field.x-field.w/2+(col+.5)*field.w/22,z=field.z-field.d/2+(row+.5)*field.d/12,y=E.terrainHeight(x,z);
+  box(scenery,field.w/22,.12,field.d/12-.12,x,y+.02,z,soil);
+  if((col+row)%7!==0){box(scenery,.07,.55,.07,x,y+.3,z,crop);box(scenery,.12,.2,.12,x,y+.64,z,wheat);}
+ }
+ for(const side of [-1,1])for(let i=0;i<9;i++){const x=field.x-field.w/2+i*field.w/8,z=field.z+side*(field.d/2+1),y=E.terrainHeight(x,z);box(scenery,.16,1,.16,x,y+.5,z,M.wood);}
+}
+box(scenery,1.6,.5,1,-44,.5,16,M.wood);for(const side of [-1,1]){const wheel=mesh(scenery,geometry('cartwheel',()=>new T.TorusGeometry(.42,.08,6,16)),M.iron,-44+side*.9,.43,16);wheel.rotation.y=Math.PI/2;}
+bake(scenery);entity(scenery,fieldEntry);
+const hillEntry=landmark('hills','Zöldhát dombvidék',54,30,'Hullámzó dombok és sziklás magaslatok. A csapatok és a fertőzöttek követik a terep magasságát.');
+
 flat(scene,31,31,-16,0,M.dirt);maps.dirt.repeat.set(5,5);
 function route(points,width,material){const curve=new T.CatmullRomCurve3(points.map(p=>new T.Vector3(p[0],.035,p[1])));const vertices=[],uv=[],indices=[],count=90;for(let i=0;i<=count;i++){const t=i/count,p=curve.getPoint(t),d=curve.getTangent(t),nx=-d.z,nz=d.x;for(const side of [-1,1]){vertices.push(p.x+nx*width/2*side,p.y,p.z+nz*width/2*side);uv.push((side+1)/2,t*9);}if(i<count){const k=i*2;indices.push(k,k+2,k+1,k+1,k+2,k+3);}}const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(vertices,3));geo.setAttribute('uv',new T.Float32BufferAttribute(uv,2));geo.setIndex(indices);geo.computeVertexNormals();const o=mesh(scene,geo,material);o.castShadow=false;o.material.side=T.DoubleSide;geometries.set('route:'+geometries.size,geo);return curve;}
 const battleRoute=route([[-1,3],[5,5],[13,6],[17,4],[21,2]],3.5,M.road);
@@ -173,19 +205,19 @@ for(let i=0;i<4800;i++){
 }
 const foliageTexture=new T.CanvasTexture(foliageCanvas);foliageTexture.colorSpace=T.SRGBColorSpace;textures.push(foliageTexture);
 const foliageMaterial=new T.MeshStandardMaterial({map:foliageTexture,color:'#c8d6b1',alphaTest:.45,side:T.DoubleSide,roughness:.92});materials.push(foliageMaterial);
-for(let i=0;i<96;i++){
- const x=random()*126-60,z=random()*94-47;
- if((x-35)**2+(z+15)**2<64||(x>-35&&x<34&&z>-19&&z<20)||(x>0&&x<15&&z>-17&&z<-5))continue;
- const h=4+random()*5;const trunk=cylinder(vegetation,.14,.27,h*.7,x,h*.35,z,M.bark,10);trunk.rotation.z=(random()-.5)*.1;
- for(let j=0;j<3;j++){const branch=cylinder(vegetation,.035,.11,h*.36,x+(j-1)*.4,h*.55,z,M.bark,8);branch.rotation.z=(j-1)*.7;branch.rotation.y=j*2;}
+for(let i=0;i<180;i++){
+ const x=random()*174-87,z=random()*120-60;
+ if(E.giantTypes.some((_,id)=>{const p=E.giantPosition(getState(),0,id);return Math.hypot(x-p.x,z-p.z)<10;})||E.inLake(x,z,3)||(x>-74&&x<-42&&z>-7&&z<18)||(x>-35&&x<34&&z>-19&&z<20)||(x>0&&x<15&&z>-17&&z<-5))continue;
+ const h=4+random()*5;const trunk=cylinder(vegetation,.14,.27,h*.7,x,E.terrainHeight(x,z)+h*.35,z,M.bark,10);trunk.rotation.z=(random()-.5)*.1;
+ for(let j=0;j<3;j++){const branch=cylinder(vegetation,.035,.11,h*.36,x+(j-1)*.4,E.terrainHeight(x,z)+h*.55,z,M.bark,8);branch.rotation.z=(j-1)*.7;branch.rotation.y=j*2;}
  for(let j=0;j<5;j++){
-  const card=mesh(vegetation,geometry('foliagePlane',()=>new T.PlaneGeometry(1,1)),foliageMaterial,x,h*.76,z,4.5+h*.25,h*.7,1);card.rotation.y=j*Math.PI/5;
+  const card=mesh(vegetation,geometry('foliagePlane',()=>new T.PlaneGeometry(1,1)),foliageMaterial,x,E.terrainHeight(x,z)+h*.76,z,4.5+h*.25,h*.7,1);card.rotation.y=j*Math.PI/5;
  }
- const top=mesh(vegetation,geometry('foliagePlane',()=>new T.PlaneGeometry(1,1)),foliageMaterial,x,h*.87,z,4.5+h*.25,4.5+h*.25,1);top.rotation.x=-Math.PI/2;
+ const top=mesh(vegetation,geometry('foliagePlane',()=>new T.PlaneGeometry(1,1)),foliageMaterial,x,E.terrainHeight(x,z)+h*.87,z,4.5+h*.25,4.5+h*.25,1);top.rotation.x=-Math.PI/2;
 }
 for(let i=0;i<115;i++){
- const x=random()*104-47,z=random()*76-38;if((x-35)**2+(z+15)**2<64||(x>-34&&x<33&&z>-19&&z<20))continue;
- const rock=mesh(vegetation,geometry('rock',()=>new T.DodecahedronGeometry(1,1)),M.darkConcrete,x,0,z,.2+random()*.7,.16+random()*.4,.25+random()*.5);rock.rotation.set(random(),random(),random());
+ const x=random()*170-85,z=random()*112-56;if(E.giantTypes.some((_,id)=>{const p=E.giantPosition(getState(),0,id);return Math.hypot(x-p.x,z-p.z)<10;})||E.inLake(x,z,3)||(x>-74&&x<-42&&z>-7&&z<18)||(x>-34&&x<33&&z>-19&&z<20))continue;
+ const rock=mesh(vegetation,geometry('rock',()=>new T.DodecahedronGeometry(1,1)),M.darkConcrete,x,E.terrainHeight(x,z),z,.2+random()*.7,.16+random()*.4,.25+random()*.5);rock.rotation.set(random(),random(),random());
 }
 bake(vegetation);
 const faceMaterials=new Map();
@@ -275,45 +307,51 @@ function character(kind,index){
 }
 for(let i=0;i<24;i++)soldiers.push(character('soldier',i));
 for(let i=0;i<3;i++)scouts.push(character('scout',i));
-const zombies=[];for(let i=0;i<11;i++)zombies.push(character('zombie',i));
+const zombies=[];for(let i=0;i<E.zombieCount;i++)zombies.push(character('zombie',i));
 for(let i=0;i<4;i++)civilians.push(character('civilian',i));
-const giant=character('giant',0);giant.group.scale.set(5.2,4.1,5.2);giant.body.scale.set(1.2,1.02,1.1);giant.arms.forEach(a=>{a.shoulder.position.x*=1.3;a.shoulder.scale.set(1.2,1,1.2);});giant.group.position.set(35,0,-15);
-giant.data.id='giant';giant.data.name='A Pusztító · Óriászombi';giant.data.description='Tíz alapzombi harci ereje. A megmaradt életerő minden támadás után mentésre kerül. Minden legyőzése hatalmas zsákmányt ad; 5 perc után újraéled.';
-let lastGiantHp=getState().giant.hp,giantHitUntil=0;
+const giants=E.giantTypes.map((multiplier,id)=>{
+ const actor=character('giant',id),scale=1+(multiplier-100)/400;actor.group.scale.set(5.2*scale,4.1*scale,5.2*scale);actor.body.scale.set(1.2,1.02,1.1);
+ actor.arms.forEach(a=>{a.shoulder.position.x*=1.3;a.shoulder.scale.set(1.2,1,1.2);});
+ actor.data.id=id===0?'giant':`giant-${id}`;actor.data.giantId=id;actor.data.name=`${E.giantNames[id]} · ${multiplier}×`;
+ actor.data.description=`${multiplier} alapzombi ereje, ${E.rulesForGiant(id).maxHp} életerő. A sérülése mentésre kerül; 5 perc után újraéled.`;
+ const p=E.giantPosition(getState(),Date.now(),id);actor.group.position.set(p.x,E.terrainHeight(p.x,p.z),p.z);return actor;
+});const giant=giants[0];
 
 const flashMaterial=new T.MeshBasicMaterial({color:'#ffdf8f'});materials.push(flashMaterial);
 const flashes=Array.from({length:8},()=>{const o=sphere(scene,.065,.065,.065,0,1.2,0,flashMaterial);o.castShadow=false;return o;});
 const selectionRing=mesh(scene,geometry('selectRing',()=>new T.RingGeometry(.55,.59,64)),new T.MeshBasicMaterial({color:'#d6ef94',side:T.DoubleSide,transparent:true,opacity:.9}));materials.push(selectionRing.material);selectionRing.rotation.x=-Math.PI/2;selectionRing.visible=false;selectionRing.castShadow=false;
 const labelLayer=$('world-labels');
-const giantLabel=document.createElement('button');giantLabel.className='giant-world-health';giantLabel.id='giant-world-health';
-giantLabel.innerHTML=`<span>ÓRIÁSZOMBI</span><strong id="giant-map-percent">${root.Engine.giantPercent(getState())}%</strong><i class="giant-map-track"><i></i></i>`;
-giantLabel.addEventListener('click',()=>select(giant.data));labelLayer.append(giantLabel);
+giants.forEach((actor,id)=>{
+ const label=document.createElement('button');label.className='giant-world-health';label.dataset.giantHealth=id;if(id===0)label.id='giant-world-health';
+ label.innerHTML=`<span>${E.giantNames[id].toUpperCase()} · ${E.giantTypes[id]}×</span><strong ${id===0?'id="giant-map-percent"':''}>${E.giantPercent(getState(),id)}%</strong><i class="giant-map-track"><i></i></i>`;
+ label.addEventListener('click',()=>select(actor.data));labelLayer.append(label);actor.label=label;
+});
 
 for(const entry of buildingEntries){const button=document.createElement('button');button.className='world-label';button.dataset.worldBuilding=entry.id;button.textContent=entry.name;button.addEventListener('click',()=>select(entry));labelLayer.append(button);entry.label=button;}
 function updateCamera(){
- const c=cameraState;c.distance=clamp(c.distance,4.2,125);c.pitch=clamp(c.pitch,.25,1.33);c.target.x=clamp(c.target.x,-42,42);c.target.z=clamp(c.target.z,-28,28);
+ const c=cameraState;c.distance=clamp(c.distance,4.2,250);c.pitch=clamp(c.pitch,.25,1.33);c.target.x=clamp(c.target.x,E.mapBounds.minX,E.mapBounds.maxX);c.target.z=clamp(c.target.z,E.mapBounds.minZ,E.mapBounds.maxZ);
  const horizontal=Math.cos(c.pitch)*c.distance;
  camera.position.set(c.target.x+Math.sin(c.yaw)*horizontal,c.target.y+Math.sin(c.pitch)*c.distance,c.target.z+Math.cos(c.yaw)*horizontal);
  camera.lookAt(c.target);camera.updateMatrixWorld();
- const zoomLabel=`${Math.round(81/c.distance*100)}%`;if($('zoom-level').textContent!==zoomLabel)$('zoom-level').textContent=zoomLabel;
- canvas.dataset.zoom=String(81/c.distance);
+ const zoomLabel=`${Math.round(162/c.distance*100)}%`;if($('zoom-level').textContent!==zoomLabel)$('zoom-level').textContent=zoomLabel;
+ canvas.dataset.zoom=String(162/c.distance);
 }
 function focus(entry){
  if(!entry)return;canvas.scrollIntoView({behavior:'instant',block:'center'});select(entry);following=entry.kind==='character'?entry:null;
- entry.group.getWorldPosition(cameraState.target);cameraState.target.y=entry.id==='giant'?(getState().giant.hp>0?4:1):entry.kind==='character'?1.05:1.7;
- cameraState.distance=entry.id==='giant'?18:entry.id==='scout-camp'?12:entry.kind==='character'?4.8:entry.id==='hq'?21:17;
+ entry.group.getWorldPosition(cameraState.target);cameraState.target.y=entry.group.position.y+(entry.actor?.kind==='giant'?(E.getGiant(getState(),entry.giantId).hp>0?4:1):entry.kind==='character'?1.05:1.7);
+ cameraState.distance=entry.actor?.kind==='giant'?22:entry.id==='scout-camp'?12:entry.kind==='landmark'&&entry.id!=='scout-camp'?48:entry.kind==='character'?4.8:entry.id==='hq'?21:17;
  cameraState.pitch=entry.kind==='character'?.28:.64;if(entry.kind==='character')cameraState.yaw=entry.group.rotation.y;updateCamera();
 }
 function select(entry){
- selected=entry;const info=$('map-inspector');info.hidden=false;
+ selected=entry;if(entry.actor?.kind==='giant')canvas.dispatchEvent(new CustomEvent('select-giant',{detail:entry.giantId}));const info=$('map-inspector');info.hidden=false;
  $('inspector-title').textContent=entry.name;
- $('inspector-type').textContent=entry.kind==='building'?'BÁZISÉPÜLET':entry.kind==='landmark'?'FELDERÍTŐTÁBOR':entry.id==='giant'?'ÓRIÁSZOMBI · 10× HARCI ERŐ':entry.actor.kind==='zombie'?'KÓSZÁLÓ FERTŐZÖTT':entry.actor.kind==='civilian'?'A MENEDÉK LAKÓJA':'A SAJÁT CSAPATOD';
+ $('inspector-type').textContent=entry.kind==='building'?'BÁZISÉPÜLET':entry.kind==='landmark'?'TÁJ ÉS HELYSZÍN':entry.actor.kind==='giant'?`ÓRIÁSZOMBI · ${E.giantTypes[entry.giantId]}× HARCI ERŐ`:entry.actor.kind==='zombie'?'KÓSZÁLÓ FERTŐZÖTT':entry.actor.kind==='civilian'?'A MENEDÉK LAKÓJA':'A SAJÁT CSAPATOD';
  $('inspector-description').textContent=entry.description;
- $('inspect-upgrade').hidden=entry.kind!=='building';$('inspect-giant-attack').hidden=entry.id!=='giant';$('inspect-zombie-attack').hidden=entry.actor?.kind!=='zombie';
+ $('inspect-upgrade').hidden=entry.kind!=='building';$('inspect-giant-attack').hidden=entry.actor?.kind!=='giant';$('inspect-zombie-attack').hidden=entry.actor?.kind!=='zombie';
  canvas.dataset.selected=entry.id;
 }
 function clearSelection(){selected=null;following=null;selectionRing.visible=false;$('map-inspector').hidden=true;delete canvas.dataset.selected;}
-function home(){following=null;clearSelection();cameraState.target.set(-1,0,0);cameraState.distance=81;cameraState.yaw=.18;cameraState.pitch=.87;updateCamera();}
+function home(){following=null;clearSelection();cameraState.target.set(-1,0,0);cameraState.distance=162;cameraState.yaw=.18;cameraState.pitch=.87;updateCamera();}
 function groundAt(x,y){const r=canvas.getBoundingClientRect();pointer.set((x-r.left)/r.width*2-1,-(y-r.top)/r.height*2+1);raycaster.setFromCamera(pointer,camera);const out=new T.Vector3();return raycaster.ray.intersectPlane(groundPlane,out)?out:null;}
 function zoom(factor,x,y){
  following=null;const before=x===undefined?null:groundAt(x,y);cameraState.distance*=factor;updateCamera();
@@ -372,7 +410,8 @@ for(const button of document.querySelectorAll('[data-camera]'))button.onclick=()
  if(id==='base')focus(buildingEntries[0]);
  else if(id==='army'){const available=soldiers.filter(s=>s.group.visible);focus(available[Math.min(3,available.length-1)]?.data||civilians[0].data);}
  else if(id==='zombies')focus(zombies[0].data);
- else if(id==='giant')focus(giant.data);
+ else if(id==='giant')focus(giants[Number($('giant-select').value)||0].data);
+ else if(id==='lake')focus(lakeEntry);else if(id==='fields')focus(fieldEntry);else if(id==='hills')focus(hillEntry);
  else if(id==='scouts'){if(getState().scout)focus(scouts[0].data);else focus(campEntry);}
 };
 function setQuality(value){
@@ -412,39 +451,42 @@ function animate(timestamp){
  const count=mission.phase==='return'?Math.max(0,actual-Math.max(1,Math.ceil(actual*(mission.win?.12:bossMission?.25:.35)))):actual;
  const center=state.mission?activeRoute.getPointAt(mission.travel):new T.Vector3(-8,0,3);
  const tangent=state.mission?activeRoute.getTangentAt(mission.travel):new T.Vector3(1,0,0),direction=Math.atan2(tangent.x,tangent.z)+(mission.phase==='return'?Math.PI:0);
- soldiers.forEach((actor,i)=>{actor.group.visible=i<Math.min(24,count);if(!actor.group.visible)return;const col=i%4-1.5,row=Math.floor(i/4);actor.group.position.set(center.x+col*.62,0,center.z+row*.72);actor.group.rotation.y=direction;walk(actor,time,mission.phase==='outbound'||mission.phase==='return',false,mission.phase==='battle');});
+ soldiers.forEach((actor,i)=>{actor.group.visible=i<Math.min(24,count);if(!actor.group.visible)return;const col=i%4-1.5,row=Math.floor(i/4);actor.group.position.set(center.x+col*.62,E.terrainHeight(center.x+col*.62,center.z+row*.72),center.z+row*.72);actor.group.rotation.y=direction;walk(actor,time,mission.phase==='outbound'||mission.phase==='return',false,mission.phase==='battle');});
  scouts.forEach((actor,i)=>{actor.group.visible=Boolean(state.scout);if(!state.scout)return;const p=scoutRoute.getPointAt(scout.travel),d=scoutRoute.getTangentAt(scout.travel);actor.group.position.set(p.x+(i-1)*.65,0,p.z+(i%2)*.7);actor.group.rotation.y=Math.atan2(d.x,d.z)+(scout.phase==='return'?Math.PI:0);walk(actor,time,scout.phase!=='search');if(scout.phase==='search')actor.group.rotation.y+=Math.sin(time*.4+i)*.8;});
  zombies.forEach((actor,i)=>{
  const p=root.Engine.zombiePosition(i,now),q=root.Engine.zombiePosition(i,now+100),engaged=Boolean(state.mission)&&!bossMission&&i===(state.mission.targetId??0);
  actor.group.visible=!(engaged&&mission.win&&(mission.phase==='return'||mission.phase==='battle'&&mission.battle>.8));
- if(engaged){actor.group.position.set(target.x,0,target.z);actor.group.rotation.y=-Math.PI/2;}else{actor.group.position.set(p.x,0,p.z);actor.group.rotation.y=Math.atan2(q.x-p.x,q.z-p.z);}
+ if(engaged){actor.group.position.set(target.x,E.terrainHeight(target.x,target.z),target.z);actor.group.rotation.y=-Math.PI/2;}else{actor.group.position.set(p.x,E.terrainHeight(p.x,p.z),p.z);actor.group.rotation.y=Math.atan2(q.x-p.x,q.z-p.z);}
  walk(actor,time,!engaged,true,engaged&&mission.phase==='battle');
  });
- const deadGiant=state.giant.hp===0;
- if(state.giant.hp<lastGiantHp)giantHitUntil=now+350;lastGiantHp=state.giant.hp;
- const giantPos=root.Engine.giantPosition(state,now),nextGiant=root.Engine.giantPosition(state,now+100);giant.group.position.set(giantPos.x,deadGiant?1.0:0,giantPos.z);giant.group.rotation.set(0,deadGiant?0:Math.atan2(nextGiant.x-giantPos.x,nextGiant.z-giantPos.z),deadGiant?Math.PI/2:0);
- if(!deadGiant){walk(giant,time,!bossMission,true,bossMission&&mission.phase==='battle');if(now<giantHitUntil)giant.body.rotation.z+=Math.sin(time*35)*.09;}
- else{giant.detail.visible=true;giant.low.visible=false;}
- $('inspect-zombie-attack').disabled=Boolean(state.mission)||root.Engine.availableSoldiers(state)<1;
- $('inspect-giant-attack').disabled=Boolean(state.mission)||deadGiant||root.Engine.availableSoldiers(state)<1;
- if(selected?.id==='giant')$('inspector-description').textContent=`Életerő: ${root.Engine.giantPercent(state)}%. Harci erő: ${root.Engine.giantRules.power}. A sérülés megmarad. Jutalom: 1500 arany és nagy nyersanyagzsákmány.`;
+ giants.forEach((actor,id)=>{
+  const g=E.getGiant(state,id),dead=g.hp===0,p=E.giantPosition(state,now,id),q=E.giantPosition(state,now+100,id),engaged=bossMission&&(state.mission.giantId??0)===id;
+  actor.group.position.set(p.x,E.terrainHeight(p.x,p.z)+(dead?1:0),p.z);actor.group.rotation.set(0,dead?0:engaged?-Math.PI/2:Math.atan2(q.x-p.x,q.z-p.z),dead?Math.PI/2:0);
+  if(!dead)walk(actor,time,!engaged,true,engaged&&mission.phase==='battle');else{actor.detail.visible=true;actor.low.visible=false;}
+  if(selected===actor.data)$('inspector-description').textContent=`Életerő: ${E.giantPercent(state,id)}% · ${Math.ceil(g.hp)} / ${E.rulesForGiant(id).maxHp} HP. ${E.giantTypes[id]} alapzombi ereje. A sebzés megmarad. ${dead?'Újraéledés 5 perccel a halál után.':'Erős sereg és több támadás szükséges.'}`;
+ });
+ $('inspect-zombie-attack').disabled=Boolean(state.mission)||E.availableSoldiers(state)<1;
+ $('inspect-giant-attack').disabled=Boolean(state.mission)||(selected?.giantId!==undefined&&E.getGiant(state,selected.giantId).hp===0)||E.availableSoldiers(state)<1;
+
  civilians.forEach((actor,i)=>{const t=time*.075+i*1.6;actor.group.position.set(-16+Math.sin(t)*11,0,3.5+Math.cos(t*.7+i)*.85);actor.group.rotation.y=Math.cos(t)>0?Math.PI/2:-Math.PI/2;walk(actor,time,true);});
- flashes.forEach((o,i)=>{o.visible=mission.phase==='battle'&&(time*7+i)%1<.5;if(o.visible){const t=(time*4+i/8)%1;o.position.set(center.x+(target.x-center.x)*t,1.22+(bossMission?2.3*t:0),center.z+(target.z-center.z)*t+(i%3-1)*.3);}});
- if(following){if(following.group.visible){following.group.getWorldPosition(cameraState.target);cameraState.target.y=following.id==='giant'?(state.giant.hp>0?4:1):1.05;}else following=null;}
+ flashes.forEach((o,i)=>{o.visible=mission.phase==='battle'&&(time*7+i)%1<.5;if(o.visible){const t=(time*4+i/8)%1;o.position.set(center.x+(target.x-center.x)*t,E.terrainHeight(center.x,center.z)*(1-t)+E.terrainHeight(target.x,target.z)*t+1.22+(bossMission?2.3*t:0),center.z+(target.z-center.z)*t+(i%3-1)*.3);}});
+ if(following){if(following.group.visible){following.group.getWorldPosition(cameraState.target);cameraState.target.y=following.group.position.y+(following.actor?.kind==='giant'?(E.getGiant(state,following.giantId).hp>0?4:1):1.05);}else following=null;}
  vegetation.visible=quality==='high'||cameraState.distance>25;
- const far=cameraState.distance<25?42:190;if(camera.far!==far){camera.far=far;camera.updateProjectionMatrix();}
- scene.fog.density=cameraState.distance<25?.023:.007;
+ const far=cameraState.distance<25?48:420;if(camera.far!==far){camera.far=far;camera.updateProjectionMatrix();}
+ scene.fog.density=cameraState.distance<25?.023:.0035;
  updateCamera();
- if(selected&&selected.group.visible){selectionRing.visible=true;selectionRing.position.copy(selected.group.position);selectionRing.position.y=.065;const scale=selected.kind==='building'||selected.id==='giant'?4:1;selectionRing.scale.set(scale,scale,1);}else selectionRing.visible=false;
+ if(selected&&selected.group.visible){selectionRing.visible=true;selectionRing.position.copy(selected.group.position);selectionRing.position.y=.065;const scale=selected.kind==='building'||selected.actor?.kind==='giant'?4:1;selectionRing.scale.set(scale,scale,1);}else selectionRing.visible=false;
  const r=canvas.getBoundingClientRect(),size=`${Math.round(r.width)}:${Math.round(r.height)}:${quality}`;
  if(size!==lastSize&&r.width&&r.height){renderer.setSize(r.width,r.height,false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();lastSize=size;}
  const levelSignature=JSON.stringify(state.levels);
  for(const entry of buildingEntries){const p=project(entry.group.position.clone().add(new T.Vector3(0,entry.id==='hq'?7:5.2,0)));entry.label.hidden=!p.visible||cameraState.distance<25;entry.label.style.transform=`translate(${p.x}px,${p.y}px) translate(-50%,-100%)`;if(levelSignature!==oldLevelSignature)entry.label.textContent=`${entry.name} · ${state.levels[entry.id]}`;}
- const gp=project(new T.Vector3(giantPos.x,deadGiant?2.2:8.6,giantPos.z));giantLabel.hidden=!gp.visible;
- const compactHealth=r.width<600&&gp.y<160;
- giantLabel.style.transform=`translate(${compactHealth?76:clamp(gp.x,80,r.width-80)}px,${Math.max(64,gp.y)}px) translate(-50%,-100%)`;
- const percent=root.Engine.giantPercent(state);$('giant-map-percent').textContent=percent+'%';giantLabel.querySelector('.giant-map-track>i').style.width=(state.giant.hp/root.Engine.giantRules.maxHp*100)+'%';
- giantLabel.setAttribute('aria-label',`Óriászombi életerő: ${percent}%. Kijelölés.`);
+ giants.forEach((actor,id)=>{
+  const g=E.getGiant(state,id),p=project(actor.group.position.clone().add(new T.Vector3(0,g.hp===0?2.2:8.6+(E.giantTypes[id]-100)/60,0))),label=actor.label,rules=E.rulesForGiant(id);
+  label.hidden=!p.visible||p.x<0||p.x>r.width||p.y<0||p.y>r.height;
+  label.style.transform=`translate(${r.width<600&&p.y<180?76:clamp(p.x,80,r.width-80)}px,${Math.max(64,p.y)}px) translate(-50%,-100%)`;
+  label.querySelector('strong').textContent=E.giantPercent(state,id)+'%';label.querySelector('.giant-map-track>i').style.width=g.hp/rules.maxHp*100+'%';
+ });
+
  oldLevelSignature=levelSignature;
  const phases={idle:'A helyőrség készen áll',outbound:'A sereg kivonul a bázisról',battle:'Összecsapás a fertőzöttekkel',return:'A túlélők hazafelé tartanak',done:'Az expedíció véget ért'};
  const label=state.mission?(bossMission?(mission.phase==='battle'?'Harc az óriászombival':mission.phase==='outbound'?'A sereg az óriászombihoz vonul':'A csapat hazatér az óriástól'):phases[mission.phase]):aftermath?(aftermath.win?'Győzelem! A sereg hazatért.':'A sereg visszavonult.'):state.scout?`Felderítők: ${scout.phase==='search'?'ellátmányt keresnek':scout.phase==='return'?'hazafelé tartanak':'elhagyják a várost'}`:phases.idle;
@@ -461,8 +503,8 @@ updateCamera();frameId=root.requestAnimationFrame(animate);
 const onLost=e=>{e.preventDefault();$('graphics-notice').hidden=false;$('graphics-notice').textContent='A grafikus kapcsolat megszakadt. A játék mentése megmaradt; töltsd újra az oldalt a térkép folytatásához.';};canvas.addEventListener('webglcontextlost',onLost);
 return {
  focusBuilding(id){focus(buildingEntries.find(b=>b.id===id));},
- focusGiant(){focus(giant.data);},
- getSnapshot(){return {renderer:'webgl',zoom:81/cameraState.distance,target:cameraState.target.toArray(),camera:camera.position.toArray(),selected:selected?.id||null,pixelRatio:renderer.getPixelRatio(),width:canvas.width,height:canvas.height,detailedCharacters:npcEntries.filter(e=>e.group.visible&&e.actor.detail.visible).length,triangles:renderer.info.render.triangles,drawCalls:renderer.info.render.calls,buildings:buildingEntries.map(e=>({id:e.id,...project(e.group.position.clone().add(new T.Vector3(0,1,0)))})),npcs:zombies.map(a=>({id:a.data.id,x:a.group.position.x,z:a.group.position.z,visible:a.group.visible,screen:project(a.group.position.clone().add(new T.Vector3(0,1,0)))})),giant:{hp:getState().giant.hp,percent:root.Engine.giantPercent(getState()),x:giant.group.position.x,z:giant.group.position.z,screen:project(giant.group.position.clone().add(new T.Vector3(0,3.5,0)))},camp:{entranceDepth:new T.Raycaster(new T.Vector3(9,1.2,-7.3),new T.Vector3(0,0,-1)).intersectObject(camp,true)[0]?.distance||0},soldiers:soldiers.filter(a=>a.group.visible).length,scouts:scouts.filter(a=>a.group.visible).length};},
+ focusGiant(id=0){focus(giants[id]?.data);},
+ getSnapshot(){return {renderer:'webgl',mapBounds:E.mapBounds,terrain:{lake:E.lake,hills:E.hills,fields:2},giants:giants.map((a,id)=>({id,x:a.group.position.x,y:a.group.position.y,z:a.group.position.z,hp:E.getGiant(getState(),id).hp,multiplier:E.giantTypes[id],screen:project(a.group.position.clone().add(new T.Vector3(0,4,0)))})),zoom:162/cameraState.distance,target:cameraState.target.toArray(),camera:camera.position.toArray(),selected:selected?.id||null,pixelRatio:renderer.getPixelRatio(),width:canvas.width,height:canvas.height,detailedCharacters:npcEntries.filter(e=>e.group.visible&&e.actor.detail.visible).length,triangles:renderer.info.render.triangles,drawCalls:renderer.info.render.calls,buildings:buildingEntries.map(e=>({id:e.id,...project(e.group.position.clone().add(new T.Vector3(0,1,0)))})),npcs:zombies.map(a=>({id:a.data.id,x:a.group.position.x,z:a.group.position.z,visible:a.group.visible,screen:project(a.group.position.clone().add(new T.Vector3(0,1,0)))})),giant:{hp:getState().giant.hp,percent:root.Engine.giantPercent(getState()),x:giant.group.position.x,z:giant.group.position.z,screen:project(giant.group.position.clone().add(new T.Vector3(0,3.5,0)))},camp:{entranceDepth:new T.Raycaster(new T.Vector3(9,1.2,-7.3),new T.Vector3(0,0,-1)).intersectObject(camp,true)[0]?.distance||0},soldiers:soldiers.filter(a=>a.group.visible).length,scouts:scouts.filter(a=>a.group.visible).length};},
  destroy(){destroyed=true;root.cancelAnimationFrame(frameId);for(const [name,handler] of Object.entries(events))canvas.removeEventListener(name,handler);canvas.removeEventListener('webglcontextlost',onLost);geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());renderer.dispose();visibilityObserver.disconnect();labelLayer.replaceChildren();}
 };
 }

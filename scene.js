@@ -56,7 +56,7 @@
     function point(t,isGiant=false,target=null) {
       // Bézier-útvonal a bázis kapujától a fertőzött körzetig.
       const u=1-t;
-      if(target)return {x:510+(650+target.x*10-510)*t,y:351+(345+target.z*5-351)*t};
+      if(target)return {x:510+(650+target.x*5-510)*t,y:351+(345+target.z*3.5-351)*t};
       return isGiant?{x:u*u*u*510+3*u*u*t*700+3*u*t*t*850+t*t*t*980,y:u*u*u*351+3*u*u*t*300+3*u*t*t*260+t*t*t*300}:{x:u*u*u*510+3*u*u*t*680+3*u*t*t*710+t*t*t*896,y:u*u*u*351+3*u*u*t*400+3*u*t*t*451+t*t*t*345};
     }
     function human(x,y,time,i,zombie=false,facing=1,moving=true,dead=false,scout=false) {
@@ -90,7 +90,7 @@
     }
     function draw(now) {
       const state=getState(),time=now/1000;
-      if(previousMission&&!state.mission)aftermath={until:now+3500,win:missionView(previousMission,previousMission.ends).win,gold:previousMission.kind==='giant'?root.Engine.giantRules.loot.gold:root.Engine.goldReward(previousMission.zone)};
+      if(previousMission&&!state.mission)aftermath={until:now+3500,win:missionView(previousMission,previousMission.ends).win,gold:previousMission.kind==='giant'?root.Engine.rulesForGiant(previousMission.giantId??0).loot.gold:root.Engine.goldReward(previousMission.zone)};
       previousMission=state.mission;
       if(aftermath&&now>aftermath.until)aftermath=null;
       const view=missionView(state.mission,now),scout=scoutView(state.scout,now);
@@ -100,6 +100,10 @@
       const bg=ctx.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#628465');bg.addColorStop(.6,'#4b6950');bg.addColorStop(1,'#3d5148');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
       poly([[0,45],[170,20],[340,93],[550,25],[760,56],[990,10],[1100,49],[1100,0],[0,0]],'#92a382');
       for(let i=0;i<170;i++){const x=(i*137.7)%W,y=(i*97.3)%H;ellipse(x,y,1+(i%3),1,'#d2d1971a');}
+      // A kibővített vidék 2D tartaléknézete is mutatja a tavakat, dombokat és vetéseket.
+      for(const h of root.Engine.hills){const x=650+h.x*5,y=345+h.z*3.5;ellipse(x,y,h.r*5,h.r*2.7,'#a3ae6d');ellipse(x-8,y-9,h.r*3,h.r*1.5,'#b8ba7c');}
+      const lake=root.Engine.lake;ellipse(650+lake.x*5,345+lake.z*3.5,lake.rx*5+4,lake.rz*3.5+4,'#baa579');ellipse(650+lake.x*5,345+lake.z*3.5,lake.rx*5,lake.rz*3.5,'#6c9ca6');
+      ctx.fillStyle='#857048';ctx.fillRect(25,230,65,85);for(let i=0;i<9;i++){ctx.fillStyle=i%2?'#c5b476':'#9b995b';ctx.fillRect(30+i*6,234,3,77);}
       road();
       ctx.beginPath();ctx.moveTo(565,350);ctx.bezierCurveTo(614,315,625,225,730,215);
       ctx.strokeStyle='#93c1b355';ctx.lineWidth=17;ctx.stroke();
@@ -152,11 +156,11 @@
         const clock=`${Math.floor(remaining/60)}:${String(remaining%60).padStart(2,'0')}`;
         text(`3 FELDERÍTŐ · ${scout.phase==='search'?'KUTATÁS':scout.phase==='return'?'HAZATÉRÉS':'KIVONULÁS'} · ${clock}`,sx,sy-46,10,'#d2fff5');
       }
-      const zombies=9;
+      const zombies=root.Engine.zombieCount;
       for(let i=0;i<zombies;i++){
-        const fighting=!bossMission&&view.phase==='battle',dead=!bossMission&&view.win&&(view.phase==='return'||view.phase==='done'||(fighting&&view.battle>(i+1)/zombies));
-        const p=root.Engine.zombiePosition(i,now),engaged=Boolean(state.mission)&&!bossMission&&i===(state.mission.targetId??0),target=engaged?(state.mission.target||p):p;
-        const x=650+target.x*10,y=345+target.z*5;
+        const engaged=Boolean(state.mission)&&!bossMission&&i===(state.mission.targetId??0),fighting=engaged&&view.phase==='battle',dead=engaged&&view.win&&(view.phase==='return'||view.phase==='done'||(fighting&&view.battle>.8));
+        const p=root.Engine.zombiePosition(i,now),target=engaged?(state.mission.target||p):p;
+        const x=650+target.x*5,y=345+target.z*3.5;
         if(!dead||view.phase==='battle')human(x,y,time,i,true,-1,fighting,dead);
       }
       if(view.phase==='battle'){
@@ -167,11 +171,12 @@
         }
         text('ÖSSZECSAPÁS',916,290,13,'#ffe1a1');
       }
-      const gp=root.Engine.giantPosition(state,now),gx=650+gp.x*10,gy=345+gp.z*5;
-      ctx.save();ctx.translate(gx,gy);ctx.scale(3.5,3.5);human(0,0,time,0,true,-1,false,state.giant.hp===0);ctx.restore();
-      const giantPercent=root.Engine.giantPercent(state);
-      ctx.fillStyle='#2b231de8';ctx.fillRect(gx-57,gy-127,115,35);text(`ÓRIÁS · ${giantPercent}%`,gx,gy-113,11,'#ffd7a6');
-      ctx.fillStyle='#59402c';ctx.fillRect(gx-48,gy-106,96,6);ctx.fillStyle='#df9c63';ctx.fillRect(gx-48,gy-106,96*state.giant.hp/root.Engine.giantRules.maxHp,6);
+      state.giants.forEach((giant,id)=>{
+       const gp=root.Engine.giantPosition(state,now,id),gx=650+gp.x*5,gy=345+gp.z*3.5,scale=2.1+id*.08;
+       ctx.save();ctx.translate(gx,gy);ctx.scale(scale,scale);human(0,0,time,id,true,-1,giant.hp>0,giant.hp===0);ctx.restore();
+       const percent=root.Engine.giantPercent(state,id);ctx.fillStyle='#2b231de8';ctx.fillRect(gx-46,gy-93,92,27);text(`${root.Engine.giantTypes[id]}× · ${percent}%`,gx,gy-80,10,'#ffd7a6');
+       ctx.fillStyle='#59402c';ctx.fillRect(gx-40,gy-74,80,4);ctx.fillStyle='#df9c63';ctx.fillRect(gx-40,gy-74,80*giant.hp/root.Engine.rulesForGiant(id).maxHp,4);
+      });
       if(aftermath){ctx.fillStyle='#14281ff0';ctx.fillRect(357,42,386,43);text(aftermath.win?`GYŐZELEM · +${aftermath.gold} ARANY ÉS ZSÁKMÁNY`:'VISSZAVONULÁS · Erősítsd a sereget!',550,69,14,aftermath.win?'#d6ed91':'#f0bc91');}
       // A térkép jelmagyarázata az alsó sávban.
       ctx.fillStyle='#152b25d9';ctx.fillRect(0,548,W,42);text('● SAJÁT BÁZIS',28,574,10,'#d6ed91','left');text('━ EXPEDÍCIÓ ÚTVONALA',210,574,10,'#d2caa6','left');text('● FERTŐZÖTTEK',W-30,574,10,'#e8bb8b','right');

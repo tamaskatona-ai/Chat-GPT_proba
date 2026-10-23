@@ -6,11 +6,16 @@ const productionBuildings={wood:'sawmill',metal:'mine',food:'farm'};
 const baseProduction={wood:105.6,metal:176,food:60};
 const scoutSize=3,scoutTravelTime=10000,scoutSearchTime=300000,bonusDuration=300000;
 const scoutLoot={bonuses:{wood:3,metal:3,food:3},gold:75};
-const normalZombiePower=95;
-const giantRules={power:normalZombiePower*10,maxHp:950,respawnTime:300000,loot:{gold:1500,wood:2400,metal:1800,food:2000}};
-function initialGiant(){return {hp:giantRules.maxHp,rewardClaimed:false,respawnAt:0,generation:0};}
-function giantPercent(s){return Math.ceil(s.giant.hp/giantRules.maxHp*100);}
-function initial(){return {version:1,giant:initialGiant(),scout:null,bonusInventory:{wood:0,metal:0,food:0},boostUntil:{wood:0,metal:0,food:0},gold:0,morale:0,moraleUpdatedAt:Date.now(),encounters:0,wood:220,metal:150,food:160,soldiers:8,zone:1,wins:0,levels:{hq:1,farm:1,sawmill:1,mine:1,barracks:1,wall:1},last:Date.now(),mission:null,log:['A túlélők megérkeztek. Építs biztonságos otthont!']};}
+const normalZombiePower=95,zombieCount=44;
+const mapBounds={minX:-84,maxX:84,minZ:-56,maxZ:56,width:168,depth:112};
+const giantTypes=[100,120,140,160,180,200,210,220];
+const giantNames=['Pusztító','Romboló','Vasmarok','Dögvész','Földrengető','Ostromló','Végítélet','Világfaló'];
+const giantRules={power:normalZombiePower*100,maxHp:9500,respawnTime:300000,loot:{gold:1500,wood:2400,metal:1800,food:2000}};
+function rulesForGiant(id=0){const multiplier=giantTypes[id]??100,scale=multiplier/100;return {...giantRules,multiplier,power:normalZombiePower*multiplier,maxHp:normalZombiePower*multiplier,loot:Object.fromEntries(Object.entries(giantRules.loot).map(([k,v])=>[k,Math.round(v*scale)]))};}
+function initialGiant(id=0){return {id,hp:rulesForGiant(id).maxHp,rewardClaimed:false,respawnAt:0,generation:0};}
+function getGiant(s,id=0){return s.giants?.[id]||(id===0?s.giant:null);}
+function giantPercent(s,id=0){return Math.ceil(getGiant(s,id).hp/rulesForGiant(id).maxHp*100);}
+function initial(){const giants=giantTypes.map((_,i)=>initialGiant(i));return {version:1,giants,giant:giants[0],scout:null,bonusInventory:{wood:0,metal:0,food:0},boostUntil:{wood:0,metal:0,food:0},gold:0,morale:0,moraleUpdatedAt:Date.now(),encounters:0,wood:220,metal:150,food:160,soldiers:8,zone:1,wins:0,levels:{hq:1,farm:1,sawmill:1,mine:1,barracks:1,wall:1},last:Date.now(),mission:null,log:['A túlélők megérkeztek. Építs biztonságos otthont!']};}
 function migrate(s){
   // A korábbi mentések új mezőit alapértékkel egészítjük ki; a haladás megmarad.
   if(s.gold===undefined)s.gold=0;
@@ -18,9 +23,13 @@ function migrate(s){
   if(s.moraleUpdatedAt===undefined)s.moraleUpdatedAt=s.last;
   if(s.encounters===undefined)s.encounters=0;
   if(s.scout===undefined)s.scout=null;
-  if(s.giant===undefined)s.giant=initialGiant();
-  if(s.giant.respawnAt===undefined)s.giant.respawnAt=s.giant.hp===0?s.last+giantRules.respawnTime:0;
-  if(s.giant.generation===undefined)s.giant.generation=0;
+  if(s.giants===undefined){
+    const old=s.giant;s.giants=giantTypes.map((_,i)=>initialGiant(i));
+    // Az első óriás sérülésének aránya és újraéledési ideje megmarad.
+    if(old)s.giants[0]={...s.giants[0],...old,hp:Math.min(9500,old.hp*10),id:0};
+  }
+  s.giant=s.giants[0];
+  s.giants.forEach((g,id)=>{if(g.respawnAt===undefined)g.respawnAt=g.hp===0?s.last+giantRules.respawnTime:0;if(g.generation===undefined)g.generation=0;g.id=id;});
   if(s.bonusInventory===undefined)s.bonusInventory={wood:0,metal:0,food:0};
   if(s.boostUntil===undefined)s.boostUntil={wood:0,metal:0,food:0};
   return s;
@@ -34,20 +43,30 @@ function power(s){return Math.floor(availableSoldiers(s)*(8+s.levels.barracks*2)
 function enemy(s){return 70+s.zone*s.zone*25;}
 function baseRate(s,type){return baseProduction[type]*s.levels[productionBuildings[type]];}
 function productionRate(s,type,now){return baseRate(s,type)*((s.boostUntil?.[type]||0)>now?2:1);}
+const hills=[{x:54,z:30,r:20,h:6},{x:-52,z:32,r:17,h:5},{x:40,z:-38,r:16,h:7},{x:-52,z:-45,r:12,h:3}];
+const lake={x:-59,z:-25,rx:11,rz:8};
+function terrainHeight(x,z){const basin=((x-lake.x)/lake.rx)**2+((z-lake.z)/lake.rz)**2;return (basin<1?-2*(1-basin)**2:0)+hills.reduce((h,p)=>{const d=Math.hypot(x-p.x,z-p.z)/p.r;return h+(d<1?p.h*Math.pow(1-d*d,2):0);},0);}
+function inLake(x,z,margin=0){return ((x-lake.x)/(lake.rx+margin))**2+((z-lake.z)/(lake.rz+margin))**2<1;}
 function zombiePosition(index,now){
-  const t=now/1000*(.085+(index%3)*.009)+index*1.73;
-  return {x:24+Math.cos(t)*(4+(index%4)*1.1),z:Math.sin(t*.79)*(4+(index%3)*1.1)};
+  const centers=[[24,0],[56,1],[22,34],[58,34],[20,-35],[65,-33],[-15,39],[-57,35]],c=centers[Math.floor(index/6)%centers.length];
+  const t=now/1000*(.065+(index%3)*.009)+index*1.73;
+  return {x:c[0]+Math.cos(t)*(3+(index%4)),z:c[1]+Math.sin(t*.79)*(3+(index%3))};
 }
-function giantPosition(s,now){
-  if(s.mission?.kind==='giant'&&s.mission.target)return s.mission.target;
-  if(s.giant.hp===0&&s.giant.deathPosition)return s.giant.deathPosition;
-  const t=now/1000*.035+(s.giant.generation||0)*2;
-  return {x:38+Math.cos(t)*3,z:-14+Math.sin(t)*5};
+const giantCenters=[[38,-14],[64,-12],[19,26],[53,30],[23,-41],[65,-39],[-16,43],[-51,35]];
+function giantPosition(s,now,id=0){
+  const g=getGiant(s,id);
+  if(s.mission?.kind==='giant'&&(s.mission.giantId??0)===id&&s.mission.target)return s.mission.target;
+  if(g.hp===0&&g.deathPosition)return g.deathPosition;
+  const t=now/1000*.025+g.generation*2+id,c=giantCenters[id];
+  return {x:c[0]+Math.cos(t)*3,z:c[1]+Math.sin(t)*4};
 }
 function respawnGiant(s,now){
-  if(s.giant.hp===0&&s.giant.rewardClaimed&&s.mission?.kind!=='giant'&&s.giant.respawnAt>0&&now>=s.giant.respawnAt){
-    s.giant={...initialGiant(),generation:(s.giant.generation||0)+1};return true;
-  }return false;
+  let changed=false;
+  (s.giants||[s.giant]).forEach((g,id)=>{
+    if(g.hp===0&&g.rewardClaimed&&!(s.mission?.kind==='giant'&&(s.mission.giantId??0)===id)&&g.respawnAt>0&&now>=g.respawnAt){
+      Object.assign(g,initialGiant(id),{generation:g.generation+1});delete g.deathPosition;changed=true;
+    }
+  });return changed;
 }
 function advance(s,now){
   const since=s.moraleUpdatedAt??s.last,steps=Math.floor(Math.max(0,now-since)/600000);
@@ -114,27 +133,30 @@ function boostMorale(s){
   if((s.gold||0)<amount)return `A morál növeléséhez ${amount} arany kell.`;
   s.gold-=amount;s.morale=Math.min(maxMorale,(s.morale||0)+1);return null;
 }
-function launch(s,now,targetId){if(s.mission)return 'Már folyamatban van egy expedíció.';if(availableSoldiers(s)<1)return 'Nincs szabad katona. Képezz katonákat vagy várd meg a felderítőket!';const zombie=Number.isInteger(targetId)&&targetId>=0&&targetId<11?targetId:(s.encounters||0)%11;s.encounters=(s.encounters||0)+1;s.mission={kind:'zone',targetId:zombie,target:zombiePosition(zombie,now),soldiers:availableSoldiers(s),ends:now+15000,power:power(s),enemy:enemy(s),zone:s.zone};return null;}
-function launchGiant(s,now){
+function launch(s,now,targetId){if(s.mission)return 'Már folyamatban van egy expedíció.';if(availableSoldiers(s)<1)return 'Nincs szabad katona. Képezz katonákat vagy várd meg a felderítőket!';const zombie=Number.isInteger(targetId)&&targetId>=0&&targetId<zombieCount?targetId:(s.encounters||0)%zombieCount;s.encounters=(s.encounters||0)+1;s.mission={kind:'zone',targetId:zombie,target:zombiePosition(zombie,now),soldiers:availableSoldiers(s),ends:now+15000,power:power(s),enemy:enemy(s),zone:s.zone};return null;}
+function launchGiant(s,now,id=0){
+  if(!Number.isInteger(id)||id<0||id>=giantTypes.length)return 'Ismeretlen óriászombi.';
+  const giant=getGiant(s,id),rules=rulesForGiant(id);
   if(s.mission)return 'A katonák már bevetésen vannak.';
   respawnGiant(s,now);
-  if(s.giant.hp<=0)return 'Az óriászombi 5 perccel a halála után éled újra.';
+  if(giant.hp<=0)return 'Az óriászombi 5 perccel a halála után éled újra.';
   if(availableSoldiers(s)<1)return 'Az óriás megtámadásához legalább 1 szabad katona szükséges.';
   const strength=power(s);
-  s.mission={kind:'giant',target:giantPosition(s,now),soldiers:availableSoldiers(s),ends:now+15000,power:strength,enemy:giantRules.power,giantHpAtStart:s.giant.hp,damageTotal:Math.min(s.giant.hp,strength),damageDealt:0,appliedTicks:0};
+  s.mission={kind:'giant',giantId:id,target:giantPosition(s,now,id),soldiers:availableSoldiers(s),ends:now+15000,power:strength,enemy:rules.power,giantHpAtStart:giant.hp,damageTotal:Math.min(giant.hp,strength),damageDealt:0,appliedTicks:0};
   return null;
 }
 function applyGiantDamage(s,now){
   const m=s.mission;if(!m||m.kind!=='giant')return 0;
+  const giant=getGiant(s,m.giantId??0);
   // Öt találat a 6–10,5. másodperc között. A mentett találatszám kizárja a dupla sebzést.
   const ticks=Math.max(0,Math.min(5,Math.floor((now-(m.ends-15000)-6000)/900)));
   if(ticks<=m.appliedTicks)return 0;
-  const total=Math.floor(m.damageTotal*ticks/5),damage=Math.min(s.giant.hp,Math.max(0,total-m.damageDealt));
-  s.giant.hp-=damage;m.damageDealt+=damage;m.appliedTicks=ticks;
-  if(s.giant.hp===0&&damage>0){
+  const total=Math.floor(m.damageTotal*ticks/5),damage=Math.min(giant.hp,Math.max(0,total-m.damageDealt));
+  giant.hp-=damage;m.damageDealt+=damage;m.appliedTicks=ticks;
+  if(giant.hp===0&&damage>0){
     const killingTick=Math.ceil(m.giantHpAtStart*5/m.damageTotal);
-    s.giant.respawnAt=m.ends-15000+6000+killingTick*900+giantRules.respawnTime;
-    s.giant.deathPosition=m.target||giantPosition(s,now);
+    giant.respawnAt=m.ends-15000+6000+killingTick*900+giantRules.respawnTime;
+    giant.deathPosition=m.target||giantPosition(s,now,m.giantId??0);
   }
   return damage;
 }
@@ -143,15 +165,16 @@ function resolve(s,now){
   if(!s.mission||now<s.mission.ends){respawnGiant(s,now);return null;}
   const m=s.mission,deployed=m.soldiers??s.soldiers;
   if(m.kind==='giant'){
-    const win=s.giant.hp===0;
+    const id=m.giantId??0,giant=getGiant(s,id),rules=rulesForGiant(id);
+    const win=giant.hp===0;
     const loss=Math.min(deployed,Math.max(1,Math.ceil(deployed*(win?.12:.25))));
     s.soldiers-=loss;s.mission=null;
-    if(win&&!s.giant.rewardClaimed){
-      for(const [type,amount] of Object.entries(giantRules.loot))s[type]+=amount;
-      s.giant.rewardClaimed=true;respawnGiant(s,now);
-      return `Az óriászombi elesett! Zsákmány: 1500 arany, 2400 fa, 1800 vas, 2000 élelem. Veszteség: ${loss} katona.`;
+    if(win&&!giant.rewardClaimed){
+      for(const [type,amount] of Object.entries(rules.loot))s[type]+=amount;
+      giant.rewardClaimed=true;respawnGiant(s,now);
+      return `Az óriászombi elesett! Zsákmány: ${rules.loot.gold} arany, ${rules.loot.wood} fa, ${rules.loot.metal} vas, ${rules.loot.food} élelem. Veszteség: ${loss} katona.`;
     }
-    return `Az óriászombi ${m.damageDealt} sebzést kapott. Életereje: ${giantPercent(s)}%. A sérülése megmarad a következő támadásra. Veszteség: ${loss} katona.`;
+    return `Az óriászombi ${m.damageDealt} sebzést kapott. Életereje: ${giantPercent(s,id)}%. A sérülése megmarad a következő támadásra. Veszteség: ${loss} katona.`;
   }
   const win=m.power>=m.enemy,loss=Math.min(s.soldiers,Math.max(1,Math.ceil(deployed*(win?.12:.35))));
   s.soldiers-=loss;
@@ -159,5 +182,5 @@ function resolve(s,now){
   s.mission=null;
   return win?`Győzelem a(z) ${m.zone}. körzetben! A zombik zsákmánya: +${goldReward(m.zone)} arany és nyersanyagok. Veszteség: ${loss} katona.`:`Visszavonulás a(z) ${m.zone}. körzetből. Veszteség: ${loss} katona. Erősítsd meg a sereget!`;
 }
-const api={zombiePosition,giantPosition,respawnGiant,normalZombiePower,giantRules,initialGiant,giantPercent,launchGiant,applyGiantDamage,resourceTypes,baseProduction,baseRate,productionRate,scoutSize,scoutTravelTime,scoutSearchTime,scoutLoot,bonusDuration,availableSoldiers,launchScout,resolveScout,activateBonus,buildings,trainingCost,maxMorale,resourcesPerGold,initial,migrate,cost,moraleBonus,moraleCost,goldReward,quote,power,enemy,advance,upgrade,train,boostMorale,launch,resolve};if(typeof module!=='undefined')module.exports=api;else root.Engine=api;
+const api={zombieCount,mapBounds,giantTypes,giantNames,rulesForGiant,getGiant,hills,lake,terrainHeight,inLake,zombiePosition,giantPosition,respawnGiant,normalZombiePower,giantRules,initialGiant,giantPercent,launchGiant,applyGiantDamage,resourceTypes,baseProduction,baseRate,productionRate,scoutSize,scoutTravelTime,scoutSearchTime,scoutLoot,bonusDuration,availableSoldiers,launchScout,resolveScout,activateBonus,buildings,trainingCost,maxMorale,resourcesPerGold,initial,migrate,cost,moraleBonus,moraleCost,goldReward,quote,power,enemy,advance,upgrade,train,boostMorale,launch,resolve};if(typeof module!=='undefined')module.exports=api;else root.Engine=api;
 })(globalThis);

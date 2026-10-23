@@ -52,15 +52,29 @@ A csomagokat külön kell aktiválni a **Termelési bónuszok** panelen. Egy cso
 
 A régi mentések új felderítés és bónuszok nélkül folytatódnak; a korábbi hadsereg, arany és épületek megmaradnak.
 
-## Az óriászombi
+## A kibővített térkép és az óriások
 
-Az **Óriás** kameragomb és a térkép alatti külön harci panel mutatja A Pusztítót. A referencia-alapzombi ereje 95, az óriásé ennek tízszerese: **950 harci erő**, és **950 életerőről** indul. A feje fölött életerősáv és százalékos érték követi a mentett állapotát; ugyanaz az érték jelenik meg a panelen is.
+A bejárható térkép **168 × 112** egység a korábbi 84 × 56 helyett: mindkét irányban dupla, területében négyszeres. A háttérterep is mindkét irányban megduplázódik. **44 kószáló zombi és 8 ritka óriászombi** járőrözik rajta. Kis tó náddal és tavirózsákkal, két barázdált szántó és négy ténylegesen kiemelkedő domb teszi változatossá a vidéket. A karakterek a talaj magasságát követik. A **Tó**, **Szántó** és **Dombok** kameragombokkal közvetlenül is megtekinthetők a tájak.
 
+Az óriásokat a térképen vagy a panel legördülő listájából választhatod ki. Mindegyiknek saját életereje, sérülése, mozgása, zsákmánya és újraéledési órája van. Egy alapzombi referenciaereje 95; az óriás harci ereje és teljes életereje ennek a szorzata:
+
+| Óriás | Alapzombi ereje | Harci erő / teljes HP |
+| --- | ---: | ---: |
+| Pusztító | 100 | 9500 |
+| Romboló | 120 | 11400 |
+| Vasmarok | 140 | 13300 |
+| Dögvész | 160 | 15200 |
+| Földrengető | 180 | 17100 |
+| Ostromló | 200 | 19000 |
+| Végítélet | 210 | 19950 |
+| Világfaló | 220 | 20900 |
+
+Ezek kifejezetten nehéz ellenfelek: a kezdő sereg csak töredéknyi sebzést okoz, erősítés és sok támadás szükséges. Minden óriás feje fölött százalékos életerősáv látható. A régi mentés első óriásának sérülési aránya és a település haladása megmarad.
 Az **Óriászombi megtámadása** gomb külön, 15 másodperces expedíciót indít. A csapat egy másik útvonalon jut el hozzá. Egy támadás a sereg induláskori összesített harci erejének megfelelő sebzést ad, legfeljebb az óriás megmaradt életerejéig. A sebzés öt találatban, a csata alatt jelenik meg. Ha az óriás túléli, a sérülése **megmarad**, várakozáskor és újratöltéskor sem gyógyul vissza. Újabb csapatokkal tovább sebezheted, amíg el nem esik.
 
 A túlélő óriás elleni támadáskor a bevetett katonák 25%-a, a végső győzelemkor 12%-a vész el, felfelé kerekítve, legalább 1 katona. A felderítők nem vesznek részt ezekben a csatákban. Egyszerre csak egy harci expedíció folyhat, a külön felderítés közben folytatódhat. Az óriás elleni harc nem lépteti előre a normál körzeteket.
 
-Az óriás minden legyőzésének zsákmánya: **1500 arany, 2400 fa, 1800 vas és 2000 élelem**. A jutalom a 15 másodperces expedíció végén kerül a készletbe; egy pusztán sebesítő támadásért nem jár. A mentés az egyes találatokat és a jutalom átvételét is megőrzi, így az újratöltés nem ismétli meg a sebzést vagy a zsákmányt. A haláltól számítva **5 perc** múlva teljes életerővel újraéled, és ismét teljes zsákmányt ad. A visszaszámlálás offline is telik. Harcon kívül kószál; támadáskor a sereg az aktuális helyéhez vonul.
+A 100× erejű óriás zsákmánya: **1500 arany, 2400 fa, 1800 vas és 2000 élelem**. Az erősebb típusok zsákmánya a szorzójukkal arányosan nő; a 220× erejű óriás például **3300 aranyat** ad. A panel a kiválasztott ellenfél pontos jutalmát mutatja. A jutalom a 15 másodperces expedíció végén kerül a készletbe; egy pusztán sebesítő támadásért nem jár. A mentés az egyes találatokat és a jutalom átvételét is megőrzi, így az újratöltés nem ismétli meg a sebzést vagy a zsákmányt. A haláltól számítva **5 perc** múlva teljes életerővel újraéled, és ismét teljes zsákmányt ad. A visszaszámlálás offline is telik. Harcon kívül kószál; támadáskor a sereg az aktuális helyéhez vonul.
 
 ## Játékmenet
 
