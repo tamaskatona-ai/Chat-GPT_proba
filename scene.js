@@ -82,7 +82,7 @@
     }
     function draw(now) {
       const state=getState(),time=now/1000;
-      if(previousMission&&!state.mission)aftermath={until:now+3500,win:previousMission.power>=previousMission.enemy};
+      if(previousMission&&!state.mission)aftermath={until:now+3500,win:previousMission.power>=previousMission.enemy,gold:root.Engine.goldReward(previousMission.zone)};
       previousMission=state.mission;
       if(aftermath&&now>aftermath.until)aftermath=null;
       const view=missionView(state.mission,now);
@@ -101,7 +101,7 @@
       for(let x=78;x<558;x+=22){box(x,154,13,17,'#87937a','#a6ac8f');box(x,484,13,17,'#87937a','#a6ac8f');}
       sites.forEach(site=>building(site,state,time));
       box(563,320,30,51,'#889a84','#556d58');box(563,404,30,51,'#889a84','#556d58');
-      text('ÉSZAKI MENEDÉK',300,112,17,'#e3e9ce');text('A bázis épületeire kattintva fejleszthetsz',300,132,10,'#d3dfbd');
+      text('ÉSZAKI MENEDÉK',300,112,17,'#e3e9ce');text(`HARCI MORÁL +${root.Engine.moraleBonus(state)}%`,300,516,12,'#f3d486');text('A bázis épületeire kattintva fejleszthetsz',300,132,10,'#d3dfbd');
       // Romok, barikádok és a célterület.
       for(let i=0;i<4;i++){let x=874+(i%2)*116,y=208+Math.floor(i/2)*244;box(x,y,65,50+(i%3)*17,'#78817a','#4c5d56');poly([[x-30,y-50],[x-10,y-65],[x+2,y-45],[x+17,y-56],[x+32,y-50]],'#43574b');ctx.fillStyle='#2a3934';ctx.fillRect(x-12,y-29,14,29);}
       text(`FERTŐZÖTT KÖRZET · ${state.mission?.zone||state.zone}`,924,104,14,'#f1d3a5');
@@ -130,7 +130,7 @@
         }
         text('ÖSSZECSAPÁS',916,290,13,'#ffe1a1');
       }
-      if(aftermath){ctx.fillStyle='#14281ff0';ctx.fillRect(357,42,386,43);text(aftermath.win?'GYŐZELEM · A zsákmány megérkezett':'VISSZAVONULÁS · Erősítsd a sereget!',550,69,14,aftermath.win?'#d6ed91':'#f0bc91');}
+      if(aftermath){ctx.fillStyle='#14281ff0';ctx.fillRect(357,42,386,43);text(aftermath.win?`GYŐZELEM · +${aftermath.gold} ARANY ÉS ZSÁKMÁNY`:'VISSZAVONULÁS · Erősítsd a sereget!',550,69,14,aftermath.win?'#d6ed91':'#f0bc91');}
       // A térkép jelmagyarázata az alsó sávban.
       ctx.fillStyle='#152b25d9';ctx.fillRect(0,548,W,42);text('● SAJÁT BÁZIS',28,574,10,'#d6ed91','left');text('━ EXPEDÍCIÓ ÚTVONALA',210,574,10,'#d2caa6','left');text('● FERTŐZÖTTEK',W-30,574,10,'#e8bb8b','right');
       const label=aftermath?(aftermath.win?'Győzelem! A sereg hazatért.':'A sereg visszavonult.'):phaseText[view.phase];
