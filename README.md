@@ -12,11 +12,31 @@ A szerver alapértelmezett portja 3000, a `PORT` változóval módosítható. El
 
 A GitHubon válaszd a **Code → Download ZIP** lehetőséget, majd csomagold ki a letöltött fájlt. Nyisd meg a `vegvar.html` fájlt Chrome-ban vagy Edge-ben: az egyetlen fájl tartalmazza a teljes játékot, Node.js nélkül is használható. Az `index.html` fájl is megnyitható, ha a mellette lévő CSS- és JavaScript-fájlok ugyanabban a mappában maradnak.
 
+## Telepítés iPhone-ra
+
+A játék **kezdőképernyőre telepíthető webalkalmazás (PWA)**: saját Végvár ikonnal, Safari-címsor nélküli alkalmazásablakkal, érintésvezérléssel és offline indulással. Nem kell hozzá App Store, Xcode vagy fizetős fejlesztői fiók. Az első megnyitáshoz HTTPS-webcím és internet szükséges.
+
+1. Safariban nyisd meg a közzétett játékot: `https://tamaskatona-ai.github.io/Chat-GPT_proba/`.
+2. Koppints a **Megosztás → Főképernyőhöz adás → Hozzáadás** lehetőségre. Újabb iOS-en a **Megnyitás webalkalmazásként** kapcsoló legyen bekapcsolva. A játék **Telepítés telefonra** gombja ugyanezeket a lépéseket mutatja.
+3. Indítsd el a Végvár ikonnal, és internet mellett várd meg az **Offline játék kész** jelzést. Ezután hálózat nélkül is elindul a teljes játék és a 3D térkép.
+
+A telepítést az iPhone tulajdonosának kell elvégeznie; egy weboldal nem adhatja hozzá magát automatikusan a főképernyőhöz. A mentés helyben marad. A Safari és a telepített alkalmazás külön tárhelyet használhat, ezért telepítés után az ikonról érdemes játszani. Az iOS tárhelyfelszabadítása vagy a webhelyadatok törlése az offline fájlokat és a helyi mentést is eltávolíthatja.
+
+### GitHub Pages közzététel
+
+A fenti webcím csak bekapcsolt Pages mellett él. A repository **Settings → Pages** oldalán válaszd a **Deploy from a branch**, **main**, **/ (root)** beállításokat, majd **Save**. A követett `.nojekyll`, manifest, ikonok és service worker közvetlenül kiszolgálhatók ebből a mappából; nincs külön telepítési függőség. A publikálás néhány percet vehet igénybe. A repository vagy a GitHub-előfizetés Pages-jogosultsága szükséges. A fájlok GitHubra feltöltése önmagában nem kapcsolja be a Pages szolgáltatást.
+
+### Offline mód és frissítések
+
+A `sw.js` egy teljes kiadást gyorsítótáraz, a repository alkönyvtárában is. Minden szükséges fájlnak sikeresen le kell töltődnie, mielőtt az új kiadás települ. A `npm run build` a fájlok tartalmából számolja a kiadás azonosítóját, ezért a játék módosításai után ezt is futtatni kell. A játék **Frissítés és újraindítás** gombot mutat, amikor egy új kiadás teljesen letöltődött; megnyomása menti a haladást és újraindítja az alkalmazást. Az offline fájlok frissítése nem törli a helyi játékmentést.
+
+Helyi fejlesztéshez a `localhost` is támogatott. Egy telefonról elért sima `http://` LAN-cím nem elég az offline telepítéshez: ahhoz HTTPS szükséges. A letöltött `vegvar.html` továbbra is használható önálló fájlként, de az iPhone-os telepítéshez a közzétett főoldalt kell megnyitni.
+
 ## Interaktív 3D játéktér
 
 A térképet most valódi, WebGL-alapú 3D jelenet rajzolja. A helyben csomagolt Three.js-megjelenítőnek nincs külső CDN- vagy hálózati függősége. Az épületek külön falakat, tetőket, ablakkereteket, üveget és felszereléseket kapnak. A karaktereken nagy felbontású, arcra illesztett bőrtextúra, külön szem, írisz, pupilla, szemöldök, orr, száj és részletes kéz látható. A közeli egységek terepmintás egyenruhát, sisakot, felszerelést és tagolt, járás közben mozgó végtagokat kapnak. A távoli modelleken is megmarad az arctextúra. Ezek saját, procedurális 3D modellek és anyagfelületek, nem fotogrammetriás vagy fotórealisztikus modellek.
 
-A városban civil NPC-k járnak az utcákon; a falakon kívül 11 zombi bolyong a romok között. A kószáló zombik nem változtatják meg önkényesen a mentett játékmenetet: a harc az expedíció indításakor zajlik. Az épületekre és az emberekre kattintva adatlap nyílik. Az épület adatlapjáról elérhető a fejlesztőkártya. A katona vagy zombi közelnézete követi a kiválasztott szereplőt.
+A városban civil NPC-k járnak az utcákon; a falakon kívül 44 zombi bolyong a romok között. A kószáló zombik nem változtatják meg önkényesen a mentett játékmenetet: a harc az expedíció indításakor zajlik. Az épületekre és az emberekre kattintva adatlap nyílik. Az épület adatlapjáról elérhető a fejlesztőkártya. A katona vagy zombi közelnézete követi a kiválasztott szereplőt.
 
 - Bal egérgombbal húzás: a térkép mozgatása; jobb gombbal vagy Shift+húzással: forgatás és nézetdöntés.
 - Görgő vagy **+ / −** gombok: nagyítás és kicsinyítés. Dupla kattintás vagy az adatlapon a **Közelnézet**: a kiválasztott objektum közeli nézete.

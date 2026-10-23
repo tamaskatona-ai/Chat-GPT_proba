@@ -14,3 +14,16 @@
 .giant-picker{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 18px;color:#afbc9d;font-size:13px}.giant-picker select{max-width:100%;padding:9px;background:#20332c;color:#edf2df;border:1px solid #62745b;border-radius:7px}.camera-presets{flex-wrap:wrap}.giant-world-health[data-giant-health]{min-width:120px}.giant-world-health span{font-size:9px}
 
 .map-controls{z-index:4}.map-inspector{z-index:5}@media(max-width:700px){.camera-presets{max-width:220px}.giant-world-health{width:132px}}
+
+/* iPhone: a notch és a főképernyő gesztussávja nem fedheti a kezelőszerveket. */
+body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+.app{padding-left:max(48px,env(safe-area-inset-left));padding-right:max(48px,env(safe-area-inset-right))}
+.install-panel{display:flex;align-items:center;gap:14px;background:#203229;border:1px solid #536a43;border-radius:10px;padding:16px;margin-bottom:12px}
+.install-panel img{border-radius:10px;flex-shrink:0}.install-panel strong{font-size:15px}.install-panel p{margin:5px 0 0;font-size:12px}.install-panel button{margin-left:auto;flex-shrink:0}
+.app-status-line{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:0 0 18px;font-size:11px;color:var(--muted)}.app-status-line button{font-size:11px;padding:8px}
+#install-dialog{max-width:520px;width:calc(100% - 32px);padding:26px;color:#eef1e8;background:var(--panel);border:1px solid #64764b;border-radius:12px;max-height:85dvh;overflow:auto}#install-dialog::backdrop{background:#07100bd9}#install-dialog h2{font-size:23px;margin:0 0 20px}#install-dialog p,#install-dialog li{font-size:13px;line-height:1.7;color:#c6d1c2}#install-dialog li{margin-bottom:14px}#install-dialog ol{padding-left:22px}#install-close{width:100%;margin-top:12px}
+#toast{z-index:20;bottom:max(25px,env(safe-area-inset-bottom))}
+[hidden]{display:none!important}
+@media(max-width:850px){.app{padding-left:max(22px,env(safe-area-inset-left));padding-right:max(22px,env(safe-area-inset-right))}}
+@media(max-width:560px){.install-panel{flex-wrap:wrap;padding:13px;gap:10px}.install-panel>div{flex:1;min-width:0}.install-panel p{font-size:10px}.install-panel button{width:100%;min-height:44px}.installed-app header{height:70px}.installed-app .intro{padding-top:16px}.world-viewport{height:min(650px,75svh);min-height:440px}}
+#install-app,#install-close{background:var(--green);color:#19241f;border:0;border-radius:6px;padding:12px 16px;min-height:44px;font:700 13px system-ui;cursor:pointer}#install-app:focus-visible,#install-close:focus-visible{outline:3px solid #efc58b;outline-offset:3px}#update-app{min-height:40px}
