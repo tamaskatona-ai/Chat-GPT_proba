@@ -33,7 +33,7 @@ test('offline install contains all game dependencies and homescreen launch handl
 });
 test('worker ignores cross-origin, out-of-scope and mutation requests and never replaces unknown pages with the game',async()=>{
  const w=worker();await w.install();assert.equal(await w.request('https://other.test/foo'),undefined);assert.equal(await w.request('/other-app/'),undefined);assert.equal(await w.request('engine.js','cors','POST'),undefined);
- assert.equal(await (await w.request('missing.html','navigate')).text(),'network');assert.equal(await w.request('sw.js'),undefined);
+ assert.equal(await (await w.request('missing.html','navigate')).text(),'network');assert.equal(await w.request('sw.js'),undefined);assert.equal(await w.request('api/state'),undefined);
 });
 test('activation deletes only previous caches for this game scope and waits for explicit update',async()=>{
  const w=worker();await w.install();assert.equal(w.self.skipped,undefined);w.stores.set('vegvar-app-/Chat-GPT_proba/-old',new Map());w.stores.set('other-game',new Map());w.stores.set('vegvar-app-/another/-old',new Map());

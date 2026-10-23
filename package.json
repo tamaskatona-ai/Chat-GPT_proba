@@ -5,6 +5,15 @@
   "scripts": {
     "start": "node server.js",
     "test": "node --test",
-    "build": "node build.js"
+    "build": "node build.js",
+    "build:online": "node build-online.js",
+    "dev:online": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.152.0"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

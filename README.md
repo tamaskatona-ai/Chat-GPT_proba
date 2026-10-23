@@ -1,6 +1,6 @@
 # Végvár
 
-Magyar nyelvű, saját bázisépítős stratégiai böngészőjáték-prototípus. Nincs telepítendő külső függőség; Node.js 18+ szükséges.
+Magyar nyelvű, saját bázisépítős stratégiai böngészőjáték-prototípus. Nincs telepítendő külső függőség; Node.js 22+ szükséges.
 
 ```sh
 npm start
@@ -11,6 +11,14 @@ A szerver alapértelmezett portja 3000, a `PORT` változóval módosítható. El
 ## Kipróbálás telepítés nélkül
 
 A GitHubon válaszd a **Code → Download ZIP** lehetőséget, majd csomagold ki a letöltött fájlt. Nyisd meg a `vegvar.html` fájlt Chrome-ban vagy Edge-ben: az egyetlen fájl tartalmazza a teljes játékot, Node.js nélkül is használható. Az `index.html` fájl is megnyitható, ha a mellette lévő CSS- és JavaScript-fájlok ugyanabban a mappában maradnak.
+
+## Többjátékos mód: egymás megtámadása
+
+A **Közös játékszoba** panelen legfeljebb nyolcan játszhattok egymás ellen. Név, szoba és meghívólink, szerveren mentett bázisok, 15 másodperces portyák, automatikus védekezés, veszteségek, valós zsákmányátadás és mindkét játékosnak csatajelentés tartozik hozzá. Az egyjátékos mentés külön megmarad.
+
+**A GitHub Pages önmagában nem futtat közös szervert.** Az internetes többjátékos módhoz a követett Cloudflare Worker + SQLite konfigurációt kell egyszer közzétenni saját fiókból; az ingyenes keretre készült. Helyben a `npm start` már a közös Node-szervert indítja. [Beállítás, meghívás és csataszabályok](MULTIPLAYER.md).
+
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/tamaskatona-ai/Chat-GPT_proba)
 
 ## Telepítés iPhone-ra
 

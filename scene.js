@@ -90,7 +90,7 @@
     }
     function draw(now) {
       const state=getState(),time=now/1000;
-      if(previousMission&&!state.mission)aftermath={until:now+3500,win:missionView(previousMission,previousMission.ends).win,gold:previousMission.kind==='giant'?root.Engine.rulesForGiant(previousMission.giantId??0).loot.gold:root.Engine.goldReward(previousMission.zone)};
+      if(previousMission&&!state.mission)aftermath={until:now+3500,win:missionView(previousMission,previousMission.ends).win,gold:previousMission.kind==='giant'?root.Engine.rulesForGiant(previousMission.giantId??0).loot.gold:previousMission.kind==='pvp'?(state.lastPvpLootGold||0):root.Engine.goldReward(previousMission.zone)};
       previousMission=state.mission;
       if(aftermath&&now>aftermath.until)aftermath=null;
       const view=missionView(state.mission,now),scout=scoutView(state.scout,now);
@@ -128,18 +128,18 @@
       poly([[708,211],[721,186],[736,211]],'#294c43');
       box(774,228,22,17,'#c0a16b','#d9bb7e');box(791,213,18,14,'#aa8b5e','#cbb37b');
       text('ELHAGYOTT ELLÁTÓHELY',735,143,11,'#c9f1df');
-      const bossMission=state.mission?.kind==='giant';
+      const bossMission=state.mission?.kind==='giant',raidMission=state.mission?.kind==='pvp';
       const armySoldiers=state.mission?(state.mission.soldiers??root.Engine.availableSoldiers(state)):root.Engine.availableSoldiers(state);
       const armyCount=Math.min(24,armySoldiers);
       let center=view.phase==='idle'?{x:395,y:340}:point(view.travel,bossMission,state.mission?.target);
       let showCount=armyCount;
-      if(view.phase==='return'||view.phase==='done')showCount=Math.max(0,armyCount-Math.max(1,Math.ceil(armyCount*(view.win?.12:bossMission?.25:.35))));
+      if(view.phase==='return'||view.phase==='done')showCount=Math.max(0,armyCount-Math.max(1,Math.ceil(armyCount*(view.win?(raidMission?.15:.12):bossMission?.25:.35))));
       const moving=view.phase==='outbound'||view.phase==='return';
       for(let i=0;i<showCount;i++){
         let x=center.x+(i%4)*13-25,y=center.y+Math.floor(i/4)*14-15;
         human(x,y,time,i,false,view.phase==='return'?-1:1,moving);
       }
-      if(showCount)text(`${view.phase==='idle'?'HELYŐRSÉG':'SEREG'} · ${view.phase==='return'?Math.max(0,armySoldiers-Math.max(1,Math.ceil(armySoldiers*(view.win?.12:bossMission?.25:.35)))):armySoldiers}`,center.x,center.y-57,11,'#f2f5d9');
+      if(showCount)text(`${view.phase==='idle'?'HELYŐRSÉG':'SEREG'} · ${view.phase==='return'?Math.max(0,armySoldiers-Math.max(1,Math.ceil(armySoldiers*(view.win?(raidMission?.15:.12):bossMission?.25:.35)))):armySoldiers}`,center.x,center.y-57,11,'#f2f5d9');
       if(state.scout){
         const t=scout.travel,u=1-t;
         const sx=u*u*u*565+3*u*u*t*614+3*u*t*t*625+t*t*t*730;
@@ -158,11 +158,12 @@
       }
       const zombies=root.Engine.zombieCount;
       for(let i=0;i<zombies;i++){
-        const engaged=Boolean(state.mission)&&!bossMission&&i===(state.mission.targetId??0),fighting=engaged&&view.phase==='battle',dead=engaged&&view.win&&(view.phase==='return'||view.phase==='done'||(fighting&&view.battle>.8));
+        const engaged=Boolean(state.mission)&&!bossMission&&!raidMission&&i===(state.mission.targetId??0),fighting=engaged&&view.phase==='battle',dead=engaged&&view.win&&(view.phase==='return'||view.phase==='done'||(fighting&&view.battle>.8));
         const p=root.Engine.zombiePosition(i,now),target=engaged?(state.mission.target||p):p;
         const x=650+target.x*5,y=345+target.z*3.5;
         if(!dead||view.phase==='battle')human(x,y,time,i,true,-1,fighting,dead);
       }
+      if(raidMission){for(let i=0;i<Math.min(12,state.mission.defenderSoldiers);i++)human(650+state.mission.target.x*5+(i%3)*12,345+state.mission.target.z*3.5+Math.floor(i/3)*12,time,i,false,-1,false);text(state.mission.defenderName+' bázisa',920,355,12,'#f0bc91');}
       if(view.phase==='battle'){
         for(let i=0;i<4;i++){
           const p=(time*3+i*.24)%1,start={x:center.x+10,y:center.y-26+i*12};

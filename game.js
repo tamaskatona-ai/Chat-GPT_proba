@@ -11,11 +11,12 @@ selectedGiant=state.mission?.kind==='giant'?(state.mission.giantId??0):0;
 const $=id=>document.getElementById(id);
 const resourceNames={wood:'fa',metal:'vas',food:'élelem'};
 const number=value=>Math.floor(value).toLocaleString('hu-HU');
-function save(){try{localStorage.setItem(key,JSON.stringify(state));}catch{storageAvailable=false;}$('saved').textContent=storageAvailable?'● Helyi mentés aktív':'○ Mentés nem elérhető';}
+function save(){if(window.OnlineGame?.active()){$('saved').textContent='● Online mentés a szerveren';return;}try{localStorage.setItem(key,JSON.stringify(state));}catch{storageAvailable=false;}$('saved').textContent=storageAvailable?'● Helyi mentés aktív':'○ Mentés nem elérhető';}
 let timer;
 function toast(message){$('toast').textContent=message;$('toast').style.display='block';clearTimeout(timer);timer=setTimeout(()=>$('toast').style.display='none',5000);}
 function log(message){state.log.unshift(message);state.log=state.log.slice(0,5);}
 function sync(){
+  if(window.OnlineGame?.active())return;
   const now=Date.now();E.advance(state,now);
   for(const result of [E.resolve(state,now),E.resolveScout(state,now)])if(result){log(result);toast(result);}
 }
@@ -68,11 +69,11 @@ function render(){
     return `<article class="building ${selectedBuilding===id?'selected':''}"><span class="level">${state.levels[id]}. SZINT</span><span class="art" aria-hidden="true">${b.icon}</span><h3>${b.name}</h3><p>${b.desc}</p><button data-upgrade="${id}" ${state.mission||locked||q.gold?'disabled':''}>${locked?'Parancsnokság fejlesztése szükséges':`Fejlesztés · ${c.wood} fa / ${c.metal} vas`}</button>${q.gold&&!locked?`<button class="gold-button" data-gold-upgrade="${id}" ${state.mission||!q.canAfford?'disabled':''}>Hiány kiváltása · ${number(q.gold)} arany</button>`:''}</article>`;
   }).join('');
   if(lastBuildingMarkup!==buildingMarkup){$('buildings').innerHTML=buildingMarkup;lastBuildingMarkup=buildingMarkup;}
-  $('power').textContent=state.mission?.power??E.power(state);$('enemy').textContent=E.enemy(state);$('soldiers').textContent=state.soldiers;
+  $('power').textContent=state.mission?.power??E.power(state);$('enemy').textContent=state.mission?.enemy??E.enemy(state);$('soldiers').textContent=state.soldiers;
   $('zones').textContent=String(state.wins).padStart(2,'0');$('rank').textContent=state.levels.hq>3?'Túlélők erődje':'Kezdő település';
-  $('target').textContent=`${state.zone}. körzet · ${['Elhagyott külváros','Romos ipartelep','Fertőzött raktár','Elveszett városközpont'][(state.zone-1)%4]}`;
+  $('target').textContent=state.mission?.kind==='pvp'?`${state.mission.defenderName} bázisa`:`${state.zone}. körzet · ${['Elhagyott külváros','Romos ipartelep','Fertőzött raktár','Elveszett városközpont'][(state.zone-1)%4]}`;
   $('forecast').textContent=state.mission?'A csapat bevetésen van…':E.power(state)>=E.enemy(state)?'Erőfölényben vagy. A győzelem várható.':'Az ellenség erősebb. Képezz katonákat vagy növeld a morált!';
-  $('loot-preview').textContent=`Győzelmi zsákmány: ${E.goldReward(state.mission?.zone||state.zone)} arany + nyersanyagok`;
+  $('loot-preview').textContent=state.mission?.kind==='pvp'?'Játékos elleni portya · az eredmény a közös szerveren számítódik.':`Győzelmi zsákmány: ${E.goldReward(state.mission?.zone||state.zone)} arany + nyersanyagok`;
   $('expedition').disabled=Boolean(state.mission)||E.availableSoldiers(state)<1;$('map-expedition').disabled=$('expedition').disabled;
   $('map-expedition').textContent=state.mission?'A sereg bevetésen van…':'Sereg indítása →';
   $('expedition').textContent=state.mission?`Expedíció folyamatban · ${Math.max(0,Math.ceil((state.mission.ends-Date.now())/1000))} mp`:'Expedíció indítása →';
@@ -87,9 +88,12 @@ function render(){
   const maxed=state.morale>=E.maxMorale;
   $('boost-morale').disabled=Boolean(state.mission)||maxed||state.gold<E.moraleCost(state);
   $('boost-morale').textContent=maxed?'Maximális morál':`Morál +10% · ${E.moraleCost(state)} arany`;
+  if(window.OnlineGame?.blocked()){for(const el of document.querySelectorAll('[data-upgrade],[data-gold-upgrade],[data-activate-bonus],#train,#train-gold,#boost-morale,#attack-giant,#expedition,#map-expedition,#launch-scout'))el.disabled=true;}
+  $('reset').disabled=Boolean(window.OnlineGame?.active());
   $('log').replaceChildren(...state.log.map(message=>{const li=document.createElement('li');li.textContent=message;return li;}));
 }
 function perform(kind,id,useGold=false){
+  if(window.OnlineGame?.active()){window.OnlineGame.action({type:kind,id,useGold,maxGold:E.quote(state,kind==='upgrade'?E.cost(state,id):E.trainingCost).gold});return;}
   sync();const before=state.gold;
   const error=kind==='upgrade'?E.upgrade(state,id,useGold):E.train(state,useGold);
   if(error)toast(error);
@@ -127,6 +131,7 @@ $('buildings').addEventListener('click',event=>{
 $('train').onclick=()=>perform('train');
 $('train-gold').onclick=()=>purchaseWithGold('train');
 $('boost-morale').onclick=()=>{
+  if(window.OnlineGame?.active()){window.OnlineGame.action({type:'morale'});return;}
   sync();const before=state.gold,error=E.boostMorale(state);
   if(error)toast(error);
   else{const message=`A sereg morálja nőtt: +${E.moraleBonus(state)}% katonai harci erő. Költség: ${before-state.gold} arany.`;log(message);toast(message);}
@@ -136,12 +141,14 @@ $('giant-select').innerHTML=E.giantTypes.map((n,id)=>`<option value="${id}">${E.
 $('giant-select').onchange=()=>{selectedGiant=Number($('giant-select').value);renderGiant(Date.now());worldView?.focusGiant?.(selectedGiant);};
 $('world-canvas').addEventListener('select-giant',event=>{selectedGiant=event.detail;renderGiant(Date.now());});
 $('attack-giant').onclick=()=>{
+  if(window.OnlineGame?.active()){window.OnlineGame.action({type:'giant',id:selectedGiant});return;}
   sync();const error=E.launchGiant(state,Date.now(),selectedGiant);
   if(error)toast(error);
   else{worldView?.focusGiant?.(selectedGiant);log('A sereg elindult az óriászombi ellen. A megszerzett sebzés akkor is megmarad, ha most nem győzöl.');$('world-title').scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});}
   save();render();
 };
 function attackZombie(targetId){
+  if(window.OnlineGame?.active()){window.OnlineGame.action({type:'zombie',targetId});return;}
   sync();const error=E.launch(state,Date.now(),targetId);
   if(error)toast(error);
   else{log(`Az expedíció elindult a(z) ${state.zone}. körzetbe.`);$('world-title').scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});}
@@ -149,9 +156,10 @@ function attackZombie(targetId){
 };
 $('expedition').onclick=()=>attackZombie();
 $('world-canvas').addEventListener('attack-zombie',event=>attackZombie(event.detail));
-$('reset').onclick=()=>{if(confirm('Új települést kezdesz? A jelenlegi haladás törlődik.')){state=E.initial();save();render();}};
+$('reset').onclick=()=>{if(window.OnlineGame?.active()){toast('Online módban a közös bázis nem törölhető ezzel a gombbal.');return;}if(confirm('Új települést kezdesz? A jelenlegi haladás törlődik.')){state=E.initial();save();render();}};
 $('map-expedition').onclick=()=>$('expedition').click();
 $('launch-scout').onclick=()=>{
+  if(window.OnlineGame?.active()){window.OnlineGame.action({type:'scout'});return;}
   sync();const error=E.launchScout(state,Date.now());
   if(error)toast(error);
   else{log('3 felderítő elindult a városon kívüli ellátóhelyre. Kutatás: 5 perc.');toast('A felderítők elindultak! A többi katonával közben harcolhatsz.');$('world-title').scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});}
@@ -159,6 +167,7 @@ $('launch-scout').onclick=()=>{
 };
 $('bonuses').addEventListener('click',event=>{
   const button=event.target.closest('[data-activate-bonus]');if(!button||button.disabled)return;
+  if(window.OnlineGame?.active()){window.OnlineGame.action({type:'bonus',id:button.dataset.activateBonus});return;}
   sync();const type=button.dataset.activateBonus,error=E.activateBonus(state,type,Date.now());
   if(error)toast(error);
   else{const message=`${resourceNames[type]} termelési bónusz aktiválva: ×2 termelés, +5 perc.`;log(message);toast(message);}
@@ -173,3 +182,12 @@ const worldView=BattleScene.mount($('world-canvas'),()=>state,id=>{
   document.querySelectorAll('.building.selected').forEach(el=>el.classList.remove('selected'));card.classList.add('selected');
   toast(`${E.buildings[id].name}: ${state.levels[id]}. szint. A fejlesztéshez használd az épület gombját.`);
 });
+
+// Online módban kizárólag szerverválaszt rajzolunk; a helyi mentés külön megmarad.
+if(window.OnlineGame){
+ let offlineState=null;
+ window.OnlineGame.start=()=>{if(!offlineState){offlineState=structuredClone(state);}};
+ window.OnlineGame.stop=()=>{if(offlineState){state=offlineState;offlineState=null;lastBuildingMarkup='';sync();save();render();}};
+ window.OnlineGame.applyState=s=>{const oldMission=state.mission?.ends;state=E.migrate(s);lastBuildingMarkup='';lastBonusMarkup='';render();save();if(state.mission&&state.mission.ends!==oldMission)$('world-title').scrollIntoView({block:'start',behavior:'instant'});};
+ window.OnlineGame.refreshControls=()=>{lastBuildingMarkup='';lastBonusMarkup='';render();};window.OnlineGame.notify=toast;
+}

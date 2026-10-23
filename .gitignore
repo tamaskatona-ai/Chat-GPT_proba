@@ -1,0 +1,7 @@
+node_modules/
+public/
+.wrangler/
+data/
+.env
+.env.*
+.dev.vars

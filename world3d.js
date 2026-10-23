@@ -316,6 +316,8 @@ const giants=E.giantTypes.map((multiplier,id)=>{
  actor.data.description=`${multiplier} alapzombi ereje, ${E.rulesForGiant(id).maxHp} életerő. A sérülése mentésre kerül; 5 perc után újraéled.`;
  const p=E.giantPosition(getState(),Date.now(),id);actor.group.position.set(p.x,E.terrainHeight(p.x,p.z),p.z);return actor;
 });const giant=giants[0];
+const raiders=Array.from({length:12},(_,i)=>{const a=character('raider',i);a.data.name='Ellenséges katona';a.data.description='A megtámadott játékos bázisát védi.';a.group.visible=false;return a;});
+const enemyBase=group(scene,53,E.terrainHeight(53,22),22);box(enemyBase,4,3,3,2,1.5,-2,M.darkConcrete);box(enemyBase,5,.3,4,2,3.1,-2,M.roof);box(enemyBase,.15,6,.15,0,3,-3,M.iron);box(enemyBase,1.8,1,.08,.9,5.4,-3,M.red);bake(enemyBase);enemyBase.visible=false;
 
 const flashMaterial=new T.MeshBasicMaterial({color:'#ffdf8f'});materials.push(flashMaterial);
 const flashes=Array.from({length:8},()=>{const o=sphere(scene,.065,.065,.065,0,1.2,0,flashMaterial);o.castShadow=false;return o;});
@@ -345,7 +347,7 @@ function focus(entry){
 function select(entry){
  selected=entry;if(entry.actor?.kind==='giant')canvas.dispatchEvent(new CustomEvent('select-giant',{detail:entry.giantId}));const info=$('map-inspector');info.hidden=false;
  $('inspector-title').textContent=entry.name;
- $('inspector-type').textContent=entry.kind==='building'?'BÁZISÉPÜLET':entry.kind==='landmark'?'TÁJ ÉS HELYSZÍN':entry.actor.kind==='giant'?`ÓRIÁSZOMBI · ${E.giantTypes[entry.giantId]}× HARCI ERŐ`:entry.actor.kind==='zombie'?'KÓSZÁLÓ FERTŐZÖTT':entry.actor.kind==='civilian'?'A MENEDÉK LAKÓJA':'A SAJÁT CSAPATOD';
+ $('inspector-type').textContent=entry.kind==='building'?'BÁZISÉPÜLET':entry.kind==='landmark'?'TÁJ ÉS HELYSZÍN':entry.actor.kind==='giant'?`ÓRIÁSZOMBI · ${E.giantTypes[entry.giantId]}× HARCI ERŐ`:entry.actor.kind==='zombie'?'KÓSZÁLÓ FERTŐZÖTT':entry.actor.kind==='civilian'?'A MENEDÉK LAKÓJA':entry.actor.kind==='raider'?'ELLENSÉGES KATONA':'A SAJÁT CSAPATOD';
  $('inspector-description').textContent=entry.description;
  $('inspect-upgrade').hidden=entry.kind!=='building';$('inspect-giant-attack').hidden=entry.actor?.kind!=='giant';$('inspect-zombie-attack').hidden=entry.actor?.kind!=='zombie';
  canvas.dataset.selected=entry.id;
@@ -441,20 +443,20 @@ let oldLevelSignature='',routeMission=null,missionRoute=null;
 const visibilityObserver=new IntersectionObserver(entries=>{inView=entries[0].isIntersecting;},{rootMargin:'80px'});visibilityObserver.observe(canvas);
 function animate(timestamp){
  if(destroyed)return;frameId=root.requestAnimationFrame(animate);if(!inView||document.hidden)return;if(timestamp-lastRendered<(software?120:32))return;lastRendered=timestamp;
- const now=Date.now(),time=now/1000,state=getState(),mission=timing.missionView(state.mission,now),scout=timing.scoutView(state.scout,now);
+ const now=Date.now(),time=now/1000,state=getState(),mission=timing.missionView(state.mission,now),scout=timing.scoutView(state.scout,now),defense=state.incomingRaid,defenseView=timing.missionView(defense,now);
  if(previousMission&&!state.mission)aftermath={until:now+3500,win:timing.missionView(previousMission,previousMission.ends).win};previousMission=state.mission;
  if(aftermath&&now>aftermath.until)aftermath=null;
  const actual=state.mission?(state.mission.soldiers??root.Engine.availableSoldiers(state)):root.Engine.availableSoldiers(state);
- const bossMission=state.mission?.kind==='giant',target=state.mission?.target||(bossMission?root.Engine.giantPosition(state,now):{x:24,z:2});
+ const bossMission=state.mission?.kind==='giant',raidMission=state.mission?.kind==='pvp',target=state.mission?.target||(bossMission?root.Engine.giantPosition(state,now):{x:24,z:2});
  if(routeMission!==state.mission){routeMission=state.mission;missionRoute=state.mission?.target?new T.CatmullRomCurve3([new T.Vector3(-1,0,3),new T.Vector3(5,0,3),new T.Vector3(13,0,target.z*.4),new T.Vector3(target.x-3,0,target.z)]):null;}
  const activeRoute=missionRoute||(bossMission?giantRoute:battleRoute);
- const count=mission.phase==='return'?Math.max(0,actual-Math.max(1,Math.ceil(actual*(mission.win?.12:bossMission?.25:.35)))):actual;
+ const count=mission.phase==='return'?Math.max(0,actual-Math.max(1,Math.ceil(actual*(mission.win?(raidMission?.15:.12):bossMission?.25:.35)))):actual;
  const center=state.mission?activeRoute.getPointAt(mission.travel):new T.Vector3(-8,0,3);
  const tangent=state.mission?activeRoute.getTangentAt(mission.travel):new T.Vector3(1,0,0),direction=Math.atan2(tangent.x,tangent.z)+(mission.phase==='return'?Math.PI:0);
- soldiers.forEach((actor,i)=>{actor.group.visible=i<Math.min(24,count);if(!actor.group.visible)return;const col=i%4-1.5,row=Math.floor(i/4);actor.group.position.set(center.x+col*.62,E.terrainHeight(center.x+col*.62,center.z+row*.72),center.z+row*.72);actor.group.rotation.y=direction;walk(actor,time,mission.phase==='outbound'||mission.phase==='return',false,mission.phase==='battle');});
+ soldiers.forEach((actor,i)=>{actor.group.visible=i<Math.min(24,count);if(!actor.group.visible)return;const col=i%4-1.5,row=Math.floor(i/4);actor.group.position.set(center.x+col*.62,E.terrainHeight(center.x+col*.62,center.z+row*.72),center.z+row*.72);actor.group.rotation.y=direction;walk(actor,time,mission.phase==='outbound'||mission.phase==='return',false,mission.phase==='battle'||defenseView.phase==='battle');});
  scouts.forEach((actor,i)=>{actor.group.visible=Boolean(state.scout);if(!state.scout)return;const p=scoutRoute.getPointAt(scout.travel),d=scoutRoute.getTangentAt(scout.travel);actor.group.position.set(p.x+(i-1)*.65,0,p.z+(i%2)*.7);actor.group.rotation.y=Math.atan2(d.x,d.z)+(scout.phase==='return'?Math.PI:0);walk(actor,time,scout.phase!=='search');if(scout.phase==='search')actor.group.rotation.y+=Math.sin(time*.4+i)*.8;});
  zombies.forEach((actor,i)=>{
- const p=root.Engine.zombiePosition(i,now),q=root.Engine.zombiePosition(i,now+100),engaged=Boolean(state.mission)&&!bossMission&&i===(state.mission.targetId??0);
+ const p=root.Engine.zombiePosition(i,now),q=root.Engine.zombiePosition(i,now+100),engaged=Boolean(state.mission)&&!bossMission&&!raidMission&&i===(state.mission.targetId??0);
  actor.group.visible=!(engaged&&mission.win&&(mission.phase==='return'||mission.phase==='battle'&&mission.battle>.8));
  if(engaged){actor.group.position.set(target.x,E.terrainHeight(target.x,target.z),target.z);actor.group.rotation.y=-Math.PI/2;}else{actor.group.position.set(p.x,E.terrainHeight(p.x,p.z),p.z);actor.group.rotation.y=Math.atan2(q.x-p.x,q.z-p.z);}
  walk(actor,time,!engaged,true,engaged&&mission.phase==='battle');
@@ -468,6 +470,14 @@ function animate(timestamp){
  $('inspect-zombie-attack').disabled=Boolean(state.mission)||E.availableSoldiers(state)<1;
  $('inspect-giant-attack').disabled=Boolean(state.mission)||(selected?.giantId!==undefined&&E.getGiant(state,selected.giantId).hp===0)||E.availableSoldiers(state)<1;
 
+ enemyBase.visible=raidMission;
+ raiders.forEach((actor,i)=>{
+  const view=defense?defenseView:mission,total=defense?defense.soldiers:state.mission?.defenderSoldiers||0;
+  const count=view.phase==='return'?total-Math.ceil(total*(defense?(view.win?.15:.35):(view.win?.25:.10))):total;
+  actor.group.visible=(raidMission||Boolean(defense))&&i<Math.min(12,count);if(!actor.group.visible)return;
+  const x=(defense?53-61*view.travel:target.x)+(i%3)*.7,z=(defense?22-19*view.travel:target.z)+Math.floor(i/3)*.75;
+  actor.group.position.set(x,E.terrainHeight(x,z),z);actor.group.rotation.y=-Math.PI/2;walk(actor,time,Boolean(defense)&&view.phase!=='battle',false,view.phase==='battle');
+ });
  civilians.forEach((actor,i)=>{const t=time*.075+i*1.6;actor.group.position.set(-16+Math.sin(t)*11,0,3.5+Math.cos(t*.7+i)*.85);actor.group.rotation.y=Math.cos(t)>0?Math.PI/2:-Math.PI/2;walk(actor,time,true);});
  flashes.forEach((o,i)=>{o.visible=mission.phase==='battle'&&(time*7+i)%1<.5;if(o.visible){const t=(time*4+i/8)%1;o.position.set(center.x+(target.x-center.x)*t,E.terrainHeight(center.x,center.z)*(1-t)+E.terrainHeight(target.x,target.z)*t+1.22+(bossMission?2.3*t:0),center.z+(target.z-center.z)*t+(i%3-1)*.3);}});
  if(following){if(following.group.visible){following.group.getWorldPosition(cameraState.target);cameraState.target.y=following.group.position.y+(following.actor?.kind==='giant'?(E.getGiant(state,following.giantId).hp>0?4:1):1.05);}else following=null;}
@@ -489,9 +499,9 @@ function animate(timestamp){
 
  oldLevelSignature=levelSignature;
  const phases={idle:'A helyőrség készen áll',outbound:'A sereg kivonul a bázisról',battle:'Összecsapás a fertőzöttekkel',return:'A túlélők hazafelé tartanak',done:'Az expedíció véget ért'};
- const label=state.mission?(bossMission?(mission.phase==='battle'?'Harc az óriászombival':mission.phase==='outbound'?'A sereg az óriászombihoz vonul':'A csapat hazatér az óriástól'):phases[mission.phase]):aftermath?(aftermath.win?'Győzelem! A sereg hazatért.':'A sereg visszavonult.'):state.scout?`Felderítők: ${scout.phase==='search'?'ellátmányt keresnek':scout.phase==='return'?'hazafelé tartanak':'elhagyják a várost'}`:phases.idle;
+ const label=defense?`${defense.attackerName} támadja a bázisodat · ${phases[defenseView.phase]}`:state.mission?(raidMission?`${state.mission.defenderName} bázisa · ${phases[mission.phase]}`:bossMission?(mission.phase==='battle'?'Harc az óriászombival':mission.phase==='outbound'?'A sereg az óriászombihoz vonul':'A csapat hazatér az óriástól'):phases[mission.phase]):aftermath?(aftermath.win?'Győzelem! A sereg hazatért.':'A sereg visszavonult.'):state.scout?`Felderítők: ${scout.phase==='search'?'ellátmányt keresnek':scout.phase==='return'?'hazafelé tartanak':'elhagyják a várost'}`:phases.idle;
  if(label!==lastStatus){$('scene-status').textContent=label;lastStatus=label;}
- $('march-progress').style.width=`${mission.progress*100}%`;
+ $('march-progress').style.width=`${(defense?defenseView.progress:mission.progress)*100}%`;
  // A mozgó árnyékokat ritkábban frissítjük, mint a geometriát.
  const shadowSize=clamp(cameraState.distance*.65,10,55);
  light.position.set(cameraState.target.x-22,40,cameraState.target.z+22);light.target.position.copy(cameraState.target);light.target.updateMatrixWorld();
@@ -504,7 +514,7 @@ const onLost=e=>{e.preventDefault();$('graphics-notice').hidden=false;$('graphic
 return {
  focusBuilding(id){focus(buildingEntries.find(b=>b.id===id));},
  focusGiant(id=0){focus(giants[id]?.data);},
- getSnapshot(){return {renderer:'webgl',mapBounds:E.mapBounds,terrain:{lake:E.lake,hills:E.hills,fields:2},giants:giants.map((a,id)=>({id,x:a.group.position.x,y:a.group.position.y,z:a.group.position.z,hp:E.getGiant(getState(),id).hp,multiplier:E.giantTypes[id],screen:project(a.group.position.clone().add(new T.Vector3(0,4,0)))})),zoom:162/cameraState.distance,target:cameraState.target.toArray(),camera:camera.position.toArray(),selected:selected?.id||null,pixelRatio:renderer.getPixelRatio(),width:canvas.width,height:canvas.height,detailedCharacters:npcEntries.filter(e=>e.group.visible&&e.actor.detail.visible).length,triangles:renderer.info.render.triangles,drawCalls:renderer.info.render.calls,buildings:buildingEntries.map(e=>({id:e.id,...project(e.group.position.clone().add(new T.Vector3(0,1,0)))})),npcs:zombies.map(a=>({id:a.data.id,x:a.group.position.x,z:a.group.position.z,visible:a.group.visible,screen:project(a.group.position.clone().add(new T.Vector3(0,1,0)))})),giant:{hp:getState().giant.hp,percent:root.Engine.giantPercent(getState()),x:giant.group.position.x,z:giant.group.position.z,screen:project(giant.group.position.clone().add(new T.Vector3(0,3.5,0)))},camp:{entranceDepth:new T.Raycaster(new T.Vector3(9,1.2,-7.3),new T.Vector3(0,0,-1)).intersectObject(camp,true)[0]?.distance||0},soldiers:soldiers.filter(a=>a.group.visible).length,scouts:scouts.filter(a=>a.group.visible).length};},
+ getSnapshot(){return {renderer:'webgl',pvp:{raiders:raiders.filter(a=>a.group.visible).length,enemyBaseVisible:enemyBase.visible,defending:Boolean(getState().incomingRaid)},mapBounds:E.mapBounds,terrain:{lake:E.lake,hills:E.hills,fields:2},giants:giants.map((a,id)=>({id,x:a.group.position.x,y:a.group.position.y,z:a.group.position.z,hp:E.getGiant(getState(),id).hp,multiplier:E.giantTypes[id],screen:project(a.group.position.clone().add(new T.Vector3(0,4,0)))})),zoom:162/cameraState.distance,target:cameraState.target.toArray(),camera:camera.position.toArray(),selected:selected?.id||null,pixelRatio:renderer.getPixelRatio(),width:canvas.width,height:canvas.height,detailedCharacters:npcEntries.filter(e=>e.group.visible&&e.actor.detail.visible).length,triangles:renderer.info.render.triangles,drawCalls:renderer.info.render.calls,buildings:buildingEntries.map(e=>({id:e.id,...project(e.group.position.clone().add(new T.Vector3(0,1,0)))})),npcs:zombies.map(a=>({id:a.data.id,x:a.group.position.x,z:a.group.position.z,visible:a.group.visible,screen:project(a.group.position.clone().add(new T.Vector3(0,1,0)))})),giant:{hp:getState().giant.hp,percent:root.Engine.giantPercent(getState()),x:giant.group.position.x,z:giant.group.position.z,screen:project(giant.group.position.clone().add(new T.Vector3(0,3.5,0)))},camp:{entranceDepth:new T.Raycaster(new T.Vector3(9,1.2,-7.3),new T.Vector3(0,0,-1)).intersectObject(camp,true)[0]?.distance||0},soldiers:soldiers.filter(a=>a.group.visible).length,scouts:scouts.filter(a=>a.group.visible).length};},
  destroy(){destroyed=true;root.cancelAnimationFrame(frameId);for(const [name,handler] of Object.entries(events))canvas.removeEventListener(name,handler);canvas.removeEventListener('webglcontextlost',onLost);geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());renderer.dispose();visibilityObserver.disconnect();labelLayer.replaceChildren();}
 };
 }
