@@ -23,7 +23,7 @@
     { id: 'barracks', x: 450, y: 280, w: 87, h: 57, color: '#89966b', roof: '#4e6343' },
     { id: 'wall', x: 493, y: 425, w: 76, h: 42, color: '#899384', roof: '#566557' }
   ];
-  function mount(canvas, getState, onSelect) {
+  function mountFallback(canvas, getState, onSelect) {
     const ctx = canvas.getContext('2d');
     const W = 1100, H = 590;
     const status = document.getElementById('scene-status');
@@ -180,6 +180,17 @@
     canvas.addEventListener('click',selectAt);
     draw(Date.now());
     return { destroy(){root.cancelAnimationFrame(frameId);canvas.removeEventListener('click',selectAt);} };
+  }
+  function mount(canvas,getState,onSelect){
+    if(root.World3D){
+      try{return root.World3D.mount(canvas,getState,onSelect,{missionView,scoutView});}
+      catch(error){console.warn('A 3D térkép nem indult el:',error.message);}
+    }
+    const notice=document.getElementById('graphics-notice');
+    if(notice){notice.hidden=false;notice.textContent='A 3D nézethez WebGL-t támogató böngésző és bekapcsolt grafikus gyorsítás szükséges. Most a 2D tartaléknézet látható.';}
+    document.getElementById('map-controls')?.setAttribute('hidden','');
+    const replacement=canvas.cloneNode(false);canvas.replaceWith(replacement);
+    return mountFallback(replacement,getState,onSelect);
   }
   const api={missionView,scoutView,mount};
   if(typeof module!=='undefined')module.exports=api;else root.BattleScene=api;

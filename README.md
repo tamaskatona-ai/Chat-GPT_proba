@@ -6,17 +6,29 @@ Magyar nyelvű, saját bázisépítős stratégiai böngészőjáték-prototípu
 npm start
 ```
 
-A szerver alapértelmezett portja 3000, a `PORT` változóval módosítható. Ellenőrzés: `npm test`.
+A szerver alapértelmezett portja 3000, a `PORT` változóval módosítható. Ellenőrzés: `npm test`. A forrás módosítása után az önálló játékfájl újraépítése: `npm run build`.
 
 ## Kipróbálás telepítés nélkül
 
 A GitHubon válaszd a **Code → Download ZIP** lehetőséget, majd csomagold ki a letöltött fájlt. Nyisd meg a `vegvar.html` fájlt Chrome-ban vagy Edge-ben: az egyetlen fájl tartalmazza a teljes játékot, Node.js nélkül is használható. Az `index.html` fájl is megnyitható, ha a mellette lévő CSS- és JavaScript-fájlok ugyanabban a mappában maradnak.
 
-## Grafikus játéktér
+## Interaktív 3D játéktér
 
-A főképernyőn saját rajzolt, animált térkép látható a bázis épületeivel, erdővel, romokkal és egységekkel. A **Sereg indítása** gombbal indul az expedíció: a katonák kivonulnak az úton (6 másodperc), megküzdenek a zombikkal (4,5 másodperc), majd a túlélők visszatérnek (4,5 másodperc). A csata eredményét a harci erő határozza meg; az animáció ezt jeleníti meg. Legfeljebb 24 katonai figura jelképezi a teljes sereget, a címke a tényleges létszámot mutatja.
+A térképet most valódi, WebGL-alapú 3D jelenet rajzolja. A helyben csomagolt Three.js-megjelenítőnek nincs külső CDN- vagy hálózati függősége. Az épületek külön falakat, tetőket, ablakkereteket, üveget és felszereléseket kapnak. A karaktereken arc, egyenruha, sisak, felszerelés és tagolt, járás közben mozgó végtagok láthatók. Ezek saját, procedurális 3D modellek és anyagfelületek, nem fotogrammetriás vagy fotórealisztikus modellek.
 
-Az épületekre kattintva a hozzájuk tartozó fejlesztőkártyára jutsz. Telefonon a térkép oldalra görgethető. Az expedíció újratöltés után is ugyanott folytatódik az eltárolt befejezési idő alapján. A grafika nem igényel külső képeket, szolgáltatásokat vagy internetkapcsolatot.
+A városban civil NPC-k járnak az utcákon; a falakon kívül 11 zombi bolyong a romok között. A kószáló zombik nem változtatják meg önkényesen a mentett játékmenetet: a harc az expedíció indításakor zajlik. Az épületekre és az emberekre kattintva adatlap nyílik. Az épület adatlapjáról elérhető a fejlesztőkártya. A katona vagy zombi közelnézete követi a kiválasztott szereplőt.
+
+- Bal egérgombbal húzás: a térkép mozgatása; jobb gombbal vagy Shift+húzással: forgatás és nézetdöntés.
+- Görgő vagy **+ / −** gombok: nagyítás és kicsinyítés. Dupla kattintás vagy az adatlapon a **Közelnézet**: a kiválasztott objektum közeli nézete.
+- **Bázis / Katonák / Zombik / Felderítők**: közvetlen kameranézetek. A házikó gomb visszaállítja az áttekintést.
+- Telefonon egy ujjal húzható a térkép, két ujjal nagyítható és mozgatható.
+- Billentyűzettel: fókuszáld a térképet; nyilak: mozgatás, +/−: zoom, Home: áttekintés, Escape: kijelölés megszüntetése. A kameragombok és az épületcímkék Tab billentyűvel is elérhetők.
+
+Közelítéskor a geometria újrarajzolódik, és a közeli karakterek részletes modellre váltanak; nem az áttekintő képernyő képpontjait nagyítjuk. **Magas** részletességben legfeljebb kétszeres képpontsűrűség, anyagfelületi domborítás és dinamikus árnyékok működnek. A **Kímélő** beállítás megőrzi a 3D-t és a közeli karaktermodelleket, de csökkenti az árnyékok és távoli díszletek költségét. Telefonon vagy szoftveres grafikus meghajtón ez az alapbeállítás. A képernyőn kívüli térkép rajzolása szünetel, a gazdaság és a küldetések közben tovább haladnak.
+
+A 3D-hez modern, WebGL-t támogató böngésző és grafikus gyorsítás ajánlott. WebGL nélkül a játék jelzett 2D tartaléknézettel indul; a gazdaság és a küldetések továbbra is működnek. Az elérhető sebesség a gép grafikus képességeitől függ.
+
+Az expedíció 6 másodperc kivonulásból, 4,5 másodperc csatából és 4,5 másodperc hazatérésből áll. A korábbi játékszabályok és mentések megmaradnak. Legfeljebb 24 figura jeleníti meg a sereget; a számláló mindig a tényleges létszámot mutatja. A felderítők külön ösvényen mennek a táborhoz.
 
 ## Aranypénz és harci morál
 
@@ -47,3 +59,7 @@ A fa, vas és élelem automatikusan termelődik. Az 1. szintű vasfeldolgozó al
 A játék böngészőnként, localStorage-ba ment. Visszatéréskor legfeljebb 4 órányi nyersanyagtermelést számol el. Az „Új település” gomb megerősítés után törli a helyi haladást.
 
 Ez egy egyjátékos prototípus, szerveroldali fiókok, többjátékos funkciók és valódi pénzes vásárlások nélkül. Az építkezés és kiképzés azonnali. Az ikonokat a rendszer emoji betűkészlete jeleníti meg.
+
+## Külső összetevő
+
+Three.js 0.160.1, MIT licenc. A csomag és licenc a `vendor/` mappában található; eredet és ellenőrzőösszeg: `vendor/README.md`. Az önálló HTML tartalmazza a megjelenítőt és annak licencfejlécét.

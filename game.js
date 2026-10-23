@@ -136,7 +136,7 @@ $('bonuses').addEventListener('click',event=>{
 });
 sync();save();render();setInterval(()=>{sync();render();save();},1000);
 document.addEventListener('visibilitychange',()=>{sync();save();render();});
-BattleScene.mount($('world-canvas'),()=>state,id=>{
+const worldView=BattleScene.mount($('world-canvas'),()=>state,id=>{
   selectedBuilding=id;
   const button=$('buildings').querySelector(`[data-upgrade="${id}"]`),card=button.closest('.building');
   card.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'center'});
