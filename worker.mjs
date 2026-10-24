@@ -9,7 +9,7 @@ export class VegvarWorld {
     });
   }
   async save(){
-    const ends=this.world.data.players.map(p=>p.state.mission).filter(m=>m?.kind==='pvp').map(m=>m.ends);
+    const ends=this.world.data.players.map(p=>p.state.mission).filter(m=>['pvp','npc'].includes(m?.kind)).map(m=>m.ends);
     if(ends.length)await this.ctx.storage.setAlarm(Math.min(...ends));
     this.ctx.storage.sql.exec('INSERT OR REPLACE INTO game (id,state) VALUES (1,?)',JSON.stringify(this.world.data));
   }

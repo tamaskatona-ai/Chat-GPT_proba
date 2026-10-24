@@ -21,6 +21,21 @@ function sync(){
   for(const result of [E.resolve(state,now),E.resolveScout(state,now)])if(result){log(result);toast(result);}
 }
 function timeLeft(ms){const seconds=Math.max(0,Math.ceil(ms/1000));return `${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`;}
+let lastNpcMarkup='';
+function renderNpcCities(){
+ $('npc-kill-total').textContent=number(state.npcKills)+' legyőzött NPC-katona';
+ const markup=E.npcCityDefinitions.map(d=>{const c=state.npcCities[d.id],disabled=c.looted||Boolean(state.mission)||E.availableSoldiers(state)<1||window.OnlineGame?.blocked()||window.CloudSave?.blocked();return `<article class="npc-card ${c.looted?'conquered':''}"><div class="npc-card-top"><span class="npc-city-icon" aria-hidden="true">♜</span><div><h3>${d.name}</h3><small>${c.looted?'ELFOGLALVA':'NPC · '+(d.id+1)+'. NEHÉZSÉG'}</small></div></div><p><strong>${c.guards}</strong> / ${d.guards} védő · <strong>${c.killed}</strong> elesett</p><progress max="${d.guards}" value="${c.guards}" aria-label="${d.name}: megmaradt védők"></progress><p>Harci erő: ${number(c.guards*d.unitPower)}</p><p class="npc-loot">${number(d.loot.gold)} arany · ${number(d.loot.wood)} fa<br>${number(d.loot.metal)} vas · ${number(d.loot.food)} élelem</p><button data-attack-npc="${d.id}" ${disabled?'disabled':''}>${c.looted?'Zsákmány begyűjtve':state.mission?'Sereg bevetésen':'Város megtámadása →'}</button><button data-focus-npc="${d.id}" class="npc-focus">Megnézem a térképen</button></article>`;}).join('');
+ if(markup!==lastNpcMarkup){$('npc-cities').innerHTML=markup;lastNpcMarkup=markup;}
+}
+function attackNpc(id){
+ if(window.CloudSave?.blocked()||window.OnlineGame?.blocked())return;
+ if(window.OnlineGame?.active()){window.OnlineGame.action({type:'npc',id});return;}
+ sync();const error=E.launchNpc(state,Date.now(),id);
+ if(error)toast(error);else{log('A sereg elindult '+E.npcCityDefinitions[id].name+' ellen.');worldView?.focusNpc?.(id);$('world-title').scrollIntoView({block:'start',behavior:'smooth'});}
+ save();render();
+}
+$('npc-cities').addEventListener('click',event=>{const attack=event.target.closest('[data-attack-npc]');if(attack&&!attack.disabled)attackNpc(Number(attack.dataset.attackNpc));const focus=event.target.closest('[data-focus-npc]');if(focus){worldView?.focusNpc?.(Number(focus.dataset.focusNpc));$('world-title').scrollIntoView({block:'start',behavior:'smooth'});}});
+document.addEventListener('attack-npc',event=>attackNpc(event.detail));
 let lastBonusMarkup='';
 function renderExploration(now){
   const view=BattleScene.scoutView(state.scout,now);
@@ -61,6 +76,7 @@ function renderGiant(now){
 }
 
 function render(){
+  renderNpcCities();
   const now=Date.now();renderExploration(now);renderGiant(now);
   const data=[['wood','🪵','FA',E.productionRate(state,'wood',now)/60],['metal','⚙️','VAS',E.productionRate(state,'metal',now)/60],['food','🌾','ÉLELEM',E.productionRate(state,'food',now)/60],['gold','🪙','ARANY',null],['soldiers','🪖','KATONÁK',null]];
   $('resources').innerHTML=data.map(([id,icon,label,rate])=>`<div class="resource ${id==='gold'?'gold-resource':''}"><span class="icon">${icon}</span><div><small>${label}</small><strong id="resource-${id}">${number(state[id])}</strong><em>${id==='gold'?'Zsákmány és felderítés':rate===null?(state.mission?`${state.mission.soldiers??E.availableSoldiers(state)} harcol${state.scout?' · 3 felderítő':''}`:`${E.availableSoldiers(state)} elérhető${state.scout?' · 3 felderítő':''}`):`+${(rate*60).toLocaleString('hu-HU',{maximumFractionDigits:1})} / perc`}</em></div></div>`).join('');
@@ -71,9 +87,9 @@ function render(){
   if(lastBuildingMarkup!==buildingMarkup){$('buildings').innerHTML=buildingMarkup;lastBuildingMarkup=buildingMarkup;}
   $('power').textContent=state.mission?.power??E.power(state);$('enemy').textContent=state.mission?.enemy??E.enemy(state);$('soldiers').textContent=state.soldiers;
   $('zones').textContent=String(state.wins).padStart(2,'0');$('rank').textContent=state.levels.hq>3?'Túlélők erődje':'Kezdő település';
-  $('target').textContent=state.mission?.kind==='pvp'?`${state.mission.defenderName} bázisa`:`${state.zone}. körzet · ${['Elhagyott külváros','Romos ipartelep','Fertőzött raktár','Elveszett városközpont'][(state.zone-1)%4]}`;
+  $('target').textContent=['pvp','npc'].includes(state.mission?.kind)?`${state.mission.defenderName} bázisa`:`${state.zone}. körzet · ${['Elhagyott külváros','Romos ipartelep','Fertőzött raktár','Elveszett városközpont'][(state.zone-1)%4]}`;
   $('forecast').textContent=state.mission?'A csapat bevetésen van…':E.power(state)>=E.enemy(state)?'Erőfölényben vagy. A győzelem várható.':'Az ellenség erősebb. Képezz katonákat vagy növeld a morált!';
-  $('loot-preview').textContent=state.mission?.kind==='pvp'?'Játékos elleni portya · az eredmény a közös szerveren számítódik.':`Győzelmi zsákmány: ${E.goldReward(state.mission?.zone||state.zone)} arany + nyersanyagok`;
+  $('loot-preview').textContent=state.mission?.kind==='npc'?'NPC-város ostroma · a védők vesztesége megmarad; teljes győzelemkor zsákmány.':state.mission?.kind==='pvp'?'Játékos elleni portya · az eredmény a közös szerveren számítódik.':`Győzelmi zsákmány: ${E.goldReward(state.mission?.zone||state.zone)} arany + nyersanyagok`;
   $('expedition').disabled=Boolean(state.mission)||E.availableSoldiers(state)<1;$('map-expedition').disabled=$('expedition').disabled;
   $('map-expedition').textContent=state.mission?'A sereg bevetésen van…':'Sereg indítása →';
   $('expedition').textContent=state.mission?`Expedíció folyamatban · ${Math.max(0,Math.ceil((state.mission.ends-Date.now())/1000))} mp`:'Expedíció indítása →';

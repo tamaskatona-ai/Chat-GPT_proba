@@ -61,6 +61,7 @@ function createWorld(saved){
    case 'scout':error=E.launchScout(p.state,now);break;
    case 'bonus':error=E.activateBonus(p.state,command.id,now);break;
    case 'zombie':error=E.launch(p.state,now,command.targetId);break;
+   case 'npc':error=E.launchNpc(p.state,now,command.id);break;
    case 'giant':error=E.launchGiant(p.state,now,command.id);break;
    case 'attack':{
     if(p.state.mission)fail('A sereged már bevetésen van.',409);

@@ -94,12 +94,12 @@ box(scenery,1.6,.5,1,-44,.5,16,M.wood);for(const side of [-1,1]){const wheel=mes
 bake(scenery);entity(scenery,fieldEntry);
 const hillEntry=landmark('hills','Zöldhát dombvidék',54,30,'Hullámzó dombok és sziklás magaslatok. A csapatok és a fertőzöttek követik a terep magasságát.');
 
-flat(scene,31,31,-16,0,M.dirt);maps.dirt.repeat.set(5,5);
+flat(scene,12,12,-16,0,M.dirt);maps.dirt.repeat.set(5,5);
 function route(points,width,material){const curve=new T.CatmullRomCurve3(points.map(p=>new T.Vector3(p[0],.035,p[1])));const vertices=[],uv=[],indices=[],count=90;for(let i=0;i<=count;i++){const t=i/count,p=curve.getPoint(t),d=curve.getTangent(t),nx=-d.z,nz=d.x;for(const side of [-1,1]){vertices.push(p.x+nx*width/2*side,p.y,p.z+nz*width/2*side);uv.push((side+1)/2,t*9);}if(i<count){const k=i*2;indices.push(k,k+2,k+1,k+1,k+2,k+3);}}const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(vertices,3));geo.setAttribute('uv',new T.Float32BufferAttribute(uv,2));geo.setIndex(indices);geo.computeVertexNormals();const o=mesh(scene,geo,material);o.castShadow=false;o.material.side=T.DoubleSide;geometries.set('route:'+geometries.size,geo);return curve;}
 const battleRoute=route([[-1,3],[5,5],[13,6],[17,4],[21,2]],3.5,M.road);
 const giantRoute=route([[-1,3],[9,3],[22,-3],[31,-6],[34,-10]],2.4,M.road);
 const scoutRoute=route([[-1,3],[2,-2],[5,-7],[9,-8.9]],1.3,M.dirt);
-route([[-29,3],[-15,3],[-1,3]],2.3,M.road);route([[-18,-12],[-18,12]],2.1,M.road);
+route([[-12,3],[-6,3],[-1,3]],2.3,M.road);
 function pitchedRoof(parent,w,d,height,x,y,z,material){
  const g=new T.BufferGeometry(),a=w/2,b=d/2;
  const p=[-a,0,b,a,0,b,0,height,b,-a,0,-b,0,height,-b,a,0,-b,-a,0,-b,-a,0,b,0,height,b,-a,0,-b,0,height,b,0,height,-b,0,height,b,a,0,b,a,0,-b,0,height,b,a,0,-b,0,height,-b];
@@ -122,11 +122,7 @@ function house(parent,{w=6,d=4,h=3,roof=true,wall=M.plaster}={}){
  const drain=cylinder(parent,.045,.045,h,-w/2-.13,h/2,d/2-.15,M.metal,8);
  if(roof){box(parent,.65,1.6,.62,w/3,h+.7,-d/5,M.brick);box(parent,.8,.15,.75,w/3,h+1.53,-d/5,M.concrete);}
 }
-const siteData=[
- {id:'hq',x:-24,z:-7,w:7,d:5,h:4.1}, {id:'farm',x:-14,z:-8,w:6,d:6,h:2.5},
- {id:'barracks',x:-5,z:-7,w:6,d:4,h:2.8}, {id:'sawmill',x:-24,z:9,w:7,d:5,h:3},
- {id:'mine',x:-14,z:9,w:6,d:5,h:3.8},{id:'wall',x:-5,z:9,w:3,d:4,h:4.6}
-];
+const siteData=[{id:'hq',x:-16,z:0,w:7,d:5,h:4.1}];
 function entity(o,data){o.userData.entity=data;objects.push(o);return o;}
 for(const spec of siteData){
  const g=group(scene,spec.x,0,spec.z);
@@ -157,17 +153,28 @@ for(const spec of siteData){
      box(g,1.2,.2,.06,0,2.6,2.17,M.uniform);
    }
  }
- bake(g);const data={kind:'building',id:spec.id,name:root.Engine.buildings[spec.id].name,group:g,description:root.Engine.buildings[spec.id].desc};entity(g,data);buildingEntries.push(data);
+ bake(g);const data={kind:'building',id:spec.id,name:spec.id==='hq'?'Saját város':root.Engine.buildings[spec.id].name,group:g,description:root.Engine.buildings[spec.id].desc};entity(g,data);buildingEntries.push(data);
 }
-// A bázisfal, kapu, rozsdás kerítések és utcai berendezések.
+const npcCityEntries=[];
+for(const d of E.npcCityDefinitions){
+ const g=group(scene,d.x,E.terrainHeight(d.x,d.z),d.z);
+ box(g,10,.3,9,0,.15,0,M.darkConcrete);house(g,{w:4.4,d:3.5,h:2.8,wall:M.brick});
+ for(const x of [-4,4])for(const z of [-3.5,3.5]){box(g,1.5,3,1.5,x,1.5,z,M.darkConcrete);pitchedRoof(g,1.9,1.9,.9,x,3,z,M.roof);}
+ for(const x of [-4,4])box(g,.45,1.8,7,x,.9,0,M.concrete);box(g,8,1.8,.45,0,.9,-3.5,M.concrete);
+ for(const x of [-2.7,2.7])box(g,2.6,1.8,.45,x,.9,3.5,M.concrete);
+ cylinder(g,.05,.05,5,2,4,0,M.iron);box(g,1.2,.7,.05,2.6,6,0,M.red);bake(g);
+ const entry={kind:'npcCity',npcId:d.id,id:'npc-'+d.id,name:d.name,group:g,description:''};entity(g,entry);npcCityEntries.push(entry);
+ const label=document.createElement('button');label.className='world-label npc-world-label';label.dataset.npcCity=d.id;label.addEventListener('click',()=>select(entry));entry.label=label;
+ const parts=[];
+ for(const [geo,mat,y,sx,sy,sz] of [[geometry('box',()=>new T.BoxGeometry(1,1,1)),M.red,1,.45,.7,.3],[geometry('sphere',()=>new T.SphereGeometry(1,20,14)),M.skin,1.6,.22,.22,.22],[geometry('box',()=>new T.BoxGeometry(1,1,1)),M.iron,.4,.38,.6,.25]]){
+  const inst=new T.InstancedMesh(geo,mat,8),matrix=new T.Matrix4(),q=new T.Quaternion();
+  for(let i=0;i<8;i++){matrix.compose(new T.Vector3(-2+(i%4)*1.3,y,5+Math.floor(i/4)*1.2),q,new T.Vector3(sx,sy,sz));inst.setMatrixAt(i,matrix);}
+  inst.instanceMatrix.needsUpdate=true;inst.castShadow=true;g.add(inst);parts.push(inst);
+ }
+ entry.defenders=parts;
+}
+// A saját város belseje kizárólag a külön bázisnézetben látható.
 const architecture=group(scene);
-for(let x=-32;x<-1;x+=2){box(architecture,1.96,2.1,.48,x,1.05,-16,M.concrete);box(architecture,2,.18,.62,x,2.15,-16,M.concrete);box(architecture,1.96,2.1,.48,x,1.05,16,M.concrete);}
-for(let z=-15;z<16;z+=2){box(architecture,.5,2.1,1.96,-33,1.05,z,M.concrete);if(z<-1||z>5)box(architecture,.5,2.1,1.96,-1,1.05,z,M.concrete);}
-for(const z of [-1,6]){box(architecture,1.2,3.4,1.2,-1,1.7,z,M.concrete);box(architecture,1.45,.2,1.45,-1,3.5,z,M.iron);}
-for(let i=0;i<8;i++){const x=-31+i*4.2;for(const z of [-16,16]){cylinder(architecture,.018,.018,.7,x,2.52,z,M.iron,6);box(architecture,4.3,.025,.025,x+2.1,2.8,z,M.iron);}}
-for(const [x,z] of [[-28,1],[-18,1],[-7,1],[-28,13],[-2,-13]]){
- cylinder(architecture,.055,.095,4.2,x,2.1,z,M.iron,10);const lamp=box(architecture,.55,.18,.32,x+.18,4.22,z,M.metal);box(architecture,.42,.04,.25,x+.18,4.12,z,M.frame);
-}
 for(let i=0;i<5;i++){const x=15+i*4.5,z=i%2?-10:12;const ruin=group(architecture,x,0,z);house(ruin,{w:4.3,d:4,h:3+(i%3),roof:i%2===0,wall:M.darkConcrete});if(i%2){for(let j=0;j<5;j++){const debris=box(ruin,.5+random(),.3+random()*.4,.7+random(),random()*5-2.5,.3,2.5+random()*2,M.brick);debris.rotation.y=random()*6;}}}
 // Elhagyott kutatótábor.
 const camp=group(scene,9,0,-12);
@@ -329,6 +336,7 @@ giants.forEach((actor,id)=>{
  label.addEventListener('click',()=>select(actor.data));labelLayer.append(label);actor.label=label;
 });
 
+for(const entry of npcCityEntries)labelLayer.append(entry.label);
 for(const entry of buildingEntries){const button=document.createElement('button');button.className='world-label';button.dataset.worldBuilding=entry.id;button.textContent=entry.name;button.addEventListener('click',()=>select(entry));labelLayer.append(button);entry.label=button;}
 function updateCamera(){
  const c=cameraState;c.distance=clamp(c.distance,4.2,250);c.pitch=clamp(c.pitch,.25,1.33);c.target.x=clamp(c.target.x,E.mapBounds.minX,E.mapBounds.maxX);c.target.z=clamp(c.target.z,E.mapBounds.minZ,E.mapBounds.maxZ);
@@ -348,8 +356,9 @@ function select(entry){
  if(entry.kind==='building'&&root.VegvarCity){root.VegvarCity.open();root.VegvarCity.select(entry.id);return;}
  selected=entry;if(entry.actor?.kind==='giant')canvas.dispatchEvent(new CustomEvent('select-giant',{detail:entry.giantId}));const info=$('map-inspector');info.hidden=false;
  $('inspector-title').textContent=entry.name;
- $('inspector-type').textContent=entry.kind==='building'?'BÁZISÉPÜLET':entry.kind==='landmark'?'TÁJ ÉS HELYSZÍN':entry.actor.kind==='giant'?`ÓRIÁSZOMBI · ${E.giantTypes[entry.giantId]}× HARCI ERŐ`:entry.actor.kind==='zombie'?'KÓSZÁLÓ FERTŐZÖTT':entry.actor.kind==='civilian'?'A MENEDÉK LAKÓJA':entry.actor.kind==='raider'?'ELLENSÉGES KATONA':'A SAJÁT CSAPATOD';
+ $('inspector-type').textContent=entry.kind==='npcCity'?'ELLENSÉGES NPC-VÁROS':entry.kind==='building'?'BÁZISÉPÜLET':entry.kind==='landmark'?'TÁJ ÉS HELYSZÍN':entry.actor.kind==='giant'?`ÓRIÁSZOMBI · ${E.giantTypes[entry.giantId]}× HARCI ERŐ`:entry.actor.kind==='zombie'?'KÓSZÁLÓ FERTŐZÖTT':entry.actor.kind==='civilian'?'A MENEDÉK LAKÓJA':entry.actor.kind==='raider'?'ELLENSÉGES KATONA':'A SAJÁT CSAPATOD';
  $('inspector-description').textContent=entry.description;
+ $('inspect-npc-attack').hidden=entry.kind!=='npcCity';
  $('inspect-upgrade').hidden=entry.kind!=='building';$('inspect-giant-attack').hidden=entry.actor?.kind!=='giant';$('inspect-zombie-attack').hidden=entry.actor?.kind!=='zombie';
  canvas.dataset.selected=entry.id;
 }
@@ -407,11 +416,12 @@ $('rotate-map').onclick=()=>{following=null;cameraState.yaw+=Math.PI/4;updateCam
 $('inspector-close').onclick=clearSelection;$('inspect-closeup').onclick=()=>focus(selected);
 $('inspect-zombie-attack').onclick=()=>{const index=zombies.findIndex(a=>a.data===selected);if(index>=0)canvas.dispatchEvent(new CustomEvent('attack-zombie',{detail:index}));};
 $('inspect-giant-attack').onclick=()=>$('attack-giant').click();
+$('inspect-npc-attack').onclick=()=>{if(selected?.kind==='npcCity')canvas.dispatchEvent(new CustomEvent('attack-npc',{detail:selected.npcId,bubbles:true}));};
 $('inspect-upgrade').onclick=()=>{if(selected?.kind==='building')onUpgrade(selected.id);};
 for(const button of document.querySelectorAll('[data-camera]'))button.onclick=()=>{
  const id=button.dataset.camera;
  if(id==='base')focus(buildingEntries[0]);
- else if(id==='army'){const available=soldiers.filter(s=>s.group.visible);focus(available[Math.min(3,available.length-1)]?.data||civilians[0].data);}
+ else if(id==='army'){const available=soldiers.filter(s=>s.group.visible);focus(available[Math.min(3,available.length-1)]?.data||buildingEntries[0]);}
  else if(id==='zombies')focus(zombies[0].data);
  else if(id==='giant')focus(giants[Number($('giant-select').value)||0].data);
  else if(id==='lake')focus(lakeEntry);else if(id==='fields')focus(fieldEntry);else if(id==='hills')focus(hillEntry);
@@ -448,16 +458,16 @@ function animate(timestamp){
  if(previousMission&&!state.mission)aftermath={until:now+3500,win:timing.missionView(previousMission,previousMission.ends).win};previousMission=state.mission;
  if(aftermath&&now>aftermath.until)aftermath=null;
  const actual=state.mission?(state.mission.soldiers??root.Engine.availableSoldiers(state)):root.Engine.availableSoldiers(state);
- const bossMission=state.mission?.kind==='giant',raidMission=state.mission?.kind==='pvp',target=state.mission?.target||(bossMission?root.Engine.giantPosition(state,now):{x:24,z:2});
+ const bossMission=state.mission?.kind==='giant',raidMission=state.mission?.kind==='pvp',npcMission=state.mission?.kind==='npc',target=state.mission?.target||(bossMission?root.Engine.giantPosition(state,now):{x:24,z:2});
  if(routeMission!==state.mission){routeMission=state.mission;missionRoute=state.mission?.target?new T.CatmullRomCurve3([new T.Vector3(-1,0,3),new T.Vector3(5,0,3),new T.Vector3(13,0,target.z*.4),new T.Vector3(target.x-3,0,target.z)]):null;}
  const activeRoute=missionRoute||(bossMission?giantRoute:battleRoute);
  const count=mission.phase==='return'?Math.max(0,actual-Math.max(1,Math.ceil(actual*(mission.win?(raidMission?.15:.12):bossMission?.25:.35)))):actual;
  const center=state.mission?activeRoute.getPointAt(mission.travel):new T.Vector3(-8,0,3);
  const tangent=state.mission?activeRoute.getTangentAt(mission.travel):new T.Vector3(1,0,0),direction=Math.atan2(tangent.x,tangent.z)+(mission.phase==='return'?Math.PI:0);
- soldiers.forEach((actor,i)=>{actor.group.visible=i<Math.min(24,count);if(!actor.group.visible)return;const col=i%4-1.5,row=Math.floor(i/4);actor.group.position.set(center.x+col*.62,E.terrainHeight(center.x+col*.62,center.z+row*.72),center.z+row*.72);actor.group.rotation.y=direction;walk(actor,time,mission.phase==='outbound'||mission.phase==='return',false,mission.phase==='battle'||defenseView.phase==='battle');});
+ soldiers.forEach((actor,i)=>{actor.group.visible=Boolean(state.mission||defense)&&i<Math.min(24,count);if(!actor.group.visible)return;const col=i%4-1.5,row=Math.floor(i/4);actor.group.position.set(center.x+col*.62,E.terrainHeight(center.x+col*.62,center.z+row*.72),center.z+row*.72);actor.group.rotation.y=direction;walk(actor,time,mission.phase==='outbound'||mission.phase==='return',false,mission.phase==='battle'||defenseView.phase==='battle');});
  scouts.forEach((actor,i)=>{actor.group.visible=Boolean(state.scout);if(!state.scout)return;const p=scoutRoute.getPointAt(scout.travel),d=scoutRoute.getTangentAt(scout.travel);actor.group.position.set(p.x+(i-1)*.65,0,p.z+(i%2)*.7);actor.group.rotation.y=Math.atan2(d.x,d.z)+(scout.phase==='return'?Math.PI:0);walk(actor,time,scout.phase!=='search');if(scout.phase==='search')actor.group.rotation.y+=Math.sin(time*.4+i)*.8;});
  zombies.forEach((actor,i)=>{
- const p=root.Engine.zombiePosition(i,now),q=root.Engine.zombiePosition(i,now+100),engaged=Boolean(state.mission)&&!bossMission&&!raidMission&&i===(state.mission.targetId??0);
+ const p=root.Engine.zombiePosition(i,now),q=root.Engine.zombiePosition(i,now+100),engaged=Boolean(state.mission)&&!bossMission&&!raidMission&&!npcMission&&i===(state.mission.targetId??0);
  actor.group.visible=!(engaged&&mission.win&&(mission.phase==='return'||mission.phase==='battle'&&mission.battle>.8));
  if(engaged){actor.group.position.set(target.x,E.terrainHeight(target.x,target.z),target.z);actor.group.rotation.y=-Math.PI/2;}else{actor.group.position.set(p.x,E.terrainHeight(p.x,p.z),p.z);actor.group.rotation.y=Math.atan2(q.x-p.x,q.z-p.z);}
  walk(actor,time,!engaged,true,engaged&&mission.phase==='battle');
@@ -468,6 +478,16 @@ function animate(timestamp){
   if(!dead)walk(actor,time,!engaged,true,engaged&&mission.phase==='battle');else{actor.detail.visible=true;actor.low.visible=false;}
   if(selected===actor.data)$('inspector-description').textContent=`Életerő: ${E.giantPercent(state,id)}% · ${Math.ceil(g.hp)} / ${E.rulesForGiant(id).maxHp} HP. ${E.giantTypes[id]} alapzombi ereje. A sebzés megmarad. ${dead?'Újraéledés 5 perccel a halál után.':'Erős sereg és több támadás szükséges.'}`;
  });
+ for(const entry of npcCityEntries){
+  const c=state.npcCities[entry.npcId],d=E.npcCityDefinitions[entry.npcId];
+  entry.description=`Védők: ${c.guards} / ${d.guards}. Elesett katonák: ${c.killed}. Harci erő: ${c.guards*d.unitPower}. ${c.looted?'Elfoglalt város; a zsákmányt már begyűjtötted.':`Zsákmány: ${d.loot.gold} arany, ${d.loot.wood} fa, ${d.loot.metal} vas, ${d.loot.food} élelem. A védők vesztesége megmarad.`}`;
+  const p=project(entry.group.position.clone().add(new T.Vector3(0,6.7,0)));entry.label.hidden=!p.visible;entry.label.style.transform=`translate(${p.x}px,${p.y}px) translate(-50%,-100%)`;entry.label.textContent=`${d.name} · ${c.looted?'Elfoglalva':c.guards+' védő'}`;
+  let count=Math.ceil(c.guards/d.guards*8);
+  if(npcMission&&state.mission.npcId===d.id&&(mission.phase==='battle'||mission.phase==='return')){const losses=Math.min(c.guards,Math.max(1,Math.floor(state.mission.power/d.unitPower)));count=Math.ceil((c.guards-losses*(mission.phase==='return'?1:mission.battle))/d.guards*8);}
+  entry.defenders.forEach(part=>part.count=count);
+  if(selected===entry)$('inspector-description').textContent=entry.description;
+ }
+ $('inspect-npc-attack').disabled=Boolean(state.mission)||E.availableSoldiers(state)<1||Boolean(selected?.kind==='npcCity'&&state.npcCities[selected.npcId].looted)||Boolean(root.CloudSave?.blocked()||root.OnlineGame?.blocked());
  $('inspect-zombie-attack').disabled=Boolean(state.mission)||E.availableSoldiers(state)<1;
  $('inspect-giant-attack').disabled=Boolean(state.mission)||(selected?.giantId!==undefined&&E.getGiant(state,selected.giantId).hp===0)||E.availableSoldiers(state)<1;
 
@@ -479,7 +499,7 @@ function animate(timestamp){
   const x=(defense?53-61*view.travel:target.x)+(i%3)*.7,z=(defense?22-19*view.travel:target.z)+Math.floor(i/3)*.75;
   actor.group.position.set(x,E.terrainHeight(x,z),z);actor.group.rotation.y=-Math.PI/2;walk(actor,time,Boolean(defense)&&view.phase!=='battle',false,view.phase==='battle');
  });
- civilians.forEach((actor,i)=>{const t=time*.075+i*1.6;actor.group.position.set(-16+Math.sin(t)*11,0,3.5+Math.cos(t*.7+i)*.85);actor.group.rotation.y=Math.cos(t)>0?Math.PI/2:-Math.PI/2;walk(actor,time,true);});
+ civilians.forEach((actor,i)=>{actor.group.visible=false;const t=time*.075+i*1.6;actor.group.position.set(-16+Math.sin(t)*11,0,3.5+Math.cos(t*.7+i)*.85);actor.group.rotation.y=Math.cos(t)>0?Math.PI/2:-Math.PI/2;walk(actor,time,true);});
  flashes.forEach((o,i)=>{o.visible=mission.phase==='battle'&&(time*7+i)%1<.5;if(o.visible){const t=(time*4+i/8)%1;o.position.set(center.x+(target.x-center.x)*t,E.terrainHeight(center.x,center.z)*(1-t)+E.terrainHeight(target.x,target.z)*t+1.22+(bossMission?2.3*t:0),center.z+(target.z-center.z)*t+(i%3-1)*.3);}});
  if(following){if(following.group.visible){following.group.getWorldPosition(cameraState.target);cameraState.target.y=following.group.position.y+(following.actor?.kind==='giant'?(E.getGiant(state,following.giantId).hp>0?4:1):1.05);}else following=null;}
  vegetation.visible=quality==='high'||cameraState.distance>25;
@@ -500,7 +520,7 @@ function animate(timestamp){
 
  oldLevelSignature=levelSignature;
  const phases={idle:'A helyőrség készen áll',outbound:'A sereg kivonul a bázisról',battle:'Összecsapás a fertőzöttekkel',return:'A túlélők hazafelé tartanak',done:'Az expedíció véget ért'};
- const label=defense?`${defense.attackerName} támadja a bázisodat · ${phases[defenseView.phase]}`:state.mission?(raidMission?`${state.mission.defenderName} bázisa · ${phases[mission.phase]}`:bossMission?(mission.phase==='battle'?'Harc az óriászombival':mission.phase==='outbound'?'A sereg az óriászombihoz vonul':'A csapat hazatér az óriástól'):phases[mission.phase]):aftermath?(aftermath.win?'Győzelem! A sereg hazatért.':'A sereg visszavonult.'):state.scout?`Felderítők: ${scout.phase==='search'?'ellátmányt keresnek':scout.phase==='return'?'hazafelé tartanak':'elhagyják a várost'}`:phases.idle;
+ const label=defense?`${defense.attackerName} támadja a bázisodat · ${phases[defenseView.phase]}`:state.mission?(npcMission?`${state.mission.defenderName} ostroma · ${phases[mission.phase]}`:raidMission?`${state.mission.defenderName} bázisa · ${phases[mission.phase]}`:bossMission?(mission.phase==='battle'?'Harc az óriászombival':mission.phase==='outbound'?'A sereg az óriászombihoz vonul':'A csapat hazatér az óriástól'):phases[mission.phase]):aftermath?(aftermath.win?'Győzelem! A sereg hazatért.':'A sereg visszavonult.'):state.scout?`Felderítők: ${scout.phase==='search'?'ellátmányt keresnek':scout.phase==='return'?'hazafelé tartanak':'elhagyják a várost'}`:phases.idle;
  if(label!==lastStatus){$('scene-status').textContent=label;lastStatus=label;}
  $('march-progress').style.width=`${(defense?defenseView.progress:mission.progress)*100}%`;
  // A mozgó árnyékokat ritkábban frissítjük, mint a geometriát.
@@ -514,8 +534,9 @@ updateCamera();frameId=root.requestAnimationFrame(animate);
 const onLost=e=>{e.preventDefault();$('graphics-notice').hidden=false;$('graphics-notice').textContent='A grafikus kapcsolat megszakadt. A játék mentése megmaradt; töltsd újra az oldalt a térkép folytatásához.';};canvas.addEventListener('webglcontextlost',onLost);
 return {
  focusBuilding(id){focus(buildingEntries.find(b=>b.id===id));},
+ focusNpc(id=0){focus(npcCityEntries[id]);},
  focusGiant(id=0){focus(giants[id]?.data);},
- getSnapshot(){return {renderer:'webgl',pvp:{raiders:raiders.filter(a=>a.group.visible).length,enemyBaseVisible:enemyBase.visible,defending:Boolean(getState().incomingRaid)},mapBounds:E.mapBounds,terrain:{lake:E.lake,hills:E.hills,fields:2},giants:giants.map((a,id)=>({id,x:a.group.position.x,y:a.group.position.y,z:a.group.position.z,hp:E.getGiant(getState(),id).hp,multiplier:E.giantTypes[id],screen:project(a.group.position.clone().add(new T.Vector3(0,4,0)))})),zoom:162/cameraState.distance,target:cameraState.target.toArray(),camera:camera.position.toArray(),selected:selected?.id||null,pixelRatio:renderer.getPixelRatio(),width:canvas.width,height:canvas.height,detailedCharacters:npcEntries.filter(e=>e.group.visible&&e.actor.detail.visible).length,triangles:renderer.info.render.triangles,drawCalls:renderer.info.render.calls,buildings:buildingEntries.map(e=>({id:e.id,...project(e.group.position.clone().add(new T.Vector3(0,1,0)))})),npcs:zombies.map(a=>({id:a.data.id,x:a.group.position.x,z:a.group.position.z,visible:a.group.visible,screen:project(a.group.position.clone().add(new T.Vector3(0,1,0)))})),giant:{hp:getState().giant.hp,percent:root.Engine.giantPercent(getState()),x:giant.group.position.x,z:giant.group.position.z,screen:project(giant.group.position.clone().add(new T.Vector3(0,3.5,0)))},camp:{entranceDepth:new T.Raycaster(new T.Vector3(9,1.2,-7.3),new T.Vector3(0,0,-1)).intersectObject(camp,true)[0]?.distance||0},soldiers:soldiers.filter(a=>a.group.visible).length,scouts:scouts.filter(a=>a.group.visible).length};},
+ getSnapshot(){return {renderer:'webgl',compactBase:buildingEntries.length===1,npcCities:npcCityEntries.map(e=>({id:e.npcId,...project(e.group.position.clone().add(new T.Vector3(0,5,0)))})),pvp:{raiders:raiders.filter(a=>a.group.visible).length,enemyBaseVisible:enemyBase.visible,defending:Boolean(getState().incomingRaid)},mapBounds:E.mapBounds,terrain:{lake:E.lake,hills:E.hills,fields:2},giants:giants.map((a,id)=>({id,x:a.group.position.x,y:a.group.position.y,z:a.group.position.z,hp:E.getGiant(getState(),id).hp,multiplier:E.giantTypes[id],screen:project(a.group.position.clone().add(new T.Vector3(0,4,0)))})),zoom:162/cameraState.distance,target:cameraState.target.toArray(),camera:camera.position.toArray(),selected:selected?.id||null,pixelRatio:renderer.getPixelRatio(),width:canvas.width,height:canvas.height,detailedCharacters:npcEntries.filter(e=>e.group.visible&&e.actor.detail.visible).length,triangles:renderer.info.render.triangles,drawCalls:renderer.info.render.calls,buildings:buildingEntries.map(e=>({id:e.id,...project(e.group.position.clone().add(new T.Vector3(0,1,0)))})),npcs:zombies.map(a=>({id:a.data.id,x:a.group.position.x,z:a.group.position.z,visible:a.group.visible,screen:project(a.group.position.clone().add(new T.Vector3(0,1,0)))})),giant:{hp:getState().giant.hp,percent:root.Engine.giantPercent(getState()),x:giant.group.position.x,z:giant.group.position.z,screen:project(giant.group.position.clone().add(new T.Vector3(0,3.5,0)))},camp:{entranceDepth:new T.Raycaster(new T.Vector3(9,1.2,-7.3),new T.Vector3(0,0,-1)).intersectObject(camp,true)[0]?.distance||0},soldiers:soldiers.filter(a=>a.group.visible).length,scouts:scouts.filter(a=>a.group.visible).length};},
  destroy(){destroyed=true;root.cancelAnimationFrame(frameId);for(const [name,handler] of Object.entries(events))canvas.removeEventListener(name,handler);canvas.removeEventListener('webglcontextlost',onLost);geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());renderer.dispose();visibilityObserver.disconnect();labelLayer.replaceChildren();}
 };
 }

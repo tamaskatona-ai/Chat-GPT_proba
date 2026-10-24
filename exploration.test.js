@@ -47,8 +47,8 @@ test('a bonus doubles only its selected resource and never retroactively boosts 
   const s=E.initial(),now=s.last,metal=s.metal,wood=s.wood;s.bonusInventory.metal=1;
   assert.equal(E.activateBonus(s,'metal',now+60000),null);near(s.metal,metal+176);
   assert.equal(s.bonusInventory.metal,0);assert.equal(E.productionRate(s,'metal',now+60000),352);
-  E.advance(s,now+120000);near(s.metal,metal+528);near(s.wood,wood+211.2);
-  assert.equal(E.productionRate(s,'wood',now+120000),105.6);
+  E.advance(s,now+120000);near(s.metal,metal+528);near(s.wood,wood+2112);
+  assert.equal(E.productionRate(s,'wood',now+120000),1056);
 });
 test('production integrates expiry in the middle of an offline interval',()=>{
   const s=E.initial(),now=s.last,metal=s.metal;s.boostUntil.metal=now+30000;

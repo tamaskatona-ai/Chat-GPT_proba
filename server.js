@@ -25,7 +25,7 @@ function createServer({dataFile=path.join(__dirname,'data','online.json'),now=Da
   const file=files[url.pathname];if(!file){res.writeHead(404);res.end('Not found');return;}
   res.setHeader('Content-Type',mime[path.extname(file)]||'application/octet-stream');if(file==='sw.js'||file==='index.html')res.setHeader('Cache-Control','no-cache');fs.createReadStream(path.join(root,file)).pipe(res);
  });
- const settle=setInterval(()=>{if(!world.data.players.some(p=>p.state.mission?.kind==='pvp'&&p.state.mission.ends<=now()))return;const run=queue.then(()=>{const before=JSON.stringify(world.data);try{world.tick(now());persist();}catch(error){world=createWorld(JSON.parse(before));console.error('A csata mentése sikertelen:',error.message);}});queue=run.catch(()=>{});},1000);settle.unref();server.on('close',()=>clearInterval(settle));return server;
+ const settle=setInterval(()=>{if(!world.data.players.some(p=>['pvp','npc'].includes(p.state.mission?.kind)&&p.state.mission.ends<=now()))return;const run=queue.then(()=>{const before=JSON.stringify(world.data);try{world.tick(now());persist();}catch(error){world=createWorld(JSON.parse(before));console.error('A csata mentése sikertelen:',error.message);}});queue=run.catch(()=>{});},1000);settle.unref();server.on('close',()=>clearInterval(settle));return server;
 }
 if(require.main===module)createServer().listen(Number(process.env.PORT)||3000,'0.0.0.0',()=>console.log(`Végvár elindult a ${Number(process.env.PORT)||3000}-es porton. Online mód: /api/online`));
 module.exports={createServer};

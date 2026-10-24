@@ -13,7 +13,9 @@ function validateSave(input){
   if(!Number.isFinite(s.morale)||s.morale<0||s.morale>5)throw Error();
   if(!E.resourceTypes.every(t=>Number.isSafeInteger(s.bonusInventory?.[t])&&s.bonusInventory[t]>=0&&finite(s.boostUntil?.[t])))throw Error();
   if(!Array.isArray(s.giants)||s.giants.length!==8||!s.giants.every((g,id)=>finite(g.hp)&&g.hp<=E.rulesForGiant(id).maxHp&&typeof g.rewardClaimed==='boolean'&&finite(g.respawnAt)&&Number.isSafeInteger(g.generation)&&g.generation>=0))throw Error();
-  if(s.mission){const m=s.mission;if(!m.kind)m.kind='zone';if(m.soldiers===undefined)m.soldiers=s.soldiers;if(!['zone','giant'].includes(m.kind)||!['ends','power','enemy','soldiers'].every(k=>finite(m[k]))||!Number.isSafeInteger(m.soldiers)||m.soldiers>s.soldiers)throw Error();
+  if(!Array.isArray(s.npcCities)||s.npcCities.length!==E.npcCityDefinitions.length||!s.npcCities.every((c,id)=>c.id===id&&Number.isSafeInteger(c.guards)&&c.guards>=0&&c.guards<=E.npcCityDefinitions[id].guards&&Number.isSafeInteger(c.killed)&&c.killed>=0&&c.guards+c.killed===E.npcCityDefinitions[id].guards&&typeof c.looted==='boolean'&&c.looted===(c.guards===0))||s.npcKills!==s.npcCities.reduce((n,c)=>n+c.killed,0))throw Error();
+  if(s.mission){const m=s.mission;if(!m.kind)m.kind='zone';if(m.soldiers===undefined)m.soldiers=s.soldiers;if(!['zone','giant','npc'].includes(m.kind)||!['ends','power','enemy','soldiers'].every(k=>finite(m[k]))||!Number.isSafeInteger(m.soldiers)||m.soldiers>s.soldiers)throw Error();
+   if(m.kind==='npc'&&(!Number.isInteger(m.npcId)||!E.npcCityDefinitions[m.npcId]||s.npcCities[m.npcId].looted||m.defenderSoldiers!==s.npcCities[m.npcId].guards))throw Error();
    if(m.kind==='giant'&&(!Number.isInteger(m.giantId??0)||(m.giantId??0)<0||(m.giantId??0)>7||!['giantHpAtStart','damageTotal','damageDealt','appliedTicks'].every(k=>finite(m[k]))||m.appliedTicks>5||m.damageDealt>m.damageTotal))throw Error();
    if(m.kind==='zone'&&(!Number.isInteger(m.zone)||m.zone<1))throw Error();
   }

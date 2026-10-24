@@ -63,7 +63,7 @@
   catch{/* A helyi kijelentkezés hálózat nélkül is működik; a szerveres munkamenet lejár. */}
   finally{active=false;connected=false;owner=false;generation++;try{localStorage.removeItem(LOGIN);}catch{}window.GameSave.endCloud();working=false;draw();tell('Kijelentkeztél. A felhőmentésed megmaradt, a helyi eredeti bázisodat látod.');}
  };
- document.addEventListener('click',event=>{if(window.CloudSave?.blocked()&&event.target.closest('[data-upgrade],[data-gold-upgrade],[data-activate-bonus],#train,#train-gold,#boost-morale,#attack-giant,#expedition,#map-expedition,#launch-scout,#reset')){event.preventDefault();event.stopImmediatePropagation();tell('A folytatáshoz állítsd helyre a kapcsolatot, vagy válaszd ezt a készüléket.');}},true);
+ document.addEventListener('click',event=>{if(window.CloudSave?.blocked()&&event.target.closest('[data-attack-npc],#inspect-npc-attack,[data-upgrade],[data-gold-upgrade],[data-activate-bonus],#train,#train-gold,#boost-morale,#attack-giant,#expedition,#map-expedition,#launch-scout,#reset')){event.preventDefault();event.stopImmediatePropagation();tell('A folytatáshoz állítsd helyre a kapcsolatot, vagy válaszd ezt a készüléket.');}},true);
  window.CloudSave={active:()=>active,blocked:()=>active&&!window.OnlineGame?.active()&&(!connected||!owner||working),switching:()=>working,
   cache(state){put('vegvar-cloud-cache:'+server+':'+username,JSON.stringify({revision,state,at:Date.now()}));},
   changed(){if(!active)return;clearTimeout(changeTimer);changeTimer=setTimeout(saveNow,500);},

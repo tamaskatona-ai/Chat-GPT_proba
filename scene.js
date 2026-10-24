@@ -15,14 +15,7 @@
     const travel=phase==='outbound'?Math.max(0,(now-scout.started)/(scout.searchStarts-scout.started)):phase==='search'?1:Math.max(0,1-(now-scout.searchEnds)/(scout.ends-scout.searchEnds));
     return {phase,progress,travel};
   }
-  const sites = [
-    { id: 'hq', x: 170, y: 270, w: 102, h: 75, color: '#829a78', roof: '#445d52' },
-    { id: 'farm', x: 315, y: 260, w: 92, h: 53, color: '#93bea0', roof: '#578d80' },
-    { id: 'sawmill', x: 170, y: 410, w: 96, h: 55, color: '#ac8861', roof: '#665e48' },
-    { id: 'mine', x: 315, y: 410, w: 87, h: 65, color: '#9a9f91', roof: '#596872' },
-    { id: 'barracks', x: 450, y: 280, w: 87, h: 57, color: '#89966b', roof: '#4e6343' },
-    { id: 'wall', x: 493, y: 425, w: 76, h: 42, color: '#899384', roof: '#566557' }
-  ];
+  const sites = [{id:'hq',x:300,y:330,w:102,h:75,color:'#829a78',roof:'#445d52'}];
   function mountFallback(canvas, getState, onSelect) {
     const ctx = canvas.getContext('2d');
     const W = 1100, H = 590;
@@ -109,14 +102,10 @@
       ctx.strokeStyle='#93c1b355';ctx.lineWidth=17;ctx.stroke();
       ctx.setLineDash([4,7]);ctx.strokeStyle='#a4dbcc';ctx.lineWidth=2;ctx.stroke();ctx.setLineDash([]);
       for(let i=0;i<35;i++){const x=(i*131)%W,y=(i*79)%H;if((x>75&&x<580&&y>130&&y<500)||(y>295&&y<470))continue;tree(x,y,.65+(i%4)*.12);}
-      // Sol en pierre et enceinte du camp.
-      poly([[87,172],[526,172],[557,470],[87,470]],'#a7ab8066','#bbc09255');
-      ctx.strokeStyle='#b4af85';ctx.lineWidth=25;ctx.beginPath();ctx.moveTo(120,332);ctx.lineTo(515,332);ctx.moveTo(260,208);ctx.lineTo(260,447);ctx.stroke();
-      ctx.strokeStyle='#566b5a';ctx.lineWidth=8;ctx.beginPath();ctx.moveTo(70,480);ctx.lineTo(70,150);ctx.lineTo(559,150);ctx.lineTo(559,317);ctx.moveTo(559,387);ctx.lineTo(559,480);ctx.lineTo(70,480);ctx.stroke();
-      for(let x=78;x<558;x+=22){box(x,154,13,17,'#87937a','#a6ac8f');box(x,484,13,17,'#87937a','#a6ac8f');}
-      sites.forEach(site=>building(site,state,time));
-      box(563,320,30,51,'#889a84','#556d58');box(563,404,30,51,'#889a84','#556d58');
-      text('ÉSZAKI MENEDÉK',300,112,17,'#e3e9ce');text(`HARCI MORÁL +${root.Engine.moraleBonus(state)}%`,300,516,12,'#f3d486');text('A bázis épületeire kattintva fejleszthetsz',300,132,10,'#d3dfbd');
+      // Egyetlen külső bázisjelölő: a város belseje külön képernyő.
+      ellipse(300,340,86,30,'#253e3d44');sites.forEach(site=>building(site,state,time));
+      text('SAJÁT VÁROS · BELÉPÉS',300,216,14,'#e3e9ce');
+      for(const d of root.Engine.npcCityDefinitions){const c=state.npcCities[d.id],x=650+d.x*5,y=345+d.z*3.5;box(x,y,40,36,c.looted?'#738469':'#9a725b','#594738');text(d.name,x,y-57,11,'#ffe3b7');text(c.looted?'Elfoglalva':c.guards+' védő',x,y+22,10,'#edcc9c');}
       // Romok, barikádok és a célterület.
       for(let i=0;i<4;i++){let x=874+(i%2)*116,y=208+Math.floor(i/2)*244;box(x,y,65,50+(i%3)*17,'#78817a','#4c5d56');poly([[x-30,y-50],[x-10,y-65],[x+2,y-45],[x+17,y-56],[x+32,y-50]],'#43574b');ctx.fillStyle='#2a3934';ctx.fillRect(x-12,y-29,14,29);}
       text(`FERTŐZÖTT KÖRZET · ${state.mission?.zone||state.zone}`,924,104,14,'#f1d3a5');
@@ -128,11 +117,11 @@
       poly([[708,211],[721,186],[736,211]],'#294c43');
       box(774,228,22,17,'#c0a16b','#d9bb7e');box(791,213,18,14,'#aa8b5e','#cbb37b');
       text('ELHAGYOTT ELLÁTÓHELY',735,143,11,'#c9f1df');
-      const bossMission=state.mission?.kind==='giant',raidMission=state.mission?.kind==='pvp';
+      const npcMission=state.mission?.kind==='npc',bossMission=state.mission?.kind==='giant',raidMission=state.mission?.kind==='pvp';
       const armySoldiers=state.mission?(state.mission.soldiers??root.Engine.availableSoldiers(state)):root.Engine.availableSoldiers(state);
       const armyCount=Math.min(24,armySoldiers);
       let center=view.phase==='idle'?{x:395,y:340}:point(view.travel,bossMission,state.mission?.target);
-      let showCount=armyCount;
+      let showCount=state.mission?armyCount:0;
       if(view.phase==='return'||view.phase==='done')showCount=Math.max(0,armyCount-Math.max(1,Math.ceil(armyCount*(view.win?(raidMission?.15:.12):bossMission?.25:.35))));
       const moving=view.phase==='outbound'||view.phase==='return';
       for(let i=0;i<showCount;i++){
@@ -158,7 +147,7 @@
       }
       const zombies=root.Engine.zombieCount;
       for(let i=0;i<zombies;i++){
-        const engaged=Boolean(state.mission)&&!bossMission&&!raidMission&&i===(state.mission.targetId??0),fighting=engaged&&view.phase==='battle',dead=engaged&&view.win&&(view.phase==='return'||view.phase==='done'||(fighting&&view.battle>.8));
+        const engaged=Boolean(state.mission)&&!bossMission&&!raidMission&&!npcMission&&i===(state.mission.targetId??0),fighting=engaged&&view.phase==='battle',dead=engaged&&view.win&&(view.phase==='return'||view.phase==='done'||(fighting&&view.battle>.8));
         const p=root.Engine.zombiePosition(i,now),target=engaged?(state.mission.target||p):p;
         const x=650+target.x*5,y=345+target.z*3.5;
         if(!dead||view.phase==='battle')human(x,y,time,i,true,-1,fighting,dead);
@@ -188,6 +177,8 @@
     }
     function selectAt(event) {
       const r=canvas.getBoundingClientRect(),x=(event.clientX-r.left)/r.width*W,y=(event.clientY-r.top)/r.height*H;
+      const city=root.Engine.npcCityDefinitions.find(d=>Math.abs(x-(650+d.x*5))<32&&y>345+d.z*3.5-65&&y<345+d.z*3.5+30);
+      if(city){document.dispatchEvent(new CustomEvent('attack-npc',{detail:city.id}));return;}
       const site=sites.find(s=>x>s.x-s.w/2-8&&x<s.x+s.w/2+22&&y>s.y-s.h-20&&y<s.y+38);
       if(site){selected=site.id;onSelect(site.id);}
     }

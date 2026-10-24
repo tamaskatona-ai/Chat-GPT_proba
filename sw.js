@@ -1,6 +1,6 @@
 /* A build.js a teljes alkalmazás tartalmából számolja az új kiadás azonosítóját. */
 'use strict';
-const CACHE_VERSION = 'ba9b360a831473ad';
+const CACHE_VERSION = '39ac3cd52a36ee0d';
 const SCOPE = new URL('./', self.location.href);
 const CACHE_PREFIX = 'vegvar-app-' + SCOPE.pathname + '-';
 const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;

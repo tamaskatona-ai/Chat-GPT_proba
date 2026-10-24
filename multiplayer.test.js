@@ -8,7 +8,7 @@ test('real players share an invite room, credentials remain private and other ro
 test('PvP resolves once on the server, applies both casualties and conserves stolen resources',()=>{
  const {w,a,b}=pair(),zone=a.state.zone;w.action(a,{type:'attack',targetId:b.id},T);assert.equal(a.state.mission.kind,'pvp');assert.equal(b.incoming.attackerId,a.id);assert.throws(()=>w.action(b,{type:'train'},T),/védekezik/);
  w.tick(T+14999);assert.ok(a.state.mission);w.tick(T+15000);assert.equal(a.state.mission,null);assert.equal(b.incoming,null);assert.equal(a.state.soldiers,6);assert.equal(b.state.soldiers,6);assert.equal(a.state.zone,zone);assert.equal(a.reports.length,1);assert.deepEqual(a.reports,b.reports);
- const loot=a.reports[0].loot;assert.equal(loot.gold,0);assert.ok(Math.abs(a.state.wood+b.state.wood-(440+2*105.6*.25))<1e-8);assert.equal(loot.wood,Math.floor((220+105.6*.25)*.1));const soldiers=a.state.soldiers;w.tick(T+20000);assert.equal(a.reports.length,1);assert.equal(a.state.soldiers,soldiers);
+ const loot=a.reports[0].loot;assert.equal(loot.gold,0);assert.ok(Math.abs(a.state.wood+b.state.wood-(440+2*1056*.25))<1e-8);assert.equal(loot.wood,Math.floor((220+1056*.25)*.1));const soldiers=a.state.soldiers;w.tick(T+20000);assert.equal(a.reports.length,1);assert.equal(a.state.soldiers,soldiers);
  assert.throws(()=>w.action(a,{type:'attack',targetId:b.id},T+20000),/pihen/);w.tick(T+60000);assert.throws(()=>w.action(a,{type:'attack',targetId:b.id},T+60000),/csatavédelem/);
 });
 test('losing an attack gives no fabricated loot, scouts are not deployed or killed',()=>{

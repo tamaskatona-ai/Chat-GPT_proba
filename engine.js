@@ -1,9 +1,9 @@
 (function(root){
-const buildings={hq:{name:'Parancsnokság',icon:'🏛️',desc:'Minden épület szintkorlátját emeli.',cost:{wood:100,metal:70}},farm:{name:'Üvegház',icon:'🌱',desc:'Élelmet termel a kiképzéshez.',cost:{wood:45,metal:15}},sawmill:{name:'Fűrésztelep',icon:'🪵',desc:'Alaptermelés: 105,6 fa/perc szintenként.',cost:{wood:30,metal:20}},mine:{name:'Vasfeldolgozó',icon:'⚙️',desc:'Alaptermelés: 176 vas/perc szintenként.',cost:{wood:60,metal:25}},barracks:{name:'Laktanya',icon:'🪖',desc:'Katonákat képez. Szintenként +2 harci erő.',cost:{wood:70,metal:50}},wall:{name:'Védőfal',icon:'🛡️',desc:'Szintenként +15 harci erő.',cost:{wood:80,metal:40}}};
+const buildings={hq:{name:'Parancsnokság',icon:'🏛️',desc:'Minden épület szintkorlátját emeli.',cost:{wood:100,metal:70}},farm:{name:'Üvegház',icon:'🌱',desc:'Élelmet termel a kiképzéshez.',cost:{wood:45,metal:15}},sawmill:{name:'Fűrésztelep',icon:'🪵',desc:'Alaptermelés: 1 056 fa/perc szintenként.',cost:{wood:30,metal:20}},mine:{name:'Vasfeldolgozó',icon:'⚙️',desc:'Alaptermelés: 176 vas/perc szintenként.',cost:{wood:60,metal:25}},barracks:{name:'Laktanya',icon:'🪖',desc:'Katonákat képez. Szintenként +2 harci erő.',cost:{wood:70,metal:50}},wall:{name:'Védőfal',icon:'🛡️',desc:'Szintenként +15 harci erő.',cost:{wood:80,metal:40}}};
 const trainingCost={food:50,metal:20},maxMorale=5,resourcesPerGold=10;
 const resourceTypes=['wood','metal','food'];
 const productionBuildings={wood:'sawmill',metal:'mine',food:'farm'};
-const baseProduction={wood:105.6,metal:176,food:60};
+const baseProduction={wood:1056,metal:176,food:60};
 const scoutSize=3,scoutTravelTime=10000,scoutSearchTime=300000,bonusDuration=300000;
 const scoutLoot={bonuses:{wood:3,metal:3,food:3},gold:75};
 const normalZombiePower=95,zombieCount=44;
@@ -15,9 +15,29 @@ function rulesForGiant(id=0){const multiplier=giantTypes[id]??100,scale=multipli
 function initialGiant(id=0){return {id,hp:rulesForGiant(id).maxHp,rewardClaimed:false,respawnAt:0,generation:0};}
 function getGiant(s,id=0){return s.giants?.[id]||(id===0?s.giant:null);}
 function giantPercent(s,id=0){return Math.ceil(getGiant(s,id).hp/rulesForGiant(id).maxHp*100);}
-function initial(){const giants=giantTypes.map((_,i)=>initialGiant(i));return {version:1,giants,giant:giants[0],scout:null,bonusInventory:{wood:0,metal:0,food:0},boostUntil:{wood:0,metal:0,food:0},gold:0,morale:0,moraleUpdatedAt:Date.now(),encounters:0,wood:220,metal:150,food:160,soldiers:8,zone:1,wins:0,levels:{hq:1,farm:1,sawmill:1,mine:1,barracks:1,wall:1},last:Date.now(),mission:null,log:['A túlélők megérkeztek. Építs biztonságos otthont!']};}
+const npcCityDefinitions=[
+ {name:'Porvár',x:32,z:-28,guards:12,unitPower:9},
+ {name:'Vaskapu',x:-35,z:-36,guards:28,unitPower:11},
+ {name:'Farkasrév',x:62,z:0,guards:60,unitPower:13},
+ {name:'Homokbástya',x:-70,z:30,guards:120,unitPower:15},
+ {name:'Vöröskő',x:34,z:44,guards:240,unitPower:18},
+ {name:'Acélkorona',x:72,z:-43,guards:480,unitPower:22}
+].map((city,id)=>({...city,id,loot:{wood:1400+id*1200,metal:900+id*600,food:1000+id*600,gold:200+id*250}}));
+function initialNpcCities(){return npcCityDefinitions.map(c=>({id:c.id,guards:c.guards,killed:0,looted:false}));}
+function launchNpc(s,now,id){
+ if(!Number.isInteger(id)||!npcCityDefinitions[id])return 'Ismeretlen NPC-város.';
+ if(s.mission)return 'A sereg már bevetésen van.';
+ if(availableSoldiers(s)<1)return 'Nincs szabad katona. Képezz katonákat!';
+ const city=s.npcCities[id],definition=npcCityDefinitions[id];
+ if(city.looted||city.guards===0)return 'Ezt a várost már elfoglaltad és kifosztottad.';
+ s.mission={kind:'npc',npcId:id,target:{x:definition.x,z:definition.z+6},defenderName:definition.name,defenderSoldiers:city.guards,soldiers:availableSoldiers(s),power:power(s),enemy:city.guards*definition.unitPower,ends:now+15000};
+ return null;
+}
+function initial(){const giants=giantTypes.map((_,i)=>initialGiant(i));return {version:1,npcCities:initialNpcCities(),npcKills:0,giants,giant:giants[0],scout:null,bonusInventory:{wood:0,metal:0,food:0},boostUntil:{wood:0,metal:0,food:0},gold:0,morale:0,moraleUpdatedAt:Date.now(),encounters:0,wood:220,metal:150,food:160,soldiers:8,zone:1,wins:0,levels:{hq:1,farm:1,sawmill:1,mine:1,barracks:1,wall:1},last:Date.now(),mission:null,log:['A túlélők megérkeztek. Építs biztonságos otthont!']};}
 function migrate(s){
   // A korábbi mentések új mezőit alapértékkel egészítjük ki; a haladás megmarad.
+  if(s.npcCities===undefined)s.npcCities=initialNpcCities();
+  if(s.npcKills===undefined)s.npcKills=s.npcCities.reduce((sum,c)=>sum+c.killed,0);
   if(s.gold===undefined)s.gold=0;
   if(s.morale===undefined)s.morale=0;
   if(s.moraleUpdatedAt===undefined)s.moraleUpdatedAt=s.last;
@@ -164,6 +184,16 @@ function resolve(s,now){
   applyGiantDamage(s,now);
   if(!s.mission||now<s.mission.ends){respawnGiant(s,now);return null;}
   const m=s.mission,deployed=m.soldiers??s.soldiers;
+  if(m.kind==='npc'){
+    const city=s.npcCities[m.npcId],definition=npcCityDefinitions[m.npcId];
+    const killed=Math.min(city.guards,Math.max(1,Math.floor(m.power/definition.unitPower)));
+    city.guards-=killed;city.killed+=killed;s.npcKills+=killed;
+    const win=city.guards===0,loss=Math.min(deployed,Math.max(1,Math.ceil(deployed*(win?.12:.35))));
+    s.soldiers-=loss;s.mission=null;
+    let loot='';
+    if(win&&!city.looted){for(const [type,amount] of Object.entries(definition.loot))s[type]+=amount;city.looted=true;loot=` Zsákmány: ${definition.loot.gold} arany, ${definition.loot.wood} fa, ${definition.loot.metal} vas, ${definition.loot.food} élelem.`;}
+    return `${definition.name}: ${win?'a várost elfoglaltad!':'a sereg visszavonult.'} Elesett védők: ${killed}; megmaradt: ${city.guards}. Összes legyőzött NPC-katona: ${s.npcKills}. Saját veszteség: ${loss} katona.${loot}`;
+  }
   if(m.kind==='giant'){
     const id=m.giantId??0,giant=getGiant(s,id),rules=rulesForGiant(id);
     const win=giant.hp===0;
@@ -182,5 +212,5 @@ function resolve(s,now){
   s.mission=null;
   return win?`Győzelem a(z) ${m.zone}. körzetben! A zombik zsákmánya: +${goldReward(m.zone)} arany és nyersanyagok. Veszteség: ${loss} katona.`:`Visszavonulás a(z) ${m.zone}. körzetből. Veszteség: ${loss} katona. Erősítsd meg a sereget!`;
 }
-const api={zombieCount,mapBounds,giantTypes,giantNames,rulesForGiant,getGiant,hills,lake,terrainHeight,inLake,zombiePosition,giantPosition,respawnGiant,normalZombiePower,giantRules,initialGiant,giantPercent,launchGiant,applyGiantDamage,resourceTypes,baseProduction,baseRate,productionRate,scoutSize,scoutTravelTime,scoutSearchTime,scoutLoot,bonusDuration,availableSoldiers,launchScout,resolveScout,activateBonus,buildings,trainingCost,maxMorale,resourcesPerGold,initial,migrate,cost,moraleBonus,moraleCost,goldReward,quote,power,enemy,advance,upgrade,train,boostMorale,launch,resolve};if(typeof module!=='undefined')module.exports=api;else root.Engine=api;
+const api={npcCityDefinitions,initialNpcCities,launchNpc,zombieCount,mapBounds,giantTypes,giantNames,rulesForGiant,getGiant,hills,lake,terrainHeight,inLake,zombiePosition,giantPosition,respawnGiant,normalZombiePower,giantRules,initialGiant,giantPercent,launchGiant,applyGiantDamage,resourceTypes,baseProduction,baseRate,productionRate,scoutSize,scoutTravelTime,scoutSearchTime,scoutLoot,bonusDuration,availableSoldiers,launchScout,resolveScout,activateBonus,buildings,trainingCost,maxMorale,resourcesPerGold,initial,migrate,cost,moraleBonus,moraleCost,goldReward,quote,power,enemy,advance,upgrade,train,boostMorale,launch,resolve};if(typeof module!=='undefined')module.exports=api;else root.Engine=api;
 })(globalThis);

@@ -46,3 +46,13 @@ test('cloud signup and login respect the production 100000-iteration crypto limi
  const login=await api('login',{username:'production-compatible',password,deviceId:phone});assert.equal(login.status,200);assert.equal(login.state.levels.hq,9);assert.equal(calls,12);
  assert.equal((await api('login',{username:'production-compatible',password:'incorrect-password',deviceId:phone})).status,401);
 });
+
+test('a wounded NPC garrison and an ongoing second siege follow the account onto another device',async()=>{
+ const w=createWorld(),api=client(w),state=E.initial(),now=state.last;
+ E.launchNpc(state,now,0);E.resolve(state,now+15000);E.launchNpc(state,now+16000,0);
+ const reg=await api('register',{username:'npc-campaign',password,deviceId:pc,state});assert.equal(reg.status,201);
+ const phoneLogin=await api('login',{username:'npc-campaign',password,deviceId:phone});assert.equal(phoneLogin.status,200);assert.equal(phoneLogin.state.npcKills,10);assert.equal(phoneLogin.state.npcCities[0].guards,2);assert.equal(phoneLogin.state.mission.kind,'npc');
+ const resumed=structuredClone(phoneLogin.state);E.resolve(resumed,now+31000);
+ const saved=await api('save',{deviceId:phone,revision:phoneLogin.revision,state:resumed},phoneLogin.token);assert.equal(saved.status,200);
+ const current=await api('session',{deviceId:phone},phoneLogin.token);assert.equal(current.state.npcCities[0].looted,true);assert.equal(current.state.npcKills,12);assert.equal(current.state.gold,200);
+});
