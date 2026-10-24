@@ -27,8 +27,8 @@ test('manifest has scoped standalone launch and real iPhone/maskable PNG icons',
  }
 });
 test('offline install contains all game dependencies and homescreen launch handles query strings under repository scope',async()=>{
- const w=worker();await w.install();w.setOffline();assert.match(await (await w.request('./?source=homescreen','navigate')).text(),/cached:.*index.html/);
- for(const file of ['engine.js','game.js','world3d.js','vendor/three.min.js','pwa.js','icons/apple-touch-icon.png'])assert.match(await (await w.request(file)).text(),/cached:/);
+ const w=worker();await w.install();w.setOffline();assert.equal(await (await w.request('./?source=homescreen','navigate')).text(),'cached:https://example.test/Chat-GPT_proba/');
+ for(const file of ['engine.js','game.js','world3d.js','city-view.js','vendor/three.min.js','pwa.js','icons/apple-touch-icon.png'])assert.match(await (await w.request(file)).text(),/cached:/);
  assert.equal(w.fetched.length,0);
 });
 test('worker ignores cross-origin, out-of-scope and mutation requests and never replaces unknown pages with the game',async()=>{

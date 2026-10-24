@@ -1,0 +1,19 @@
+<!doctype html><html lang="hu"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Végvár – Indítás javítása</title><style>body{margin:0;background:#142a29;color:#eff1df;font:16px/1.7 system-ui,sans-serif;min-height:100dvh;display:grid;place-items:center}main{max-width:480px;margin:24px;padding:28px;border:1px solid #688074;border-radius:16px;background:#203b37}h1{font-size:26px}p{color:#c2d1c8}a{color:#e3efa5}button{font:inherit;padding:14px;border:0;border-radius:8px;background:#e3efa5;color:#24342a;cursor:pointer;min-height:44px}</style></head><body><main><h1>A városod hamarosan megnyílik</h1><p id="repair-status" role="status">A játék betöltését javítjuk. A mentett városod és a bejelentkezésed megmarad.</p><button id="repair-start">Indítás javítása</button><p><a href="./" id="repair-link" hidden>Játék megnyitása →</a></p></main><script>
+'use strict';
+const status=document.getElementById('repair-status'),button=document.getElementById('repair-start');
+button.onclick=async()=>{
+ button.disabled=true;
+ try{
+  const base=new URL('./',location.href),script=new URL('sw.js',base).href;
+  if('serviceWorker' in navigator){
+   const registrations=await navigator.serviceWorker.getRegistrations();
+   await Promise.all(registrations.filter(r=>r.scope===base.href&&[r.active,r.waiting,r.installing].some(w=>w?.scriptURL===script)).map(r=>r.unregister()));
+  }
+  if('caches' in window){const prefix='vegvar-app-'+base.pathname+'-';for(const key of await caches.keys())if(key.startsWith(prefix))await caches.delete(key);}
+  status.textContent='A javítás kész. A mentett városod megmaradt. Megnyitjuk a játékot…';
+  location.replace(base.href);
+ }catch{
+  status.textContent='Az automatikus javítás nem fejeződött be. Próbáld újra, vagy nyisd meg a játékot az alábbi hivatkozással.';button.disabled=false;document.getElementById('repair-link').hidden=false;
+ }
+};
+</script></body></html>

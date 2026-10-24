@@ -2,7 +2,7 @@
 const http=require('node:http'),fs=require('node:fs'),path=require('node:path');
 const {createWorld,handleRequest}=require('./multiplayer');
 function createServer({dataFile=path.join(__dirname,'data','online.json'),now=Date.now}={}){
- const root=__dirname,assets=['index.html','style.css','game.js','engine.js','scene.js','world3d.js','vendor/three.min.js','vendor/THREE-LICENSE.txt','vegvar.html','pwa.js','sw.js','manifest.webmanifest','multiplayer-client.js','cloud-client.js','city-view.js','icons/apple-touch-icon.png','icons/icon-192.png','icons/icon-512.png'];
+ const root=__dirname,assets=['index.html','repair.html','style.css','game.js','engine.js','scene.js','world3d.js','vendor/three.min.js','vendor/THREE-LICENSE.txt','vegvar.html','pwa.js','sw.js','manifest.webmanifest','multiplayer-client.js','cloud-client.js','city-view.js','icons/apple-touch-icon.png','icons/icon-192.png','icons/icon-512.png'];
  const files=Object.fromEntries(assets.map(file=>['/'+file,file]));files['/']='index.html';
  const mime={'.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.webmanifest':'application/manifest+json; charset=utf-8','.png':'image/png','.txt':'text/plain; charset=utf-8','.html':'text/html; charset=utf-8'};
  // Hibás mentést nem írunk felül üres világgal.
