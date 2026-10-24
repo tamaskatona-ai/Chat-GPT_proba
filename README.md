@@ -141,3 +141,9 @@ Ez egy egyjátékos prototípus, szerveroldali fiókok, többjátékos funkciók
 Three.js 0.160.1, MIT licenc. A csomag és licenc a `vendor/` mappában található; eredet és ellenőrzőösszeg: `vendor/README.md`. Az önálló HTML tartalmazza a megjelenítőt és annak licencfejlécét.
 
 A normál expedíciók egymás után másik kószáló zombit céloznak. A térképen egy zombi kijelölésével és a **Zombi megtámadása** gombbal konkrét ellenfelet is választhatsz. A csata a célpont induláskori helyén zajlik.
+
+### Külön bázisnézet
+
+A **Belépés a bázisba** gomb egy teljes képernyős, izometrikus 3D várost nyit meg. A világtérképen egy épületre kattintva szintén beléphetsz. Az épületcímkék és az **Épületek** menü a valódi hat fejleszthető épületet jelölik; szintjük és költségük az aktuális helyi, felhős vagy online játékállásból jön. A helyőrség és a logisztikai díszletek szemléltető megjelenítések, nem külön megvásárolt egységek és nem adnak új bónuszokat. A városnézet önmagában nem módosítja a mentés formátumát vagy a termelést.
+
+Egérhúzás vagy egyujjas húzás: kamera mozgatása. Görgő, kétujjas csippentés vagy +/−: nagyítás. Nyilak: mozgatás. Escape vagy **Világtérkép**: vissza. A nézet saját eljárással készített épületeket és geometriai részleteket használ, külső modellek és hálózatról letöltött textúrák nélkül. A hősök és kutatások külön későbbi fejlesztések; ez a kiadás a városnézetet vezeti be.

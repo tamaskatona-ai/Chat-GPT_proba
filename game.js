@@ -176,6 +176,7 @@ $('bonuses').addEventListener('click',event=>{
 sync();save();render();setInterval(()=>{sync();render();save();},1000);
 document.addEventListener('visibilitychange',()=>{sync();save();render();});
 const worldView=BattleScene.mount($('world-canvas'),()=>state,id=>{
+  if(window.VegvarCity){window.VegvarCity.open();window.VegvarCity.select(id);return;}
   selectedBuilding=id;
   const button=$('buildings').querySelector(`[data-upgrade="${id}"]`),card=button.closest('.building');
   card.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'center'});
@@ -202,3 +203,8 @@ window.GameSave={
  readSolo(){return structuredClone(window.OnlineGame?.active()?window.OnlineGame.soloState():state);},
  refresh(){lastBuildingMarkup='';lastBonusMarkup='';render();}
 };
+
+// A bázisnézet ugyanazt a mentést és a szerver által ellenőrzött műveleteket használja.
+const cityView=window.CityView?.mount(()=>state,id=>{if(window.CloudSave?.blocked()||window.OnlineGame?.blocked())return;perform('upgrade',id);},()=>{if(window.CloudSave?.blocked()||window.OnlineGame?.blocked())return;perform('train');});
+$('enter-city').onclick=()=>cityView?.open();
+window.VegvarCity=cityView;

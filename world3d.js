@@ -345,6 +345,7 @@ function focus(entry){
  cameraState.pitch=entry.kind==='character'?.28:.64;if(entry.kind==='character')cameraState.yaw=entry.group.rotation.y;updateCamera();
 }
 function select(entry){
+ if(entry.kind==='building'&&root.VegvarCity){root.VegvarCity.open();root.VegvarCity.select(entry.id);return;}
  selected=entry;if(entry.actor?.kind==='giant')canvas.dispatchEvent(new CustomEvent('select-giant',{detail:entry.giantId}));const info=$('map-inspector');info.hidden=false;
  $('inspector-title').textContent=entry.name;
  $('inspector-type').textContent=entry.kind==='building'?'BÁZISÉPÜLET':entry.kind==='landmark'?'TÁJ ÉS HELYSZÍN':entry.actor.kind==='giant'?`ÓRIÁSZOMBI · ${E.giantTypes[entry.giantId]}× HARCI ERŐ`:entry.actor.kind==='zombie'?'KÓSZÁLÓ FERTŐZÖTT':entry.actor.kind==='civilian'?'A MENEDÉK LAKÓJA':entry.actor.kind==='raider'?'ELLENSÉGES KATONA':'A SAJÁT CSAPATOD';
