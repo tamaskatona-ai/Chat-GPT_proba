@@ -37,3 +37,12 @@ test('invalid or PvP snapshots cannot corrupt the personal cloud save or become 
 });
 
 test('downloaded HTML can import via null origin while unrelated websites remain blocked',async()=>{const w=createWorld();const request=new Request('https://game.test/api/cloud/register',{method:'POST',headers:{'Content-Type':'application/json',Origin:'null'},body:JSON.stringify({username:'file-user',password,deviceId:pc,state:E.initial()})});const response=await handleRequest(w,request);assert.equal(response.status,201);assert.equal(response.headers.get('Access-Control-Allow-Origin'),'null');const rejected=await handleRequest(w,new Request('https://game.test/api/cloud/login',{method:'POST',headers:{'Content-Type':'application/json',Origin:'https://evil.test'},body:'{}'}));assert.equal(rejected.status,403);});
+
+test('cloud signup and login respect the production 100000-iteration crypto limit',async t=>{
+ const subtle=globalThis.crypto.subtle,derive=subtle.deriveBits.bind(subtle);let calls=0;
+ t.mock.method(subtle,'deriveBits',(algorithm,...args)=>{assert.ok(algorithm.iterations<=100000);calls++;return derive(algorithm,...args);});
+ const world=createWorld(),api=client(world),state=E.initial();state.levels.hq=9;
+ const registered=await api('register',{username:'production-compatible',password,deviceId:pc,state});assert.equal(registered.status,201);assert.equal(calls,6);
+ const login=await api('login',{username:'production-compatible',password,deviceId:phone});assert.equal(login.status,200);assert.equal(login.state.levels.hq,9);assert.equal(calls,12);
+ assert.equal((await api('login',{username:'production-compatible',password:'incorrect-password',deviceId:phone})).status,401);
+});

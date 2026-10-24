@@ -31,7 +31,19 @@ export class VegvarWorld {
 }
 export default {
   async fetch(request,env){
-    if(new URL(request.url).pathname.startsWith('/api/'))return env.WORLD.get(env.WORLD.idFromName('vegvar-world')).fetch(request);
+    if(new URL(request.url).pathname.startsWith('/api/')){
+      const response=await env.WORLD.get(env.WORLD.idFromName('vegvar-world')).fetch(request);
+      const origin=request.headers.get('Origin'),allowed=env.ALLOWED_ORIGINS?.split(',')||['https://tamaskatona-ai.github.io','null'];
+      // Include CORS even on storage errors and throttled responses.
+      if(origin&&(origin===new URL(request.url).origin||allowed.includes(origin))){
+        const wrapped=new Response(response.body,response);
+        wrapped.headers.set('Access-Control-Allow-Origin',origin);
+        wrapped.headers.set('Access-Control-Allow-Methods','GET, POST, OPTIONS');
+        wrapped.headers.set('Access-Control-Allow-Headers','Authorization, Content-Type');
+        wrapped.headers.set('Vary','Origin');return wrapped;
+      }
+      return response;
+    }
     return env.ASSETS.fetch(request);
   }
 };

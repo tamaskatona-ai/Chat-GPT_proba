@@ -23,10 +23,18 @@ function validateSave(input){
   return s;
  }catch{fail('Ez nem érvényes egyjátékos mentés. A korábbi mentésedet nem módosítottuk.');}
 }
-async function passwordHash(password,salt){
- const key=await globalThis.crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveBits']);
- const bits=await globalThis.crypto.subtle.deriveBits({name:'PBKDF2',salt:Buffer.from(salt,'hex'),iterations:600000,hash:'SHA-256'},key,256);
- return Buffer.from(bits).toString('hex');
+// Workers limits each native PBKDF2 derivation to 100,000 iterations.
+// Six sequential, domain-separated stages retain 600,000 iterations of work.
+const PASSWORD_SCHEME='pbkdf2-sha256-6x100000-v1';
+async function passwordHash(password,salt,scheme){
+ let input=new TextEncoder().encode(password);
+ const stages=scheme===PASSWORD_SCHEME?6:1;
+ for(let stage=0;stage<stages;stage++){
+  const key=await globalThis.crypto.subtle.importKey('raw',input,'PBKDF2',false,['deriveBits']);
+  const stageSalt=scheme===PASSWORD_SCHEME?Buffer.concat([Buffer.from(salt,'hex'),Buffer.from('vegvar-password-v1:'+stage)]):Buffer.from(salt,'hex');
+  input=new Uint8Array(await globalThis.crypto.subtle.deriveBits({name:'PBKDF2',salt:stageSalt,iterations:scheme===PASSWORD_SCHEME?100000:600000,hash:'SHA-256'},key,256));
+ }
+ return Buffer.from(input).toString('hex');
 }
 function accountFor(data,token,now=Date.now()){
  if(typeof token!=='string'||!/^[a-f0-9]{48}$/.test(token))return null;
@@ -49,11 +57,11 @@ async function handleCloud(world,request,url,body,now,json){
    if(data.accounts.length>=128)fail('A felhőmentés tárhelye megtelt.',503);
    const state=validateSave(body.state),player=body.onlineToken?world.authenticate(body.onlineToken):null;
    if(player?.accountId)fail('Ez az online bázis már másik fiókhoz tartozik.',409);
-   const salt=randomBytes(16).toString('hex'),digest=await passwordHash(body.password,salt);
-   account={id:randomUUID(),username,salt,passwordHash:digest,sessions:[],state,revision:1,updatedAt:now,activeDevice:id,playerId:player?.id||null};
+   const salt=randomBytes(16).toString('hex'),digest=await passwordHash(body.password,salt,PASSWORD_SCHEME);
+   account={id:randomUUID(),username,salt,passwordScheme:PASSWORD_SCHEME,passwordHash:digest,sessions:[],state,revision:1,updatedAt:now,activeDevice:id,playerId:player?.id||null};
    data.accounts.push(account);if(player)player.accountId=account.id;
   }else{
-   const digest=await passwordHash(body.password,account?.salt||'0'.repeat(32));
+   const digest=await passwordHash(body.password,account?.salt||'0'.repeat(32),account?account.passwordScheme:PASSWORD_SCHEME);
    if(!account||!timingSafeEqual(Buffer.from(digest,'hex'),Buffer.from(account.passwordHash,'hex')))fail('Hibás felhasználónév vagy jelszó.',401);
    account.activeDevice=id;account.revision++;
   }
